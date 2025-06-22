@@ -1,5 +1,5 @@
 
-import { GoogleGenAI } from "@google/genai";
+
 
 // --- Type Definitions ---
 interface LiteraryPreferences {
@@ -78,7 +78,7 @@ interface BomProposal {
 
 // --- Constants & Initial Data ---
 const API_KEY = process.env.API_KEY; 
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+
 const GEMINI_TEXT_MODEL = 'gemini-2.5-flash-preview-04-17';
 const GEMINI_IMAGE_MODEL = 'imagen-3.0-generate-002';
 const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
