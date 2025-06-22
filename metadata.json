@@ -1,0 +1,6 @@
+{
+  "name": "Book Club Hub",
+  "description": "An application to manage a book club, track reading, rate books, comment, and chat.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
