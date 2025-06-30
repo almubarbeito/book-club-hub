@@ -2248,4 +2248,4 @@ if (currentUser && currentUser.id) {
 } else {
     currentAuthProcessView = 'auth_options'; 
 }
-App();
+;
