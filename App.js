@@ -1,81 +1,5 @@
 
-// This is the CORRECT code for your file: src/App.tsx
 
-import React, { useState } from 'react';
-import './index.css'; // Or your own CSS file
-
-function App() {
-  const [prompt, setPrompt] = useState('');
-  const [response, setResponse] = useState('Waiting for your prompt...');
-  const [isLoading, setIsLoading] = useState(false);
-
-  // This function will be called when the form is submitted
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!prompt) {
-      alert('Please enter a prompt.');
-      return;
-    }
-
-    setIsLoading(true);
-    setResponse('Generating...');
-
-    try {
-      // This is the key part: it calls YOUR backend function
-      const res = await fetch('/.netlify/functions/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // Send the user's prompt in the request body
-        body: JSON.stringify({ prompt: prompt }),
-      });
-
-      if (!res.ok) {
-        // If the server responded with an error, throw an error
-        throw new Error(`Server error: ${res.status}`);
-      }
-
-      // Get the JSON response from your backend function
-      const data = await res.json();
-      
-      // Update the state with the AI's response
-      setResponse(data.response);
-
-    } catch (error) {
-      console.error('Error fetching AI response:', error);
-      setResponse('Sorry, an error occurred on our end. Please try again.');
-    } finally {
-      // Make sure the loading state is turned off
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="App">
-      <h1>My AI App</h1>
-      <form onSubmit={handleSubmit}>
-        <textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="e.g., Write a story about a magic backpack"
-          rows={4}
-          disabled={isLoading}
-        />
-        <button type="submit" disabled={isLoading}>
-          {isLoading ? 'Generating...' : 'Generate'}
-        </button>
-      </form>
-
-      <h3>AI Response:</h3>
-      <pre className="response-box">
-        {response}
-      </pre>
-    </div>
-  );
-}
-
-export default App;
 
 // --- Type Definitions ---
 interface LiteraryPreferences {
@@ -153,6 +77,7 @@ interface BomProposal {
 
 
 // --- Constants & Initial Data ---
+
 
 const DEFAULT_BOM_SEED: Omit<BomEntry, 'id' | 'monthYear' | 'setBy'> = {
     title: "The Midnight Library",
@@ -1299,6 +1224,8 @@ const handleLogout = () => {
 };
 
 
+// Inside your app.js, find the handleOnboardingQuestionsSubmit function
+
 const handleOnboardingQuestionsSubmit = async (event) => {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
@@ -1307,64 +1234,53 @@ const handleOnboardingQuestionsSubmit = async (event) => {
         pace: (form.elements.namedItem('pace') as HTMLSelectElement).value,
         adventure: (form.elements.namedItem('adventure') as HTMLSelectElement).value,
     };
+
     isProcessingOnboarding = true;
     currentAuthProcessView = 'onboarding_processing';
-    generatedPseudonym = ''; 
-    generatedProfileImageBase64Data = ''; 
-    App(); 
+    generatedPseudonym = '';
+    generatedProfileImageBase64Data = '';
+    App(); // Re-render to show the "Processing..." view
 
     try {
-        const characterPrompt = `Based on these literary preferences:
-Genre - ${onboardingAnswers.genre},
-Reading Pace - ${onboardingAnswers.pace},
-Preferred Literary Adventure - "${onboardingAnswers.adventure}",
-suggest ONE famous and iconic protagonist from a well-known classic or popular novel that aligns with these preferences.
-Examples of characters: Don Quixote, Bilbo Baggins, Elizabeth Bennet, Sherlock Holmes, Alice (from Wonderland), Jay Gatsby, Captain Ahab, Harry Potter, Katniss Everdeen, Hermione Granger.
-Return ONLY the full name of the character as a string.`;
-
-        const characterResponse = await ai.models.generateContent({
-            model: GEMINI_TEXT_MODEL,
-            contents: characterPrompt,
+        // --- This is the NEW fetch call to your secure backend ---
+        const res = await fetch('/.netlify/functions/onboarding', {
+            method: 'POST',
+            body: JSON.stringify({
+                ...onboardingAnswers,
+                userId: currentUser!.id // Send the user ID for the image seed
+            })
         });
-        generatedPseudonym = characterResponse.text.trim().replace(/^["']|["']$/g, ''); 
+
+        if (!res.ok) {
+            // If the server function itself had an error
+            throw new Error(`Server responded with status: ${res.status}`);
+        }
+
+        const data = await res.json(); // Get the response from your function
+
+        // Use the data returned from your secure function
+        generatedPseudonym = data.pseudonym;
+        generatedProfileImageBase64Data = data.imageBase64;
 
         if (!generatedPseudonym) {
-            generatedPseudonym = "The Ardent Reader"; 
-            console.warn("AI failed to return a character name. Using fallback.");
+            generatedPseudonym = "The Inquisitive Reader"; // Fallback
         }
-        
-        const uniqueSeedForImage = currentUser!.id.substring(0, 5) + currentUser!.id.slice(-3);
-        const imagePrompt = `A stylized profile avatar representing the literary character: ${generatedPseudonym}. Emphasize iconic visual features or themes associated with them, suitable for a small profile picture. If the character is human, show their face. Make it artistic and visually appealing. Unique style variation seed: ${uniqueSeedForImage}.`;
-        
-        try {
-            const imageGenResponse = await ai.models.generateImages({
-                model: GEMINI_IMAGE_MODEL,
-                prompt: imagePrompt,
-                config: { numberOfImages: 1, outputMimeType: 'image/jpeg' },
-            });
+        if (!generatedProfileImageBase64Data) {
+            authError = "Could not generate an avatar. A default will be used.";
+        }
 
-            if (imageGenResponse.generatedImages && imageGenResponse.generatedImages.length > 0 && imageGenResponse.generatedImages[0].image.imageBytes) {
-                generatedProfileImageBase64Data = `data:image/jpeg;base64,${imageGenResponse.generatedImages[0].image.imageBytes}`;
-            } else {
-                console.warn("AI Image generation did not return image data for:", generatedPseudonym, "with seed:", uniqueSeedForImage);
-                generatedProfileImageBase64Data = ''; 
-            }
-        } catch (imgError) {
-             console.error("Error during AI image generation:", imgError);
-             generatedProfileImageBase64Data = ''; 
-             authError = "Could not generate an avatar. A default will be used."; 
-        }
         currentAuthProcessView = 'onboarding_profile_setup';
 
     } catch (error) {
-        console.error("Error during onboarding AI processing (character/text):", error);
-        authError = "Oops! Our AI is pondering deeply. Could not assign a character or image. Please try again or we'll use defaults.";
-        generatedPseudonym = generatedPseudonym || "The Inquisitive Reader"; 
-        generatedProfileImageBase64Data = ''; 
-        currentAuthProcessView = 'onboarding_profile_setup'; 
+        console.error("Error during onboarding fetch process:", error);
+        authError = "Oops! Our AI is pondering deeply. Could not complete setup.";
+        // Provide fallbacks so the user isn't stuck
+        generatedPseudonym = generatedPseudonym || "The Inquisitive Reader";
+        generatedProfileImageBase64Data = '';
+        currentAuthProcessView = 'onboarding_profile_setup';
     } finally {
         isProcessingOnboarding = false;
-        App();
+        App(); // Re-render to show the final profile setup view
     }
 };
 
@@ -1587,6 +1503,8 @@ const handleMyBooksSearchInputChange = (event) => {
 
 
 // --- Book of the Month Handlers (Discussion) ---
+// Inside your app.js, replace the old function with this one
+
 const handleFetchDiscussionStarters = async () => {
     if (!currentBomToDisplay) {
         discussionStartersError = "No Book of the Month is currently selected to generate starters.";
@@ -1596,27 +1514,39 @@ const handleFetchDiscussionStarters = async () => {
     isLoadingDiscussionStarters = true;
     discussionStartersError = null;
     discussionStarters = [];
-    App(); 
+    App(); // Re-render to show loading state
 
     try {
-        const prompt = `Generate 3-4 engaging discussion starter questions for a book club reading "${currentBomToDisplay.title}" by ${currentBomToDisplay.author}. The book involves ${currentBomToDisplay.promptHint}. Questions should be open-ended and encourage deeper reflection on themes, characters, and plot. Present them as a simple list.`;
-        
-        const response = await ai.models.generateContent({ 
-            model: GEMINI_TEXT_MODEL,
-            contents: prompt,
+        // --- NEW: Fetch call to your secure backend function ---
+        const res = await fetch('/.netlify/functions/generate-starters', {
+            method: 'POST',
+            body: JSON.stringify({
+                title: currentBomToDisplay.title,
+                author: currentBomToDisplay.author,
+                promptHint: currentBomToDisplay.promptHint,
+            })
         });
 
-        const text = response.text;
-        if (text) {
-            const newStarters = text.split('\n').map(s => s.trim().replace(/^- /,'').replace(/^\* /,'').replace(/^\d+\. /,'')).filter(s => s.length > 5);
+        if (!res.ok) {
+            throw new Error(`Server responded with status: ${res.status}`);
+        }
+
+        const data = await res.json(); // Get the response from your function
+
+        if (data.starters && data.starters.length > 0) {
+            const newStarters = data.starters;
+            
+            // Update the history item in localStorage
             const bomIndex = bookOfTheMonthHistory.findIndex(b => b.id === activeBomId);
             if (bomIndex !== -1) {
                 bookOfTheMonthHistory[bomIndex].discussionStarters = newStarters;
                 Storage.setItem("bookOfTheMonthHistory", bookOfTheMonthHistory);
             }
-            discussionStarters = newStarters; 
+            // Update the state for the current view
+            discussionStarters = newStarters;
         } else {
-            throw new Error("No content received from API.");
+            // This could mean the AI returned an empty response
+            throw new Error("No discussion starters were generated.");
         }
 
     } catch (error) {
@@ -1624,7 +1554,7 @@ const handleFetchDiscussionStarters = async () => {
         discussionStartersError = "Failed to generate discussion starters. Please try again.";
     } finally {
         isLoadingDiscussionStarters = false;
-        App(); 
+        App(); // Re-render to show the results or the error
     }
 };
 
@@ -2228,7 +2158,35 @@ const attachEventListeners = () => {
 };
 
 
+// --- Main App Component ---
+const App = () => {
+    const root = document.getElementById('root');
+    if (!root) {
+        console.error("Root element not found!");
+        return;
+    }
 
+    let appContainerClass = "app-container";
+    if (!currentUser || !currentUser.onboardingComplete) {
+        appContainerClass += " auth-onboarding-active";
+    }
+
+
+    root.innerHTML = `
+        <div class="${appContainerClass}">
+            ${renderTopHeader()}
+            <div class="main-content">
+                ${renderCurrentView()}
+            </div>
+            ${renderBottomNav()}
+            ${renderAddBookModal()}
+            ${renderBomProposalModal()}
+            ${renderReviewBookModal()}
+            ${(currentUser && currentUser.onboardingComplete && currentView === 'mybooks') ? renderAddBookFAB() : ''}
+        </div>
+    `;
+    attachEventListeners();
+};
 
 // --- Initial Load ---
 bookOfTheMonthHistory = Storage.getItem("bookOfTheMonthHistory", []);
@@ -2248,4 +2206,4 @@ if (currentUser && currentUser.id) {
 } else {
     currentAuthProcessView = 'auth_options'; 
 }
-;
+App();
