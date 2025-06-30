@@ -2228,35 +2228,7 @@ const attachEventListeners = () => {
 };
 
 
-// --- Main App Component ---
-const App = () => {
-    const root = document.getElementById('root');
-    if (!root) {
-        console.error("Root element not found!");
-        return;
-    }
 
-    let appContainerClass = "app-container";
-    if (!currentUser || !currentUser.onboardingComplete) {
-        appContainerClass += " auth-onboarding-active";
-    }
-
-
-    root.innerHTML = `
-        <div class="${appContainerClass}">
-            ${renderTopHeader()}
-            <div class="main-content">
-                ${renderCurrentView()}
-            </div>
-            ${renderBottomNav()}
-            ${renderAddBookModal()}
-            ${renderBomProposalModal()}
-            ${renderReviewBookModal()}
-            ${(currentUser && currentUser.onboardingComplete && currentView === 'mybooks') ? renderAddBookFAB() : ''}
-        </div>
-    `;
-    attachEventListeners();
-};
 
 // --- Initial Load ---
 bookOfTheMonthHistory = Storage.getItem("bookOfTheMonthHistory", []);
