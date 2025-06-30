@@ -2,7 +2,7 @@
 // This is the CORRECT code for your file: src/App.tsx
 
 import React, { useState } from 'react';
-import './App.css'; // Or your own CSS file
+import './index.css'; // Or your own CSS file
 
 function App() {
   const [prompt, setPrompt] = useState('');
