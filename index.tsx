@@ -2249,4 +2249,3 @@ if (currentUser && currentUser.id) {
     currentAuthProcessView = 'auth_options'; 
 }
 App();
-export default App;
