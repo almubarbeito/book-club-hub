@@ -1632,6 +1632,7 @@ const handleBomProposalBookSearchInputChange = (event) => {
     bomProposal_searchText = (event.target as HTMLInputElement).value;
 };
 
+// This is the corrected version of the function
 const handlePerformBomProposalBookSearch = async () => {
     if (!bomProposal_searchText.trim()) {
         bomProposal_searchError = "Please enter a search term.";
@@ -1639,28 +1640,45 @@ const handlePerformBomProposalBookSearch = async () => {
         App();
         return;
     }
+
     bomProposal_isLoadingSearch = true;
     bomProposal_searchError = null;
     bomProposal_searchResults = [];
     App();
 
     try {
+        // Assumes BOOKS_API_KEY and GOOGLE_BOOKS_API_URL are defined globally in the file
+        if (!BOOKS_API_KEY) {
+            throw new Error("Books API Key is not configured.");
+        }
+
         const query = encodeURIComponent(bomProposal_searchText.trim());
-        const response = await fetch(`${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=5`);
-        if (!response.ok) throw new Error(`Google Books API request failed: ${response.statusText}`);
-        const data = await response.json();
+        const fullUrl = `${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=5&key=${BOOKS_API_KEY}`;
+        
+        const res = await fetch(fullUrl);
+
+        if (!res.ok) {
+            throw new Error(`Google Books API error: ${res.status}`);
+        }
+
+        const data = await res.json();
+        
         if (data.items && data.items.length > 0) {
-            bomProposal_searchResults = data.items.map(item => ({
-                title: item.volumeInfo.title || "No Title",
-                author: item.volumeInfo.authors ? item.volumeInfo.authors.join(', ') : "Unknown Author",
-                cover: item.volumeInfo.imageLinks?.thumbnail || item.volumeInfo.imageLinks?.smallThumbnail || null,
-            }));
+            bomProposal_searchResults = data.items.map(item => {
+                const volumeInfo = item.volumeInfo;
+                return {
+                    title: volumeInfo.title || "No Title",
+                    author: volumeInfo.authors ? volumeInfo.authors.join(', ') : "Unknown Author",
+                    cover: volumeInfo.imageLinks?.thumbnail || volumeInfo.imageLinks?.smallThumbnail || null,
+                };
+            });
         } else {
             bomProposal_searchResults = [];
         }
+
     } catch (error) {
-        console.error("Error searching books for BOM proposal:", error);
-        bomProposal_searchError = "Failed to search for books. Please check connection or try again.";
+        console.error("Error searching books for BOM Proposal:", error);
+        bomProposal_searchError = "Failed to search for books. Please try again.";
     } finally {
         bomProposal_isLoadingSearch = false;
         App();
