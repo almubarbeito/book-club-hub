@@ -217,13 +217,15 @@ textarea:focus {
 }
 
 h1, h2, h3 { 
-    color: var(--primary-variant-color);
+    color: #343a40; /* A modern, professional dark gray */
+    font-weight: 600; /* A nice semi-bold weight */
 }
 .page .book-item h2, /* For BoM specific h2 */
 .page h2 { 
     margin-top: 0; 
     font-size: 1.75rem;
     padding-bottom: 8px;
+     color: #212529; /* Make the biggest headings the darkest color for contrast */
     
 }
 .page .book-item h3, /* For BoM specific h3 */
