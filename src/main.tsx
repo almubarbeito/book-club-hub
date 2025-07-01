@@ -1406,7 +1406,7 @@ const handleNavigation = (event) => {
     if (view && currentUser && currentUser.onboardingComplete) { 
         currentView = view;
         Storage.setItem("currentView", currentView); 
-        //App(); 
+        renderApp(); 
     }
 };
 
