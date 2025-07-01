@@ -234,15 +234,12 @@ h1, h2, h3 {
   margin-top: 0;
   margin-bottom: 1rem; /* Space below the heading */
   color: #495057;
-  border-bottom: 2px solid #007bff; /* Add a little blue accent underline */
-  padding-bottom: 0.5rem; /* Space between text and the underline */
-  display: inline-block; /* Makes the underline only as wide as the text */
 }
 
 
 .page {
     animation: fadeIn 0.3s ease-in-out;
-    text-align: center; /* Centers text, buttons, and other inline content. */
+    text-align: left; /* Centers text, buttons, and other inline content. */
 }
 
 @keyframes fadeIn {
@@ -840,10 +837,10 @@ ul.discussion-starters li {
 }
 
 .book-item-content {
-    display: flex;
-    gap: 15px; 
-    align-items: flex-start;
-    margin-bottom: 10px; 
+    display: flex;       /* The magic switch! */
+  align-items: center; /* Vertically aligns the image and text block */
+  gap: 20px;           /* Adds space between the image and the text */
+  width: 100%;         /* Make it take up the full width */ 
 }
 
 .book-cover-thumbnail {
