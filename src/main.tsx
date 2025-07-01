@@ -1182,7 +1182,7 @@ const handleAuthAction = (event) => {
     if (action === 'show-login') currentAuthProcessView = 'login';
     else if (action === 'show-register') currentAuthProcessView = 'register';
     else if (action === 'show-auth-options') currentAuthProcessView = 'auth_options';
-    //App();
+    renderApp();
 };
 
 const handleRegister = (event) => {
@@ -1195,19 +1195,19 @@ const handleRegister = (event) => {
 
     if (password !== confirmPassword) {
         authError = "Passwords do not match.";
-        //App();
+        renderApp();
         return;
     }
     if (password.length < 6) {
         authError = "Password must be at least 6 characters long.";
-        //App();
+        renderApp();
         return;
     }
 
     const existingUser = users.find(u => u.email === email);
     if (existingUser) {
         authError = "User with this email already exists.";
-        //App();
+        renderApp();
         return;
     }
 
@@ -1240,7 +1240,7 @@ const handleRegister = (event) => {
 
     currentAuthProcessView = 'onboarding_questions';
     loadUserSpecificData(); 
-    //App();
+    renderApp();
 };
 
 const handleLogin = (event) => {
@@ -1253,7 +1253,7 @@ const handleLogin = (event) => {
     const user = users.find(u => u.email === email);
     if (!user || user.hashedPassword !== simpleHash(password)) { 
         authError = "Invalid email or password.";
-        //App();
+        renderApp();
         return;
     }
 
@@ -1267,7 +1267,7 @@ const handleLogin = (event) => {
     } else {
         currentView = Storage.getItem("currentView", "bookofthemonth"); 
     }
-    //App();
+    renderApp();
 };
 
 const handleLogout = () => {
@@ -1303,7 +1303,7 @@ const handleOnboardingQuestionsSubmit = async (event) => {
     currentAuthProcessView = 'onboarding_processing';
     generatedPseudonym = '';
     generatedProfileImageBase64Data = '';
-    //App(); // Re-render to show the "Processing..." view
+    renderApp(); // Re-render to show the "Processing..." view
 
     try {
         // --- This is the NEW fetch call to your secure backend ---
@@ -1344,7 +1344,7 @@ const handleOnboardingQuestionsSubmit = async (event) => {
         currentAuthProcessView = 'onboarding_profile_setup';
     } finally {
         isProcessingOnboarding = false;
-        //App(); // Re-render to show the final profile setup view
+        renderApp(); // Re-render to show the final profile setup view
     }
 };
 
@@ -1356,14 +1356,14 @@ const handleOnboardingProfileSetupSubmit = (event) => {
 
     if (!name) {
         authError = "Please enter your name.";
-        //App();
+        renderApp();
         return;
     }
     
     if (!currentUser) { 
         authError = "User session lost. Please try logging in again.";
         currentAuthProcessView = 'login';
-        //App();
+        renderApp();
         return;
     }
     
@@ -1394,11 +1394,11 @@ const handleOnboardingProfileSetupSubmit = (event) => {
         userProfile = newUserProfile; 
         
         currentView = "bookofthemonth"; 
-        //App();
+        renderApp();
     } else {
         authError = "Error saving profile. User not found."; 
         currentAuthProcessView = 'onboarding_questions'; 
-        //App();
+        renderApp();
     }
 };
 
@@ -1433,7 +1433,7 @@ const handleAddBookFabClick = () => {
 const handleCloseAddBookModal = () => {
     showAddBookModal = false;
     resetAddBookModalState();
-    //App();
+    renderApp();
 };
 
 const handleAddBookSearchInputChange = (event) => {
@@ -1467,14 +1467,14 @@ const handlePerformAddBookSearch = async () => {
     if (!addBook_searchText.trim()) {
         addBook_searchError = "Please enter a search term.";
         addBook_searchResults = [];
-        //App(); // Re-render
+        renderApp(); // Re-render
         return;
     }
 
     addBook_isLoadingSearch = true;
     addBook_searchError = null;
     addBook_searchResults = [];
-    //App(); // Re-render to show loading
+    renderApp(); // Re-render to show loading
 
     try {
         if (!BOOKS_API_KEY) {
@@ -1509,7 +1509,7 @@ const handlePerformAddBookSearch = async () => {
         addBook_searchError = "Failed to search for books. Please try again.";
     } finally {
         addBook_isLoadingSearch = false;
-        //App(); // Re-render to show results or error
+        renderApp(); // Re-render to show results or error
     }
 };
 
@@ -1523,7 +1523,7 @@ const handleSelectSearchedBookForAdd = (event) => {
         addBook_formCoverUrl = selectedBook.cover || '';
         addBook_searchResults = []; 
         addBook_searchText = ''; 
-        //App(); 
+        renderApp(); 
     }
 };
 
@@ -1555,7 +1555,7 @@ const handleAddBookFormInputChange = (event) => {
     if (name === 'title') addBook_formTitle = value;
     else if (name === 'author') addBook_formAuthor = value;
     else if (name === 'coverImageUrl') addBook_formCoverUrl = value;
-    //App(); 
+    renderApp(); 
 };
 
 
@@ -1594,7 +1594,7 @@ const handleBookAction = (event) => {
 
 const handleMyBooksSearchInputChange = (event) => {
     myBooksSearchTerm = (event.target as HTMLInputElement).value;
-    //App(); 
+    renderApp(); 
 };
 
 
@@ -1604,13 +1604,13 @@ const handleMyBooksSearchInputChange = (event) => {
 const handleFetchDiscussionStarters = async () => {
     if (!currentBomToDisplay) {
         discussionStartersError = "No Book of the Month is currently selected to generate starters.";
-        //App();
+        renderApp();
         return;
     }
     isLoadingDiscussionStarters = true;
     discussionStartersError = null;
     discussionStarters = [];
-    //App(); // Re-render to show loading state
+    renderApp(); // Re-render to show loading state
 
     try {
         // --- NEW: Fetch call to your secure backend function ---
@@ -1650,7 +1650,7 @@ const handleFetchDiscussionStarters = async () => {
         discussionStartersError = "Failed to generate discussion starters. Please try again.";
     } finally {
         isLoadingDiscussionStarters = false;
-        //App(); // Re-render to show the results or the error
+        renderApp(); // Re-render to show the results or the error
     }
 };
 
@@ -1681,7 +1681,7 @@ const handleStartReadingBom = () => {
     }
 
     Storage.setUserItem(currentUser.id, "books", books);
-    //App(); 
+    renderApp(); 
 };
 
 // --- BOM Proposal Modal Handlers ---
@@ -1700,13 +1700,13 @@ const handleShowBomProposalModal = () => {
     resetBomProposalModalState();
     bomProposal_targetMonthYear = getNextMonthYearString();
     showBomProposalModal = true;
-    //App();
+    renderApp();
 };
 
 const handleCloseBomProposalModal = () => {
     showBomProposalModal = false;
     resetBomProposalModalState();
-    //App();
+    renderApp();
 };
 
 const handleBomProposalBookSearchInputChange = (event) => {
@@ -1718,14 +1718,14 @@ const handlePerformBomProposalBookSearch = async () => {
     if (!bomProposal_searchText.trim()) {
         bomProposal_searchError = "Please enter a search term.";
         bomProposal_searchResults = [];
-        //App();
+        renderApp();
         return;
     }
 
     bomProposal_isLoadingSearch = true;
     bomProposal_searchError = null;
     bomProposal_searchResults = [];
-    //App();
+    renderApp();
 
     try {
         // Assumes BOOKS_API_KEY and GOOGLE_BOOKS_API_URL are defined globally in the file
@@ -1762,7 +1762,7 @@ const handlePerformBomProposalBookSearch = async () => {
         bomProposal_searchError = "Failed to search for books. Please try again.";
     } finally {
         bomProposal_isLoadingSearch = false;
-        //App();
+        renderApp();
     }
 };
 
@@ -1775,7 +1775,7 @@ const handleSelectSearchedBomProposalBook = (event) => {
         bomProposal_formCoverUrl = selectedBook.cover || '';
         bomProposal_searchResults = []; 
         bomProposal_searchText = ''; 
-        //App();
+        renderApp();
     }
 };
 
@@ -1857,7 +1857,7 @@ const handleBomProposalVoteToggle = (event) => {
     }
 
     Storage.setItem("bomProposals", bomProposals);
-    //App();
+    renderApp();
 };
 
 // --- Review Book Modal Handlers ---
@@ -1870,7 +1870,7 @@ const resetReviewBookModalState = () => {
 const handleCloseReviewBookModal = () => {
     showReviewBookModal = false;
     resetReviewBookModalState();
-    //App();
+    renderApp();
 };
 
 const handleReviewBookRating = (event) => {
@@ -1986,7 +1986,7 @@ const handleSendChatMessage = () => {
             chatMessages.push(newMessage);
             Storage.setItem("chatMessagesGlobal", chatMessages); 
             input.value = '';
-            //App();
+            renderApp();
             
             const chatContainer = document.getElementById('chatMessagesContainer');
             if (chatContainer) {
@@ -2021,7 +2021,7 @@ const handleProfileSave = (event) => {
     }
     
     alert("Profile saved!"); 
-    //App();
+    renderApp();
 };
 
 // --- General Keypress Handlers ---
