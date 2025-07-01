@@ -19,14 +19,16 @@ exports.handler = async function () {
     }
 
     const proposals = snapshot.docs.map(doc => {
+      // --- REWRITTEN PART ---
       const data = doc.data();
-      // Handle server timestamps correctly
-      const timestamp = data.timestamp ? data.timestamp.toDate().toISOString() : new Date().toISOString();
-      return { 
-        id: doc.id, 
-        ...data,
-        timestamp: timestamp 
-      };
+      data.id = doc.id; // Manually add the id
+      
+      // Handle timestamp
+      if (data.timestamp) {
+          data.timestamp = data.timestamp.toDate().toISOString();
+      }
+      return data;
+      // --------------------
     });
 
     return {
