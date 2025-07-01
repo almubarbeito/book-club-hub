@@ -75,9 +75,9 @@ textarea:focus {
     flex-grow: 1;
     height: 100%;
     position: relative; 
-    max-width: 800px; /* A good width for desktop. Adjust as you like. */
+    max-width: 1000px; /* A good width for desktop. Adjust as you like. */
   margin: 0 auto;   /* This is the magic that centers the block. */
-  padding: 1rem;    /* Adds some space around the edges. */
+  padding: 2rem 1rem;    /* Adds some space around the edges. */
   
   /* This ensures flexbox children also align nicely */
   min-height: 100vh; /* Make it take at least the full viewport height */
@@ -222,15 +222,21 @@ h1, h2, h3 {
 .page .book-item h2, /* For BoM specific h2 */
 .page h2 { 
     margin-top: 0; 
-    font-size: 1.5em;
+    font-size: 1.75rem;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--border-color);
-    margin-bottom: 16px;
+    margin-bottom: 1.5rem;
+    color: #343a40;
 }
 .page .book-item h3, /* For BoM specific h3 */
 .page h3 { 
-     margin-top: 0; 
-     font-size: 1.15em;
+     font-size: 1.4rem; /* ~22px */
+  margin-top: 0;
+  margin-bottom: 1rem; /* Space below the heading */
+  color: #495057;
+  border-bottom: 2px solid #007bff; /* Add a little blue accent underline */
+  padding-bottom: 0.5rem; /* Space between text and the underline */
+  display: inline-block; /* Makes the underline only as wide as the text */
 }
 
 
@@ -245,18 +251,17 @@ h1, h2, h3 {
 }
 
 .book-item, .comment-item, .profile-section, .auth-container, .onboarding-container {
-    background-color: var(--surface-color);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-shadow: 0 2px 4px var(--shadow-color);
+   
     width: 100%;
-    max-width: 600px; /* Max width for content blocks */
+    max-width: 800px; /* Max width for content blocks */
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: center; /* This will center-align items like the cover image and text blocks */
     margin-bottom: 20px;
-    padding: 20px;
+    padding-top: 2rem; /* Add space ABOVE the content of the section */
+  padding-bottom: 2rem; /* Add space BELOW the content of the section */
+  border-bottom: 1px solid #e9ecef; /* A very light, subtle horizontal line */
 
 }
 .auth-container, .onboarding-container {
