@@ -268,7 +268,10 @@ const formatMonthYearForDisplay = (monthYear: string): string => {
 
 
 const initializeAndSetCurrentBOM = () => {
-    const currentMonthStr = getCurrentMonthYearString();
+    //const currentMonthStr = getCurrentMonthYearString();
+    // --- TEMPORARY CHANGE FOR TESTING ---
+const currentMonthStr = "2025-07"; 
+// const currentMonthStr = getCurrentMonthYearString(); // Comment out the original line
     let foundBomForCurrentMonth = bookOfTheMonthHistory.find(bom => bom.monthYear === currentMonthStr);
 
     if (!foundBomForCurrentMonth) {
