@@ -600,15 +600,18 @@ const renderBomProposalSection = () => {
                         const userVotedForThis = proposal.votes.includes(currentUser!.id);
                         let voteButtonHtml = '';
                         
-                        if (userVotedForThis) {
-                            voteButtonHtml = `<button class="button small-button voted" data-action="toggle-bom-proposal-vote" data-proposal-id="${proposal.id}">
-                                                <span class="material-icons">how_to_vote</span> Voted (${proposal.votes.length})
-                                           </button>`;
-                        } else {
-                            voteButtonHtml = `<button class="button small-button primary" data-action="toggle-bom-proposal-vote" data-proposal-id="${proposal.id}">
-                                                Vote (${proposal.votes.length})
-                                           </button>`;
-                        }
+                        let voteButtonHtml = '';
+if (userVotedForThis) {
+    // The "Voted" button
+    voteButtonHtml = `<button class="button small-button voted" data-action="toggle-bom-proposal-vote" data-proposal-id="${proposal.id}">
+                        <span class="material-icons">how_to_vote</span> Voted (${proposal.votes.length})
+                   </button>`;
+} else {
+    // The "Vote" button
+    voteButtonHtml = `<button class="button small-button primary" data-action="toggle-bom-proposal-vote" data-proposal-id="${proposal.id}">
+                        <span class="material-icons">how_to_vote</span> Vote (${proposal.votes.length})
+                   </button>`;
+}
                         // Check if the current user is the one who proposed this item
                 let deleteButtonHtml = ''; 
                         if (currentUser && proposal.proposedByUserId === currentUser.id) {

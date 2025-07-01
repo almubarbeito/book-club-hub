@@ -1015,12 +1015,16 @@ ul.discussion-starters li {
 }
 
 .proposal-actions .button {
-  min-width: 110px;   /* Set a minimum width for all buttons in this container */
-  text-align: center; /* Ensures the text inside is centered */
-  justify-content: center; /* This helps center the icon and text in a flex button */
+  width: 120px;       /* Use a fixed width instead of min-width */
+  flex-shrink: 0;     /* Prevent the button from shrinking if space is tight */
+  justify-content: center;
+}
+
+.proposal-actions {
   margin-top: 10px;
   display: flex;       /* It should already be a flex container */
-  gap: 15px;           /* INCREASE this value from 10px to 15px or 20px */
+  gap: 10px;           /* INCREASE this value from 10px to 15px or 20px */
+  flex-wrap: nowrap; /* This prevents the buttons from wrapping to the next line */
 }
 
 /* BOM Proposal Styles */
