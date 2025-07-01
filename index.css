@@ -22,14 +22,44 @@
 }
 
 body {
-    font-family: 'Roboto', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     margin: 0;
-    background-color: var(--background-color);
-    color: var(--text-primary-color);
+    background-color: #f7f9fc; /* A slightly softer background color */
+  color: #333; /* A dark gray for text is often softer than pure black */
     display: flex;
     flex-direction: column;
     height: 100vh;
     overflow-x: hidden;
+}
+
+/* Add this rule to your CSS file to make form elements use the main font */
+
+input,
+button,
+textarea,
+select {
+  font-family: inherit; /* This tells them to use the font from their parent (the body) */
+  font-size: 100%;     /* Use 100% of the base font size */
+  margin: 0;           /* A good reset to have */
+}
+
+/* Style all textareas for a consistent look */
+textarea {
+  width: 100%; /* Make them take up the full width of their container */
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px; /* Slightly rounded corners */
+  box-sizing: border-box; /* This makes padding and border included in the width */
+  background-color: #fff;
+  line-height: 1.5; /* Improves readability of multi-line text */
+  transition: border-color 0.2s; /* Smooth transition for focus */
+}
+
+/* Add a nice blue glow when the user clicks into the textarea */
+textarea:focus {
+  outline: none; /* Remove the default browser outline */
+  border-color: #007bff; /* Our primary blue color */
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); /* A soft glow */
 }
 
 #root {
