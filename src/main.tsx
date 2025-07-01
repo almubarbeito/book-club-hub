@@ -1376,26 +1376,41 @@ const handleAddBookSearchInputChange = (event) => {
     addBook_searchText = (event.target as HTMLInputElement).value;
 };
 
+// In src/main.tsx
+
+const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
+// Vite makes .env variables available on this special object
+const BOOKS_API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY;
+
 const handlePerformAddBookSearch = async () => {
     if (!addBook_searchText.trim()) {
         addBook_searchError = "Please enter a search term.";
         addBook_searchResults = [];
-        App();
+        App(); // Re-render
         return;
     }
 
     addBook_isLoadingSearch = true;
     addBook_searchError = null;
     addBook_searchResults = [];
-    App();
+    App(); // Re-render to show loading
 
     try {
-        const query = encodeURIComponent(addBook_searchText.trim());
-        const response = await fetch(`${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=5`);
-        if (!response.ok) {
-            throw new Error(`Google Books API request failed: ${response.statusText}`);
+        if (!BOOKS_API_KEY) {
+            throw new Error("Books API Key is not configured.");
         }
-        const data = await response.json();
+
+        const query = encodeURIComponent(addBook_searchText.trim());
+        const fullUrl = `${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=10&key=${BOOKS_API_KEY}`;
+        
+        // This fetch call now goes directly to Google's servers
+        const res = await fetch(fullUrl);
+
+        if (!res.ok) {
+            throw new Error(`Google Books API error: ${res.status}`);
+        }
+
+        const data = await res.json();
         if (data.items && data.items.length > 0) {
             addBook_searchResults = data.items.map(item => {
                 const volumeInfo = item.volumeInfo;
@@ -1409,11 +1424,11 @@ const handlePerformAddBookSearch = async () => {
             addBook_searchResults = [];
         }
     } catch (error) {
-        console.error("Error searching books for 'Add Book':", error);
-        addBook_searchError = "Failed to search for books. Please check your connection or try again.";
+        console.error("Error searching books:", error);
+        addBook_searchError = "Failed to search for books. Please try again.";
     } finally {
         addBook_isLoadingSearch = false;
-        App();
+        App(); // Re-render to show results or error
     }
 };
 
