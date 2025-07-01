@@ -374,9 +374,9 @@ const MyBooksView = () => {
                     </div>
                 </div>
                 <div class="book-item-actions">
-                    ${book.status !== 'Reading' ? `<button data-action="set-status" data-book-id="${book.id}" data-status="Reading">Mark as Reading</button>` : ''}
-                    ${book.status !== 'Read' ? `<button data-action="set-status" data-book-id="${book.id}" data-status="Read">Mark as Read</button>` : ''}
-                    ${book.status !== 'Pending' ? `<button data-action="set-status" data-book-id="${book.id}" data-status="Pending">Mark as Pending</button>` : ''}
+                    ${book.status !== 'Reading' ? `<button data-action="set-status" data-book-id="${book.id}" data-status="Reading">Mark as reading</button>` : ''}
+                    ${book.status !== 'Read' ? `<button data-action="set-status" data-book-id="${book.id}" data-status="Read">Mark as read</button>` : ''}
+                    ${book.status !== 'Pending' ? `<button data-action="set-status" data-book-id="${book.id}" data-status="Pending">Mark as pending</button>` : ''}
                     <button class="danger" data-action="delete-book" data-book-id="${book.id}">Delete</button>
                 </div>
             </div>
@@ -466,7 +466,7 @@ const BookOfTheMonthView = () => {
         if (bomInMyBooks && bomInMyBooks.status === 'Reading') {
             startReadingButtonHtml = `<button class="button bom-action-button" disabled>Currently Reading (In My Books)</button>`;
         } else {
-            startReadingButtonHtml = `<button class="button bom-action-button primary" data-action="start-reading-bom">Start Reading this Book</button>`;
+            startReadingButtonHtml = `<button class="button bom-action-button primary" data-action="start-reading-bom">Start reading this book</button>`;
         }
     }
 
@@ -735,8 +735,8 @@ const renderReviewBookModal = () => {
                         <textarea id="reviewBookComment" name="comment" rows="4" placeholder="What did you think of the book?">${reviewBook_formComment}</textarea>
                     </div>
                     <div class="modal-actions">
-                        <button type="submit" class="button primary" data-action="submit-review-book">Submit Review</button>
-                        <button type="button" class="button secondary" data-action="skip-review-book">Mark as Read & Skip</button>
+                        <button type="submit" class="button primary" data-action="submit-review-book">Submit review</button>
+                        <button type="button" class="button secondary" data-action="skip-review-book">Mark as read & skip</button>
                     </div>
                 </form>
             </div>
