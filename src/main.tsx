@@ -390,10 +390,14 @@ const MyBooksView = () => {
     `;
 };
 
-const BookOfTheMonthView = () => {
-     console.log("Rendering BookOfTheMonthView. currentBomToDisplay is:", currentBomToDisplay);
+// This is the complete, corrected function.
 
-    if (!currentBomToDisplay || !activeBomId) {
+const BookOfTheMonthView = () => {
+    // This is a good debug log to keep for now.
+    console.log("Rendering BookOfTheMonthView. currentBomToDisplay is:", currentBomToDisplay);
+
+    // --- Part 1: Handle the case where there is no Book of the Month ---
+    if (!currentBomToDisplay) {
         return `
             <div class="page" id="bom-view">
                 <div class="book-item">
@@ -405,15 +409,16 @@ const BookOfTheMonthView = () => {
         `;
     }
 
-    // Destructure properties from the correct book
-    const { title, author, description, coverImageUrl, monthYear } = currentBomToDisplay;
+    // --- Part 2: If we have a book, prepare all its data for rendering ---
 
-    // --- Start: All the calculation logic for ratings, buttons, etc. ---
-    // (This part of your logic is good, we'll keep it)
-    const bomCoverImageId = `bomCoverImage-${activeBomId}`;
-    const bomCoverPlaceholderId = `bomCoverPlaceholder-${activeBomId}`;
+    const { title, author, description, coverImageUrl, monthYear, id: activeBomId } = currentBomToDisplay;
+
+    // --- All calculation logic goes here, before the return statement ---
+    
+    // Calculate Average Ratings
     const allRatingsForThisBom = activeBomId ? globalBomRatings[activeBomId] : null;
-    let averageRatings = { plot: 0, characters: 0, writingStyle: 0, overallEnjoyment: 0 };
+    let averageRatings: BomRatings = { plot: 0, characters: 0, writingStyle: 0, overallEnjoyment: 0 };
+    let ratingCounts = { plot: 0, characters: 0, writingStyle: 0, overallEnjoyment: 0 };
     let totalRaters = 0;
     if (allRatingsForThisBom) {
         const userRatingsArray = Object.values(allRatingsForThisBom);
@@ -431,35 +436,38 @@ const BookOfTheMonthView = () => {
             if (ratingCounts.overallEnjoyment > 0) averageRatings.overallEnjoyment /= ratingCounts.overallEnjoyment;
         }
     }
-    const renderAverageStars = (categoryValue) => {
+    const renderAverageStars = (categoryValue: number) => {
         let starsHtml = '';
-        const roundedRating = Math.round(categoryValue); // Or use toFixed(1) for half stars if desired
+        const roundedRating = Math.round(categoryValue);
         for (let i = 1; i <= 5; i++) {
             starsHtml += `<span class="material-icons static-star ${i <= roundedRating ? 'filled' : ''}" aria-label="${i} star">${i <= roundedRating ? 'star' : 'star_border'}</span>`;
         }
         return `${starsHtml} (${categoryValue.toFixed(1)} average)`;
     };
+
+    // Get Comments/Reviews
     const allCommentsForThisBom = activeBomId ? globalBomComments[activeBomId] : null;
-    const bomReviews = allCommentsForThisBom ? Object.values(allCommentsForThisBom).sort((a,b) => b.timestamp - a.timestamp) : [];
+    const bomReviews: BomComment[] = allCommentsForThisBom ? Object.values(allCommentsForThisBom).sort((a, b) => b.timestamp - a.timestamp) : [];
+
+    // Logic for "Start Reading this Book" button
     let startReadingButtonHtml = '';
     if (currentUser && currentBomToDisplay) {
-        const bomInMyBooks = books.find(book => 
+        const bomInMyBooks = books.find(book =>
             book.title.toLowerCase() === currentBomToDisplay.title.toLowerCase() &&
             (book.author || '').toLowerCase() === (currentBomToDisplay.author || '').toLowerCase()
         );
-
         if (bomInMyBooks && bomInMyBooks.status === 'Reading') {
             startReadingButtonHtml = `<button class="button bom-action-button" disabled>Currently Reading (In My Books)</button>`;
         } else {
             startReadingButtonHtml = `<button class="button bom-action-button primary" data-action="start-reading-bom">Start Reading this Book</button>`;
         }
     }
-    // --- End: All the calculation logic ---
 
-
-    // --- Start: The NEW, CLEAN HTML Structure ---
+    // --- Part 3: Return the final, clean HTML structure ---
     return `
-        <!-- Main Book of the Month Section -->
+        <div class="page" id="bom-view">
+
+            <!-- Main Book of the Month Section -->
             <div class="book-item">
                 <h2>Book of the Month: ${formatMonthYearForDisplay(monthYear)}</h2>
                 
@@ -482,22 +490,54 @@ const BookOfTheMonthView = () => {
                 </div>
             </div>
 
-            <!-- Community Ratings Section (Add your full logic back in here) -->
+            <!-- Community Ratings Section -->
             <div class="book-item">
                 <h3>Community Ratings</h3>
-                <p>No ratings submitted yet for this book.</p>
+                ${totalRaters > 0 ? `
+                    <div class="rating-category">
+                        <p>Plot: <span class="rating-stars-display">${renderAverageStars(averageRatings.plot)}</span></p>
+                    </div>
+                    <div class="rating-category">
+                        <p>Characters: <span class="rating-stars-display">${renderAverageStars(averageRatings.characters)}</span></p>
+                    </div>
+                    <div class="rating-category">
+                        <p>Writing Style: <span class="rating-stars-display">${renderAverageStars(averageRatings.writingStyle)}</span></p>
+                    </div>
+                    <div class="rating-category">
+                        <p>Overall Enjoyment: <span class="rating-stars-display">${renderAverageStars(averageRatings.overallEnjoyment)}</span></p>
+                    </div>
+                    <p class="total-raters-note">Based on ${totalRaters} review(s).</p>
+                ` : `<p>No ratings submitted yet for this book.</p>`}
             </div>
             
-            <!-- Thoughts from Readers Section (Add your full logic back in here) -->
+            <!-- Thoughts from Readers Section -->
             <div class="book-item">
                 <h3>Thoughts from Readers</h3>
-                <p>No reviews yet. Be the first to read and review!</p>
+                <div id="bomReviewsList">
+                    ${bomReviews.length === 0 ? "<p>No reviews yet. Be the first to read and review!</p>" : bomReviews.map(review => `
+                        <div class="comment-item">
+                            <p><strong>${review.userNameDisplay}</strong> <span class="comment-timestamp">${new Date(review.timestamp).toLocaleString()}</span></p>
+                            <p>${review.text.replace(/\n/g, '<br>')}</p>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
 
-            <!-- Discussion Starters Section (Add your full logic back in here) -->
+            <!-- Discussion Starters Section -->
             <div class="book-item">
                 <h3>Discussion Starters</h3>
-                <button id="fetchDiscussionStarters" class="button">Get AI Discussion Starters</button>
+                ${currentUser ? `
+                    <button id="fetchDiscussionStarters" class="button" ${isLoadingDiscussionStarters ? 'disabled' : ''}>
+                        ${isLoadingDiscussionStarters ? 'Loading...' : 'Get AI Discussion Starters'}
+                    </button>
+                    ${discussionStartersError ? `<p class="error-message">${discussionStartersError}</p>` : ''}
+                    ${discussionStarters.length > 0 ? `
+                        <ul class="discussion-starters">
+                            ${discussionStarters.map(starter => `<li>${starter}</li>`).join('')}
+                        </ul>
+                    ` : ''}
+                    ${!isLoadingDiscussionStarters && discussionStarters.length === 0 && !discussionStartersError ? '<p>Click the button to generate some discussion points for this book!</p>' : ''}
+                ` : `<p>Please log in to generate discussion starters.</p>`}
             </div>
             
             <!-- Proposals Section -->
