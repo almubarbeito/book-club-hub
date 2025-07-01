@@ -224,9 +224,7 @@ h1, h2, h3 {
     margin-top: 0; 
     font-size: 1.75rem;
     padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-color);
-    margin-bottom: 1.5rem;
-    color: #343a40;
+    
 }
 .page .book-item h3, /* For BoM specific h3 */
 .page h3 { 
@@ -272,6 +270,16 @@ h1, h2, h3 {
     font-size: 1.6em;
 }
 
+/* Add this NEW rule to your CSS file */
+
+.book-item-actions {
+  display: flex;             /* This is the key: turns it into a flex container */
+  justify-content: flex-start; /* Aligns all children (the buttons) to the start (left) */
+  gap: 10px;                 /* Adds space BETWEEN the buttons */
+  margin-top: 15px;          /* Adds space above the whole button group */
+  width: 100%;               /* Ensures the container spans the full width */
+}
+
 
 .book-item-actions button, .form button, .button, .modal-actions button {
     background-color: var(--primary-color);
@@ -281,7 +289,6 @@ h1, h2, h3 {
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
-    margin-right: 8px;
     transition: background-color 0.2s ease;
     margin-top: 8px; 
     display: inline-flex; /* For aligning icon and text */
