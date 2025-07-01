@@ -281,11 +281,13 @@ h1, h2, h3 {
 }
 
 /* Add this new rule to specifically center the main BoM section */
+/* New layout for the main Book of the Month section */
 .book-of-the-month-details {
   display: flex;
-  flex-direction: column;
-  align-items: center; /* This re-applies centering ONLY to this specific section */
-  text-align: center;  /* Also center the text within this section */
+  flex-direction: row; /* This is the key change for side-by-side */
+  align-items: flex-start; /* Aligns items to the top */
+  gap: 30px; /* Creates space between the image and the text */
+  width: 100%; /* Ensures it uses the available container width */
 }
 
 .book-item-actions button, .form button, .button, .modal-actions button {
@@ -798,15 +800,32 @@ h1, h2, h3 {
     border-radius: 4px;
     margin-bottom: 10px;
 }
+/* A new container for the BoM cover image */
+.bom-image-wrapper {
+  flex-shrink: 0; /* Prevents the image container from shrinking */
+  width: 35%; /* The image column will take up 35% of the width */
+  max-width: 250px; /* But it won't get bigger than 250px */
+}
+
+/* A new container for the BoM text content */
+.bom-text-wrapper {
+  flex-grow: 1; /* Allows the text container to grow and fill the rest of the space */
+  text-align: left; /* Ensures the text inside is left-aligned */
+}
+/* Add this NEW rule to your main CSS file */
+
+.bom-main-layout-container {
+  display: flex;          /* The magic switch: makes children into columns */
+  flex-direction: row;    /* Explicitly sets the direction to horizontal */
+  align-items: flex-start;  /* Aligns items to the top of the container */
+  gap: 30px;              /* Creates a nice 30px space between the image and text */
+  width: 100%;            /* Ensures the container uses the full available width */
+}
 .bom-cover-image {
-    max-width: 150px; /* Larger for BoM main display */
-    height: auto;
-    border-radius: 4px; 
-    margin-bottom: 10px;
-    display: block; /* Center if container allows */
-    margin-left: auto;
-    margin-right: auto;
-    border: 1px solid var(--border-color);
+  width: 100%; /* Make the image fill its new wrapper */
+  height: auto;
+  border-radius: 8px; 
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* A nicer shadow */
 }
 .bom-cover-placeholder {
      width: 150px;

@@ -390,9 +390,8 @@ const MyBooksView = () => {
     `;
 };
 
-
 const BookOfTheMonthView = () => {
-    console.log("BookOfTheMonthView - currentBomToDisplay:", currentBomToDisplay, "activeBomId:", activeBomId); 
+    console.log("BookOfTheMonthView - currentBomToDisplay:", currentBomToDisplay, "activeBomId:", activeBomId);
 
     if (!currentBomToDisplay || !activeBomId) {
         return `
@@ -406,16 +405,16 @@ const BookOfTheMonthView = () => {
         `;
     }
 
+    // Destructure properties from the correct book
     const { title, author, description, coverImageUrl, monthYear } = currentBomToDisplay;
+
+    // --- Start: All the calculation logic for ratings, buttons, etc. ---
+    // (This part of your logic is good, we'll keep it)
     const bomCoverImageId = `bomCoverImage-${activeBomId}`;
     const bomCoverPlaceholderId = `bomCoverPlaceholder-${activeBomId}`;
-
-    // --- Calculate Average Ratings ---
     const allRatingsForThisBom = activeBomId ? globalBomRatings[activeBomId] : null;
-    let averageRatings: BomRatings = { plot: 0, characters: 0, writingStyle: 0, overallEnjoyment: 0 };
-    let ratingCounts = { plot: 0, characters: 0, writingStyle: 0, overallEnjoyment: 0 };
+    let averageRatings = { plot: 0, characters: 0, writingStyle: 0, overallEnjoyment: 0 };
     let totalRaters = 0;
-
     if (allRatingsForThisBom) {
         const userRatingsArray = Object.values(allRatingsForThisBom);
         totalRaters = userRatingsArray.length;
@@ -432,8 +431,7 @@ const BookOfTheMonthView = () => {
             if (ratingCounts.overallEnjoyment > 0) averageRatings.overallEnjoyment /= ratingCounts.overallEnjoyment;
         }
     }
-    
-    const renderAverageStars = (categoryValue: number) => {
+    const renderAverageStars = (categoryValue) => {
         let starsHtml = '';
         const roundedRating = Math.round(categoryValue); // Or use toFixed(1) for half stars if desired
         for (let i = 1; i <= 5; i++) {
@@ -441,13 +439,8 @@ const BookOfTheMonthView = () => {
         }
         return `${starsHtml} (${categoryValue.toFixed(1)} average)`;
     };
-
-    // --- Get Comments/Reviews for this BoM ---
     const allCommentsForThisBom = activeBomId ? globalBomComments[activeBomId] : null;
-    const bomReviews: BomComment[] = allCommentsForThisBom ? Object.values(allCommentsForThisBom).sort((a,b) => b.timestamp - a.timestamp) : [];
-
-
-    // Logic for "Start Reading this Book" button
+    const bomReviews = allCommentsForThisBom ? Object.values(allCommentsForThisBom).sort((a,b) => b.timestamp - a.timestamp) : [];
     let startReadingButtonHtml = '';
     if (currentUser && currentBomToDisplay) {
         const bomInMyBooks = books.find(book => 
@@ -461,94 +454,61 @@ const BookOfTheMonthView = () => {
             startReadingButtonHtml = `<button class="button bom-action-button primary" data-action="start-reading-bom">Start Reading this Book</button>`;
         }
     }
-    
+    // --- End: All the calculation logic ---
+
+
+    // --- Start: The NEW, CLEAN HTML Structure ---
     return `
         <div class="page" id="bom-view">
-            <div class="book-of-the-month-details book-item">
+
+            <!-- Main Book of the Month Section -->
+            <div class="book-item book-of-the-month-details">
                 <h2>Book of the Month: ${formatMonthYearForDisplay(monthYear)}</h2>
                 
-                <div class="book-of-the-month-details">
-
-    <!-- The Left Column (Image) -->
-    <div class="bom-image-wrapper">
-        <img src="${coverImageUrl || '#'}" 
-             alt="Cover of ${title}" 
-             class="bom-cover-image" ... >
-        <!-- The placeholder can stay here if you like -->
-    </div>
-
-    <!-- The Right Column (Text) -->
-    <div class="bom-text-wrapper">
-        <h3>${title}</h3>
-        <p><em>by ${author}</em></p>
-        <p>${description}</p>
-        <div class="bom-main-actions">
-            ${startReadingButtonHtml}
-        </div>
-    </div>
-
-</div> <!-- End of book-of-the-month-details -->
-
-
-                <h3>${title}</h3>
-                <p><em>by ${author}</em></p>
-                <p>${description}</p>
-                <div class="bom-main-actions">
-                    ${startReadingButtonHtml}
+                <!-- This div now controls the side-by-side layout -->
+                <div class="bom-main-layout-container">
+                    <!-- Column 1: Image -->
+                    <div class="bom-image-wrapper">
+                        <img src="${coverImageUrl || '#'}" alt="Cover of ${title}" class="bom-cover-image" id="${bomCoverImageId}">
+                        <div class="book-cover-placeholder bom-cover-placeholder" id="${bomCoverPlaceholderId}"></div>
+                    </div>
+                    <!-- Column 2: Text -->
+                    <div class="bom-text-wrapper">
+                        <h3>${title}</h3>
+                        <p><em>by ${author}</em></p>
+                        <p>${description}</p>
+                        <div class="bom-main-actions">
+                            ${startReadingButtonHtml}
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            <!-- Community Ratings Section -->
             <div class="book-item">
                 <h3>Community Ratings</h3>
-                ${totalRaters > 0 ? `
-                    <div class="rating-category">
-                        <p>Plot: <span class="rating-stars-display">${renderAverageStars(averageRatings.plot)}</span></p>
-                    </div>
-                    <div class="rating-category">
-                        <p>Characters: <span class="rating-stars-display">${renderAverageStars(averageRatings.characters)}</span></p>
-                    </div>
-                    <div class="rating-category">
-                        <p>Writing Style: <span class="rating-stars-display">${renderAverageStars(averageRatings.writingStyle)}</span></p>
-                    </div>
-                    <div class="rating-category">
-                        <p>Overall Enjoyment: <span class="rating-stars-display">${renderAverageStars(averageRatings.overallEnjoyment)}</span></p>
-                    </div>
-                    <p class="total-raters-note">Based on ${totalRaters} review(s).</p>
-                ` : `<p>No ratings submitted yet for this book.</p>`}
-            </div>
-            
-            <div class="book-item">
-                <h3>Thoughts from Readers</h3>
-                <div id="bomReviewsList">
-                    ${bomReviews.length === 0 ? "<p>No reviews yet. Be the first to read and review!</p>" : bomReviews.map(review => `
-                        <div class="comment-item">
-                            <p><strong>${review.userNameDisplay}</strong> <span class="comment-timestamp">${new Date(review.timestamp).toLocaleString()}</span></p>
-                            <p>${review.text.replace(/\n/g, '<br>')}</p>
-                        </div>
-                    `).join('')}
-                </div>
+                ${totalRaters > 0 ? `...` : `<p>No ratings submitted yet...</p>`}
             </div>
 
+            <!-- Thoughts from Readers Section -->
+            <div class="book-item">
+                <h3>Thoughts from Readers</h3>
+                ...
+            </div>
+
+            <!-- Discussion Starters Section -->
             <div class="book-item">
                 <h3>Discussion Starters</h3>
-                ${currentUser ? `
-                    <button id="fetchDiscussionStarters" class="button" ${isLoadingDiscussionStarters ? 'disabled' : ''}>
-                        ${isLoadingDiscussionStarters ? 'Loading...' : 'Get AI Discussion Starters'}
-                    </button>
-                    ${discussionStartersError ? `<p class="error-message">${discussionStartersError}</p>` : ''}
-                    ${discussionStarters.length > 0 ? `
-                        <ul class="discussion-starters">
-                            ${discussionStarters.map(starter => `<li>${starter}</li>`).join('')}
-                        </ul>
-                    ` : ''}
-                    ${!isLoadingDiscussionStarters && discussionStarters.length === 0 && !discussionStartersError ? '<p>Click the button to generate some discussion points for this book!</p>' : ''}
-                ` : `<p>Please log in to generate discussion starters.</p>`}
+                ...
             </div>
-            
+
+            <!-- Proposals Section (if logged in) -->
             ${currentUser ? renderBomProposalSection() : ''}
         </div>
     `;
 };
+
+
 
 const renderBomProposalSection = () => {
     if (!currentUser) return '';
@@ -1175,7 +1135,7 @@ const handleAuthAction = (event) => {
     if (action === 'show-login') currentAuthProcessView = 'login';
     else if (action === 'show-register') currentAuthProcessView = 'register';
     else if (action === 'show-auth-options') currentAuthProcessView = 'auth_options';
-    App();
+    //App();
 };
 
 const handleRegister = (event) => {
@@ -1188,19 +1148,19 @@ const handleRegister = (event) => {
 
     if (password !== confirmPassword) {
         authError = "Passwords do not match.";
-        App();
+        //App();
         return;
     }
     if (password.length < 6) {
         authError = "Password must be at least 6 characters long.";
-        App();
+        //App();
         return;
     }
 
     const existingUser = users.find(u => u.email === email);
     if (existingUser) {
         authError = "User with this email already exists.";
-        App();
+        //App();
         return;
     }
 
@@ -1233,7 +1193,7 @@ const handleRegister = (event) => {
 
     currentAuthProcessView = 'onboarding_questions';
     loadUserSpecificData(); 
-    App();
+    //App();
 };
 
 const handleLogin = (event) => {
@@ -1246,7 +1206,7 @@ const handleLogin = (event) => {
     const user = users.find(u => u.email === email);
     if (!user || user.hashedPassword !== simpleHash(password)) { 
         authError = "Invalid email or password.";
-        App();
+        //App();
         return;
     }
 
@@ -1260,7 +1220,7 @@ const handleLogin = (event) => {
     } else {
         currentView = Storage.getItem("currentView", "bookofthemonth"); 
     }
-    App();
+    //App();
 };
 
 const handleLogout = () => {
@@ -1277,7 +1237,7 @@ const handleLogout = () => {
     currentAuthProcessView = 'auth_options';
     authError = null;
     initializeAndSetCurrentBOM(); 
-    App();
+    renderApp();
 };
 
 
@@ -1296,7 +1256,7 @@ const handleOnboardingQuestionsSubmit = async (event) => {
     currentAuthProcessView = 'onboarding_processing';
     generatedPseudonym = '';
     generatedProfileImageBase64Data = '';
-    App(); // Re-render to show the "Processing..." view
+    //App(); // Re-render to show the "Processing..." view
 
     try {
         // --- This is the NEW fetch call to your secure backend ---
@@ -1337,7 +1297,7 @@ const handleOnboardingQuestionsSubmit = async (event) => {
         currentAuthProcessView = 'onboarding_profile_setup';
     } finally {
         isProcessingOnboarding = false;
-        App(); // Re-render to show the final profile setup view
+        //App(); // Re-render to show the final profile setup view
     }
 };
 
@@ -1349,14 +1309,14 @@ const handleOnboardingProfileSetupSubmit = (event) => {
 
     if (!name) {
         authError = "Please enter your name.";
-        App();
+        //App();
         return;
     }
     
     if (!currentUser) { 
         authError = "User session lost. Please try logging in again.";
         currentAuthProcessView = 'login';
-        App();
+        //App();
         return;
     }
     
@@ -1387,11 +1347,11 @@ const handleOnboardingProfileSetupSubmit = (event) => {
         userProfile = newUserProfile; 
         
         currentView = "bookofthemonth"; 
-        App();
+        //App();
     } else {
         authError = "Error saving profile. User not found."; 
         currentAuthProcessView = 'onboarding_questions'; 
-        App();
+        //App();
     }
 };
 
@@ -1402,7 +1362,7 @@ const handleNavigation = (event) => {
     if (view && currentUser && currentUser.onboardingComplete) { 
         currentView = view;
         Storage.setItem("currentView", currentView); 
-        App(); 
+        //App(); 
     }
 };
 
@@ -1420,13 +1380,13 @@ const resetAddBookModalState = () => {
 const handleAddBookFabClick = () => {
     resetAddBookModalState();
     showAddBookModal = true;
-    App();
+    //App();
 };
 
 const handleCloseAddBookModal = () => {
     showAddBookModal = false;
     resetAddBookModalState();
-    App();
+    //App();
 };
 
 const handleAddBookSearchInputChange = (event) => {
@@ -1460,14 +1420,14 @@ const handlePerformAddBookSearch = async () => {
     if (!addBook_searchText.trim()) {
         addBook_searchError = "Please enter a search term.";
         addBook_searchResults = [];
-        App(); // Re-render
+        //App(); // Re-render
         return;
     }
 
     addBook_isLoadingSearch = true;
     addBook_searchError = null;
     addBook_searchResults = [];
-    App(); // Re-render to show loading
+    //App(); // Re-render to show loading
 
     try {
         if (!BOOKS_API_KEY) {
@@ -1502,7 +1462,7 @@ const handlePerformAddBookSearch = async () => {
         addBook_searchError = "Failed to search for books. Please try again.";
     } finally {
         addBook_isLoadingSearch = false;
-        App(); // Re-render to show results or error
+        //App(); // Re-render to show results or error
     }
 };
 
@@ -1516,7 +1476,7 @@ const handleSelectSearchedBookForAdd = (event) => {
         addBook_formCoverUrl = selectedBook.cover || '';
         addBook_searchResults = []; 
         addBook_searchText = ''; 
-        App(); 
+        //App(); 
     }
 };
 
@@ -1548,7 +1508,7 @@ const handleAddBookFormInputChange = (event) => {
     if (name === 'title') addBook_formTitle = value;
     else if (name === 'author') addBook_formAuthor = value;
     else if (name === 'coverImageUrl') addBook_formCoverUrl = value;
-    App(); 
+    //App(); 
 };
 
 
@@ -1582,12 +1542,12 @@ const handleBookAction = (event) => {
             Storage.setUserItem(currentUser.id, "books", books);
         }
     }
-    App();
+    //App();
 };
 
 const handleMyBooksSearchInputChange = (event) => {
     myBooksSearchTerm = (event.target as HTMLInputElement).value;
-    App(); 
+    //App(); 
 };
 
 
@@ -1597,13 +1557,13 @@ const handleMyBooksSearchInputChange = (event) => {
 const handleFetchDiscussionStarters = async () => {
     if (!currentBomToDisplay) {
         discussionStartersError = "No Book of the Month is currently selected to generate starters.";
-        App();
+        //App();
         return;
     }
     isLoadingDiscussionStarters = true;
     discussionStartersError = null;
     discussionStarters = [];
-    App(); // Re-render to show loading state
+    //App(); // Re-render to show loading state
 
     try {
         // --- NEW: Fetch call to your secure backend function ---
@@ -1643,7 +1603,7 @@ const handleFetchDiscussionStarters = async () => {
         discussionStartersError = "Failed to generate discussion starters. Please try again.";
     } finally {
         isLoadingDiscussionStarters = false;
-        App(); // Re-render to show the results or the error
+        //App(); // Re-render to show the results or the error
     }
 };
 
@@ -1674,7 +1634,7 @@ const handleStartReadingBom = () => {
     }
 
     Storage.setUserItem(currentUser.id, "books", books);
-    App(); 
+    //App(); 
 };
 
 // --- BOM Proposal Modal Handlers ---
@@ -1693,13 +1653,13 @@ const handleShowBomProposalModal = () => {
     resetBomProposalModalState();
     bomProposal_targetMonthYear = getNextMonthYearString();
     showBomProposalModal = true;
-    App();
+    //App();
 };
 
 const handleCloseBomProposalModal = () => {
     showBomProposalModal = false;
     resetBomProposalModalState();
-    App();
+    //App();
 };
 
 const handleBomProposalBookSearchInputChange = (event) => {
@@ -1711,14 +1671,14 @@ const handlePerformBomProposalBookSearch = async () => {
     if (!bomProposal_searchText.trim()) {
         bomProposal_searchError = "Please enter a search term.";
         bomProposal_searchResults = [];
-        App();
+        //App();
         return;
     }
 
     bomProposal_isLoadingSearch = true;
     bomProposal_searchError = null;
     bomProposal_searchResults = [];
-    App();
+    //App();
 
     try {
         // Assumes BOOKS_API_KEY and GOOGLE_BOOKS_API_URL are defined globally in the file
@@ -1755,7 +1715,7 @@ const handlePerformBomProposalBookSearch = async () => {
         bomProposal_searchError = "Failed to search for books. Please try again.";
     } finally {
         bomProposal_isLoadingSearch = false;
-        App();
+        //App();
     }
 };
 
@@ -1768,7 +1728,7 @@ const handleSelectSearchedBomProposalBook = (event) => {
         bomProposal_formCoverUrl = selectedBook.cover || '';
         bomProposal_searchResults = []; 
         bomProposal_searchText = ''; 
-        App();
+        //App();
     }
 };
 
@@ -1850,7 +1810,7 @@ const handleBomProposalVoteToggle = (event) => {
     }
 
     Storage.setItem("bomProposals", bomProposals);
-    App();
+    //App();
 };
 
 // --- Review Book Modal Handlers ---
@@ -1863,7 +1823,7 @@ const resetReviewBookModalState = () => {
 const handleCloseReviewBookModal = () => {
     showReviewBookModal = false;
     resetReviewBookModalState();
-    App();
+    //App();
 };
 
 const handleReviewBookRating = (event) => {
@@ -1979,7 +1939,7 @@ const handleSendChatMessage = () => {
             chatMessages.push(newMessage);
             Storage.setItem("chatMessagesGlobal", chatMessages); 
             input.value = '';
-            App();
+            //App();
             
             const chatContainer = document.getElementById('chatMessagesContainer');
             if (chatContainer) {
@@ -2014,7 +1974,7 @@ const handleProfileSave = (event) => {
     }
     
     alert("Profile saved!"); 
-    App();
+    //App();
 };
 
 // --- General Keypress Handlers ---
@@ -2280,7 +2240,15 @@ const attachEventListeners = () => {
 
 
 // --- Main App Component ---
-const App = () => {
+
+
+const renderApp = () => {
+    const root = document.getElementById('root');
+    if (!root) {
+        console.error("Root element not found!");
+        return;
+    }
+    //... all the innerHTML logic from your old App function
     const root = document.getElementById('root');
     if (!root) {
         console.error("Root element not found!");
@@ -2306,8 +2274,11 @@ const App = () => {
             ${(currentUser && currentUser.onboardingComplete && currentView === 'mybooks') ? renderAddBookFAB() : ''}
         </div>
     `;
+    root.innerHTML = `...`; 
     attachEventListeners();
-};
+}
+
+
 
 // --- Initial Load ---
 bookOfTheMonthHistory = Storage.getItem("bookOfTheMonthHistory", []);
@@ -2327,4 +2298,4 @@ if (currentUser && currentUser.id) {
 } else {
     currentAuthProcessView = 'auth_options'; 
 }
-App();
+renderApp();
