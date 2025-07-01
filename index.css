@@ -252,7 +252,6 @@ h1, h2, h3 {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    align-items: center; /* This will center-align items like the cover image and text blocks */
     margin-bottom: 20px;
     padding-top: 2rem; /* Add space ABOVE the content of the section */
   padding-bottom: 2rem; /* Add space BELOW the content of the section */
@@ -280,6 +279,13 @@ h1, h2, h3 {
   width: 100%;               /* Ensures the container spans the full width */
 }
 
+/* Add this new rule to specifically center the main BoM section */
+.book-of-the-month-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* This re-applies centering ONLY to this specific section */
+  text-align: center;  /* Also center the text within this section */
+}
 
 .book-item-actions button, .form button, .button, .modal-actions button {
     background-color: var(--primary-color);
