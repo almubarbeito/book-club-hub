@@ -1427,7 +1427,7 @@ const resetAddBookModalState = () => {
 const handleAddBookFabClick = () => {
     resetAddBookModalState();
     showAddBookModal = true;
-    //App();
+    renderApp();
 };
 
 const handleCloseAddBookModal = () => {
