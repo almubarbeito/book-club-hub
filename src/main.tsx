@@ -599,14 +599,7 @@ const renderBomProposalSection = () => {
                     ${currentProposalsForNextMonth.map(proposal => {
                         const userVotedForThis = proposal.votes.includes(currentUser!.id);
                         let voteButtonHtml = '';
-                        // Check if the current user is the one who proposed this item
-if (currentUser && proposal.proposedByUserId === currentUser.id) {
-    deleteButtonHtml = `
-        <button class="button small-button danger" data-action="delete-bom-proposal" data-proposal-id="${proposal.id}">
-            <span class="material-icons">delete</span> Delete
-        </button>
-    `;
-}
+                        
                         if (userVotedForThis) {
                             voteButtonHtml = `<button class="button small-button voted" data-action="toggle-bom-proposal-vote" data-proposal-id="${proposal.id}">
                                                 <span class="material-icons">how_to_vote</span> Voted (${proposal.votes.length})
@@ -616,6 +609,15 @@ if (currentUser && proposal.proposedByUserId === currentUser.id) {
                                                 Vote (${proposal.votes.length})
                                            </button>`;
                         }
+                        // Check if the current user is the one who proposed this item
+                let deleteButtonHtml = ''; 
+                        if (currentUser && proposal.proposedByUserId === currentUser.id) {
+    deleteButtonHtml = `
+        <button class="button small-button danger" data-action="delete-bom-proposal" data-proposal-id="${proposal.id}">
+            <span class="material-icons">delete</span> Delete
+        </button>
+    `;
+}
 
                         return `
                         <div class="bom-proposal-item ${userVotedForThis ? 'user-voted-highlight' : ''}">
@@ -627,6 +629,7 @@ if (currentUser && proposal.proposedByUserId === currentUser.id) {
                                 <p class="proposed-by">Proposed by: ${proposal.proposedByUserName}</p>
                                 <div class="proposal-actions">
                                    ${voteButtonHtml}
+                                   ${deleteButtonHtml}
                                 </div>
                             </div>
                         </div>
