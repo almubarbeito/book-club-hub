@@ -188,7 +188,7 @@ let discussionStartersError: string | null = null;
 //let discussionStartersError: string | null = null;
 
 // Book of the Month Proposal State
-let bomProposals: BomProposal[] = Storage.getItem("bomProposals", []);
+let bomProposals: BomProposal[] = [];
 let showBomProposalModal = false;
 let bomProposal_searchText = '';
 let bomProposal_searchResults: any[] = [];
@@ -199,6 +199,17 @@ let bomProposal_formAuthor = '';
 let bomProposal_formCoverUrl = '';
 let bomProposal_formReason = '';
 let bomProposal_targetMonthYear = ''; // e.g., "2024-08"
+
+const fetchBomProposals = async () => {
+    try {
+        const res = await fetch('/.netlify/functions/get-proposals');
+        const data = await res.json();
+        bomProposals = data; // Update the global state
+        renderApp(); // Re-render the app with the new data
+    } catch (error) {
+        console.error("Failed to fetch proposals:", error);
+    }
+};
 
 // User-specific state - will be loaded on login / after onboarding
 let books: Book[] = [];
@@ -1262,12 +1273,14 @@ const handleLogin = (event) => {
     initializeAndSetCurrentBOM(); 
     loadUserSpecificData();
 
+    fetchBomProposals(); // Fetch the shared data right after login
+
     if (!currentUser.onboardingComplete) {
         currentAuthProcessView = 'onboarding_questions';
     } else {
         currentView = Storage.getItem("currentView", "bookofthemonth"); 
     }
-    renderApp();
+    //renderApp();
 };
 
 const handleLogout = () => {
@@ -1812,20 +1825,38 @@ const handleSubmitBomProposal = (event) => {
         return;
     }
 
-    const newProposal: BomProposal = {
-        id: generateId(),
+    const proposalDataToSend = {
         bookTitle: bomProposal_formTitle.trim(),
         bookAuthor: bomProposal_formAuthor.trim(),
-        bookCoverImageUrl: bomProposal_formCoverUrl.trim() || undefined,
+        bookCoverImageUrl: bomProposal_formCoverUrl.trim() || '',
         reason: bomProposal_formReason.trim(),
         proposedByUserId: currentUser.id,
         proposedByUserName: currentUser.literaryPseudonym || currentUser.name,
         proposalMonthYear: bomProposal_targetMonthYear,
-        votes: [],
-        timestamp: Date.now()
+        votes: [], // A new proposal always starts with an empty votes array
     };
-    bomProposals.push(newProposal);
-    Storage.setItem("bomProposals", bomProposals);
+    //bomProposals.push(newProposal);
+    //Storage.setItem("bomProposals", bomProposals);
+    try {
+        const res = await fetch('/.netlify/functions/add-proposal', {
+            method: 'POST',
+            body: JSON.stringify(proposalDataToSend)
+        });
+
+        if (!res.ok) {
+            // This is better error handling. It checks if the server responded with an error.
+            throw new Error('Server responded with an error while saving.');
+        }
+
+        // We successfully added the proposal. Now, refresh the list from the server.
+        // The 'await' here ensures we wait for the fresh list before doing anything else.
+        await fetchBomProposals();
+
+    } catch (error) {
+        console.error("Failed to submit proposal:", error);
+        alert("Sorry, your proposal could not be saved. Please try again.");
+    }
+
     handleCloseBomProposalModal(); 
 };
 
@@ -2337,7 +2368,11 @@ if (currentUser && currentUser.id) {
     if (!currentUser.onboardingComplete) {
         currentAuthProcessView = 'onboarding_questions'; 
     }
+
+    fetchBomProposals(); // Also fetch proposals if the user is already logged in
+
 } else {
     currentAuthProcessView = 'auth_options'; 
+    renderApp();
 }
-renderApp();
+
