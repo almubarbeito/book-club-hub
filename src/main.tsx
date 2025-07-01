@@ -126,8 +126,38 @@ let generatedPseudonym = '';
 let generatedProfileImageBase64Data = ''; 
 let isProcessingOnboarding = false;
 
-// Book of the Month State
-let bookOfTheMonthHistory: BomEntry[] = Storage.getItem("bookOfTheMonthHistory", []);
+// --- Book of the Month State ---
+
+// This is the new hardcoded data.
+const hardcodedBomHistory: BomEntry[] = [
+    // The original default book (we can keep it as a past entry)
+    {
+        id: "2024-07_the_midnight_library",
+        monthYear: "2024-07", // A past month
+        title: "The Midnight Library",
+        author: "Matt Haig",
+        description: "Between life and death there is a library, and within that library, the shelves go on forever. Every book provides a chance to try another life you could have lived. To see how things would be if you had made other choices... Would you have done anything different, if you had the chance to undo your regrets?",
+        promptHint: "themes of regret, choices, and parallel lives",
+        coverImageUrl: "https://covers.openlibrary.org/b/id/10309991-L.jpg",
+        setBy: 'default',
+        discussionStarters: []
+    },
+    // The NEW Book of the Month for July 2025
+    {
+        id: "2025-07_intermezzo",
+        monthYear: "2025-07",
+        title: "Intermezzo",
+        author: "Sally Rooney",
+        description: "A story of siblings Peter and Ivan Koubek, who have contrasting lives but are united by grief after their father's death. The novel explores their complex relationships with each other and with the women they love, navigating love, loss, and the intricacies of family.",
+        promptHint: "themes of grief, sibling relationships, and modern love",
+        coverImageUrl: "https://covers.openlibrary.org/b/id/14532988-L.jpg",
+        setBy: 'default',
+        discussionStarters: []
+    }
+];
+
+// This line now uses the hardcoded data as a fallback if localStorage is empty.
+let bookOfTheMonthHistory: BomEntry[] = Storage.getItem("bookOfTheMonthHistory", hardcodedBomHistory);
 let currentBomToDisplay: BomEntry | null = null;
 let activeBomId: string | null = null; 
 
@@ -138,6 +168,21 @@ let globalBomComments: { [bomId: string]: { [userId: string]: BomComment } } = S
 let discussionStarters: string[] = [];
 let isLoadingDiscussionStarters = false;
 let discussionStartersError: string | null = null;
+
+// --- End of Book of the Month State ---
+
+// Book of the Month State
+//let bookOfTheMonthHistory: BomEntry[] = Storage.getItem("bookOfTheMonthHistory", []);
+//let currentBomToDisplay: BomEntry | null = null;
+//let activeBomId: string | null = null; 
+
+// Global collections for ratings and comments related to BOM entries
+//let globalBomRatings: { [bomId: string]: { [userId: string]: BomRatings } } = Storage.getItem("globalBomRatings", {});
+//let globalBomComments: { [bomId: string]: { [userId: string]: BomComment } } = Storage.getItem("globalBomComments", {}); // Assuming one review-comment per user per BoM
+
+//let discussionStarters: string[] = [];
+//let isLoadingDiscussionStarters = false;
+//let discussionStartersError: string | null = null;
 
 // Book of the Month Proposal State
 let bomProposals: BomProposal[] = Storage.getItem("bomProposals", []);
@@ -419,19 +464,28 @@ const BookOfTheMonthView = () => {
             <div class="book-of-the-month-details book-item">
                 <h2>Book of the Month: ${formatMonthYearForDisplay(monthYear)}</h2>
                 
-                <div class="bom-cover-container">
-                    <img src="${coverImageUrl || '#'}" 
-                         alt="Cover of ${title}" 
-                         class="bom-cover-image" 
-                         id="${bomCoverImageId}" 
-                         style="display: ${coverImageUrl ? 'block' : 'none'};"
-                         onerror="this.style.display='none'; document.getElementById('${bomCoverPlaceholderId}').style.display='flex'; console.warn('BoM cover image failed to load:', this.src);">
-                    <div class="book-cover-placeholder bom-cover-placeholder" 
-                         id="${bomCoverPlaceholderId}" 
-                         style="display: ${coverImageUrl ? 'none' : 'flex'};">
-                         ${coverImageUrl ? '' : 'Cover Not Available'}
-                    </div>
-                </div>
+                <div class="book-of-the-month-details">
+
+    <!-- The Left Column (Image) -->
+    <div class="bom-image-wrapper">
+        <img src="${coverImageUrl || '#'}" 
+             alt="Cover of ${title}" 
+             class="bom-cover-image" ... >
+        <!-- The placeholder can stay here if you like -->
+    </div>
+
+    <!-- The Right Column (Text) -->
+    <div class="bom-text-wrapper">
+        <h3>${title}</h3>
+        <p><em>by ${author}</em></p>
+        <p>${description}</p>
+        <div class="bom-main-actions">
+            ${startReadingButtonHtml}
+        </div>
+    </div>
+
+</div> <!-- End of book-of-the-month-details -->
+
 
                 <h3>${title}</h3>
                 <p><em>by ${author}</em></p>
