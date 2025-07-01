@@ -150,7 +150,7 @@ const hardcodedBomHistory: BomEntry[] = [
         author: "Sally Rooney",
         description: "A story of siblings Peter and Ivan Koubek, who have contrasting lives but are united by grief after their father's death. The novel explores their complex relationships with each other and with the women they love, navigating love, loss, and the intricacies of family.",
         promptHint: "themes of grief, sibling relationships, and modern love",
-        coverImageUrl: "https://covers.openlibrary.org/b/olid/OL41785521M-L.jpg",
+        coverImageUrl: "https://covers.openlibrary.org/b/isbn/9780374613233-L.jpg",
         setBy: 'default',
         discussionStarters: []
     }
