@@ -1382,6 +1382,23 @@ const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
 // Vite makes .env variables available on this special object
 const BOOKS_API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY;
 
+// In src/main.tsx, add this new helper function
+
+const handleSearchInputKeypress = (event: KeyboardEvent, searchButtonId: string) => {
+    // Check if the key pressed was "Enter"
+    if (event.key === 'Enter') {
+        // Prevent the default Enter key behavior (like submitting a form)
+        event.preventDefault(); 
+        
+        // Find the corresponding search button by its ID
+        const searchButton = document.getElementById(searchButtonId) as HTMLButtonElement | null;
+        
+        // If the button exists and is not disabled, click it
+        if (searchButton && !searchButton.disabled) {
+            searchButton.click();
+        }
+    }
+};
 const handlePerformAddBookSearch = async () => {
     if (!addBook_searchText.trim()) {
         addBook_searchError = "Please enter a search term.";
@@ -2049,6 +2066,11 @@ const attachEventListeners = () => {
             performSearchButton.removeEventListener('click', handlePerformAddBookSearch);
             performSearchButton.addEventListener('click', handlePerformAddBookSearch);
         }
+        const bookSearchInput = document.getElementById('bookSearchText');
+        if (bookSearchInput) {
+            bookSearchInput.removeEventListener('keypress', (e) => handleSearchInputKeypress(e, 'performBookSearchButton')); // Use a wrapper to pass args
+            bookSearchInput.addEventListener('keypress', (e) => handleSearchInputKeypress(e, 'performBookSearchButton'));
+         }
         document.querySelectorAll('#addBookModalContainer .book-search-result-item button[data-action="select-searched-book"]').forEach(button => {
             button.removeEventListener('click', handleSelectSearchedBookForAdd);
             button.addEventListener('click', handleSelectSearchedBookForAdd);
@@ -2109,6 +2131,11 @@ const attachEventListeners = () => {
             performSearchBtn.removeEventListener('click', handlePerformBomProposalBookSearch);
             performSearchBtn.addEventListener('click', handlePerformBomProposalBookSearch);
         }
+        const searchInput = document.getElementById('bomProposalBookSearchText');
+    if (searchInput) {
+        searchInput.removeEventListener('keypress', (e) => handleSearchInputKeypress(e, 'performBomProposalBookSearchButton'));
+        searchInput.addEventListener('keypress', (e) => handleSearchInputKeypress(e, 'performBomProposalBookSearchButton'));
+    }
         document.querySelectorAll('#bomProposalModalContainer .book-search-result-item button[data-action="select-searched-bom-proposal-book"]').forEach(button => {
             button.removeEventListener('click', handleSelectSearchedBomProposalBook);
             button.addEventListener('click', handleSelectSearchedBomProposalBook);
