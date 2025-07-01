@@ -1014,6 +1014,15 @@ ul.discussion-starters li {
     margin-top: 20px;
 }
 
+.proposal-actions .button {
+  min-width: 110px;   /* Set a minimum width for all buttons in this container */
+  text-align: center; /* Ensures the text inside is centered */
+  justify-content: center; /* This helps center the icon and text in a flex button */
+  margin-top: 10px;
+  display: flex;       /* It should already be a flex container */
+  gap: 15px;           /* INCREASE this value from 10px to 15px or 20px */
+}
+
 /* BOM Proposal Styles */
 #bom-proposal-section h3 {
     margin-bottom: 10px;
