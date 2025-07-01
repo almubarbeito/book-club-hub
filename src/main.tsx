@@ -157,7 +157,10 @@ const hardcodedBomHistory: BomEntry[] = [
 ];
 
 // This line now uses the hardcoded data as a fallback if localStorage is empty.
-let bookOfTheMonthHistory: BomEntry[] = Storage.getItem("bookOfTheMonthHistory", hardcodedBomHistory);
+// 1. ALWAYS initialize the app state from our hardcoded array.
+let bookOfTheMonthHistory: BomEntry[] = hardcodedBomHistory;
+// 2. IMMEDIATELY save this "correct" state to localStorage, overwriting any old data.
+Storage.setItem("bookOfTheMonthHistory", bookOfTheMonthHistory);
 let currentBomToDisplay: BomEntry | null = null;
 let activeBomId: string | null = null; 
 
