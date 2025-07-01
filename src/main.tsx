@@ -2249,7 +2249,6 @@ const renderApp = () => {
         return;
     }
     //... all the innerHTML logic from your old App function
-    const root = document.getElementById('root');
     if (!root) {
         console.error("Root element not found!");
         return;
