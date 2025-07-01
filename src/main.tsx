@@ -1589,7 +1589,7 @@ const handleBookAction = (event) => {
             Storage.setUserItem(currentUser.id, "books", books);
         }
     }
-    //App();
+    renderApp();
 };
 
 const handleMyBooksSearchInputChange = (event) => {
