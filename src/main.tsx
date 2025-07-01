@@ -2060,17 +2060,20 @@ const attachEventListeners = () => {
         if (bookSearchInput) {
             bookSearchInput.removeEventListener('input', handleAddBookSearchInputChange);
             bookSearchInput.addEventListener('input', handleAddBookSearchInputChange);
+            // Add the keypress listener here
+        const keypressHandler = (e: KeyboardEvent) => handleSearchInputKeypress(e, 'performBookSearchButton');
+        bookSearchInput.removeEventListener('keypress', keypressHandler);
+        bookSearchInput.addEventListener('keypress', keypressHandler);
         }
         const performSearchButton = document.getElementById('performBookSearchButton');
         if (performSearchButton) {
             performSearchButton.removeEventListener('click', handlePerformAddBookSearch);
             performSearchButton.addEventListener('click', handlePerformAddBookSearch);
         }
-        const bookSearchInput = document.getElementById('bookSearchText');
-        if (bookSearchInput) {
-            bookSearchInput.removeEventListener('keypress', (e) => handleSearchInputKeypress(e, 'performBookSearchButton')); // Use a wrapper to pass args
-            bookSearchInput.addEventListener('keypress', (e) => handleSearchInputKeypress(e, 'performBookSearchButton'));
-         }
+        
+       
+            
+         
         document.querySelectorAll('#addBookModalContainer .book-search-result-item button[data-action="select-searched-book"]').forEach(button => {
             button.removeEventListener('click', handleSelectSearchedBookForAdd);
             button.addEventListener('click', handleSelectSearchedBookForAdd);
@@ -2125,17 +2128,18 @@ const attachEventListeners = () => {
         if (searchInput) {
             searchInput.removeEventListener('input', handleBomProposalBookSearchInputChange);
             searchInput.addEventListener('input', handleBomProposalBookSearchInputChange);
+            // Add the keypress listener here
+        const keypressHandler = (e: KeyboardEvent) => handleSearchInputKeypress(e, 'performBomProposalBookSearchButton');
+        searchInput.removeEventListener('keypress', keypressHandler);
+        searchInput.addEventListener('keypress', keypressHandler);
         }
         const performSearchBtn = document.getElementById('performBomProposalBookSearchButton');
         if (performSearchBtn) {
             performSearchBtn.removeEventListener('click', handlePerformBomProposalBookSearch);
             performSearchBtn.addEventListener('click', handlePerformBomProposalBookSearch);
         }
-        const searchInput = document.getElementById('bomProposalBookSearchText');
-    if (searchInput) {
-        searchInput.removeEventListener('keypress', (e) => handleSearchInputKeypress(e, 'performBomProposalBookSearchButton'));
-        searchInput.addEventListener('keypress', (e) => handleSearchInputKeypress(e, 'performBomProposalBookSearchButton'));
-    }
+        
+
         document.querySelectorAll('#bomProposalModalContainer .book-search-result-item button[data-action="select-searched-bom-proposal-book"]').forEach(button => {
             button.removeEventListener('click', handleSelectSearchedBomProposalBook);
             button.addEventListener('click', handleSelectSearchedBomProposalBook);
