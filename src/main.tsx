@@ -1799,7 +1799,7 @@ const handleBomProposalFormInputChange = (event) => {
     }
 };
 
-const handleSubmitBomProposal = (event) => {
+const handleSubmitBomProposal = async (event) => {
     event.preventDefault();
     if (!currentUser) return;
 
