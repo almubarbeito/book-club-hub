@@ -391,7 +391,7 @@ const MyBooksView = () => {
 };
 
 const BookOfTheMonthView = () => {
-    console.log("BookOfTheMonthView - currentBomToDisplay:", currentBomToDisplay, "activeBomId:", activeBomId);
+     console.log("Rendering BookOfTheMonthView. currentBomToDisplay is:", currentBomToDisplay);
 
     if (!currentBomToDisplay || !activeBomId) {
         return `
@@ -459,18 +459,16 @@ const BookOfTheMonthView = () => {
 
     // --- Start: The NEW, CLEAN HTML Structure ---
     return `
-        <div class="page" id="bom-view">
-
-            <!-- Main Book of the Month Section -->
-            <div class="book-item book-of-the-month-details">
+        <!-- Main Book of the Month Section -->
+            <div class="book-item">
                 <h2>Book of the Month: ${formatMonthYearForDisplay(monthYear)}</h2>
                 
-                <!-- This div now controls the side-by-side layout -->
                 <div class="bom-main-layout-container">
                     <!-- Column 1: Image -->
                     <div class="bom-image-wrapper">
-                        <img src="${coverImageUrl || '#'}" alt="Cover of ${title}" class="bom-cover-image" id="${bomCoverImageId}">
-                        <div class="book-cover-placeholder bom-cover-placeholder" id="${bomCoverPlaceholderId}"></div>
+                        <img src="${(coverImageUrl || '').replace('http://', 'https://')}" 
+                             alt="Cover of ${title}" 
+                             class="bom-cover-image">
                     </div>
                     <!-- Column 2: Text -->
                     <div class="bom-text-wrapper">
@@ -484,25 +482,25 @@ const BookOfTheMonthView = () => {
                 </div>
             </div>
 
-            <!-- Community Ratings Section -->
+            <!-- Community Ratings Section (Add your full logic back in here) -->
             <div class="book-item">
                 <h3>Community Ratings</h3>
-                ${totalRaters > 0 ? `...` : `<p>No ratings submitted yet...</p>`}
+                <p>No ratings submitted yet for this book.</p>
             </div>
-
-            <!-- Thoughts from Readers Section -->
+            
+            <!-- Thoughts from Readers Section (Add your full logic back in here) -->
             <div class="book-item">
                 <h3>Thoughts from Readers</h3>
-                ...
+                <p>No reviews yet. Be the first to read and review!</p>
             </div>
 
-            <!-- Discussion Starters Section -->
+            <!-- Discussion Starters Section (Add your full logic back in here) -->
             <div class="book-item">
                 <h3>Discussion Starters</h3>
-                ...
+                <button id="fetchDiscussionStarters" class="button">Get AI Discussion Starters</button>
             </div>
-
-            <!-- Proposals Section (if logged in) -->
+            
+            <!-- Proposals Section -->
             ${currentUser ? renderBomProposalSection() : ''}
         </div>
     `;
