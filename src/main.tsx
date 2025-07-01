@@ -599,6 +599,14 @@ const renderBomProposalSection = () => {
                     ${currentProposalsForNextMonth.map(proposal => {
                         const userVotedForThis = proposal.votes.includes(currentUser!.id);
                         let voteButtonHtml = '';
+                        // Check if the current user is the one who proposed this item
+if (currentUser && proposal.proposedByUserId === currentUser.id) {
+    deleteButtonHtml = `
+        <button class="button small-button danger" data-action="delete-bom-proposal" data-proposal-id="${proposal.id}">
+            <span class="material-icons">delete</span> Delete
+        </button>
+    `;
+}
                         if (userVotedForThis) {
                             voteButtonHtml = `<button class="button small-button voted" data-action="toggle-bom-proposal-vote" data-proposal-id="${proposal.id}">
                                                 <span class="material-icons">how_to_vote</span> Voted (${proposal.votes.length})
@@ -1194,6 +1202,42 @@ const handleAuthAction = (event) => {
     else if (action === 'show-register') currentAuthProcessView = 'register';
     else if (action === 'show-auth-options') currentAuthProcessView = 'auth_options';
     renderApp();
+};
+
+const handleDeleteBomProposal = async (event: Event) => {
+    if (!currentUser) return;
+    const target = event.currentTarget as HTMLElement;
+    const proposalId = target.dataset.proposalId;
+
+    if (!proposalId) return;
+
+    // Ask for confirmation
+    if (!confirm("Are you sure you want to permanently delete this proposal?")) {
+        return;
+    }
+
+    try {
+        const res = await fetch('/.netlify/functions/delete-proposal', {
+            method: 'POST',
+            body: JSON.stringify({
+                proposalId: proposalId,
+                userId: currentUser.id // Send the current user's ID for verification
+            })
+        });
+
+        if (!res.ok) {
+            // Handle errors from the server like "Permission Denied"
+            const errorData = await res.json();
+            throw new Error(errorData.error || 'Failed to delete proposal.');
+        }
+
+        // Success! Re-fetch the list to update the UI.
+        await fetchBomProposals();
+
+    } catch (error) {
+        console.error("Error deleting proposal:", error);
+        alert(`Could not delete proposal: ${error.message}`);
+    }
 };
 
 const handleRegister = (event) => {
@@ -2195,6 +2239,10 @@ const attachEventListeners = () => {
             startReadingBomButton.removeEventListener('click', handleStartReadingBom);
             startReadingBomButton.addEventListener('click', handleStartReadingBom);
         }
+        document.querySelectorAll('button[data-action="delete-bom-proposal"]').forEach(button => {
+        button.removeEventListener('click', handleDeleteBomProposal);
+        button.addEventListener('click', handleDeleteBomProposal);
+    });
     }
 
     if (showBomProposalModal) {
