@@ -809,8 +809,13 @@ h1, h2, h3 {
 
 /* A new container for the BoM text content */
 .bom-text-wrapper {
-  flex-grow: 1; /* Allows the text container to grow and fill the rest of the space */
+   display: flex;             /* 1. Turn it into a flex container */
+  flex-direction: column;
   text-align: left; /* Ensures the text inside is left-aligned */
+}
+/* This new rule targets the text part of the column */
+.bom-text-content {
+    flex-grow: 1; /* 3. This makes the text content take up all available vertical space */
 }
 /* Add this NEW rule to your main CSS file */
 
@@ -833,8 +838,8 @@ h1, h2, h3 {
 }
 
 .bom-main-actions {
-    margin-top: 15px;
-    text-align: center; /* Or left, depending on desired alignment */
+    margin-top: auto; /* 4. This automatically calculates the top margin, pushing the element to the bottom of the flex container */
+  padding-top: 20px; /* 5. Adds some space above the button so it doesn't touch the text */
 }
 
 .bom-action-button {

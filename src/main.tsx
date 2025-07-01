@@ -150,7 +150,7 @@ const hardcodedBomHistory: BomEntry[] = [
         author: "Sally Rooney",
         description: "A story of siblings Peter and Ivan Koubek, who have contrasting lives but are united by grief after their father's death. The novel explores their complex relationships with each other and with the women they love, navigating love, loss, and the intricacies of family.",
         promptHint: "themes of grief, sibling relationships, and modern love",
-        coverImageUrl: "https://books.google.com/books/content?id=nx75EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+        coverImageUrl: "https://books.google.com/books/content?id=nx75EAAAQBAJ&printsec=frontcover&img=1&zoom=0&edge=curl&source=gbs_api",
         setBy: 'default',
         discussionStarters: []
     }
@@ -487,9 +487,12 @@ const BookOfTheMonthView = () => {
                     </div>
                     <!-- Column 2: Text -->
                     <div class="bom-text-wrapper">
-                        <h3>${title}</h3>
-                        <p><em>by ${author}</em></p>
-                        <p>${description}</p>
+                         <!-- NEW wrapper for the growing content -->
+    <div class="bom-text-content">
+        <h3>${title}</h3>
+        <p><em>by ${author}</em></p>
+        <p>${description}</p>
+    </div>
                         <div class="bom-main-actions">
                             ${startReadingButtonHtml}
                         </div>
