@@ -599,8 +599,6 @@ const renderBomProposalSection = () => {
                     ${currentProposalsForNextMonth.map(proposal => {
                         const userVotedForThis = proposal.votes.includes(currentUser!.id);
                         let voteButtonHtml = '';
-                        
-                        let voteButtonHtml = '';
 if (userVotedForThis) {
     // The "Voted" button
     voteButtonHtml = `<button class="button small-button voted" data-action="toggle-bom-proposal-vote" data-proposal-id="${proposal.id}">
