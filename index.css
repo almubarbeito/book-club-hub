@@ -1095,6 +1095,12 @@ ul.discussion-starters li {
     border-radius: 6px;
     background-color: #f9f9f9;
     transition: box-shadow 0.2s ease-in-out;
+    cursor: pointer;
+}
+.bom-proposal-item:hover {
+  border-color: #c4c4c4; /* Slightly darken the border on hover */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Add a subtle shadow */
+  transform: translateY(-2px); /* Lift the card up slightly */
 }
 .bom-proposal-item.user-voted-highlight {
     box-shadow: 0 0 0 2px var(--success-color); /* Highlight if user voted for this */
