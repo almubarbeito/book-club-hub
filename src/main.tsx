@@ -351,6 +351,29 @@ const renderAverageStars = (categoryValue: number) => {
     return `${starsHtml} (${categoryValue.toFixed(1)} average)`;
 };
 
+const renderMainAverageRating = (overallValue: number, ratersCount: number) => {
+    if (ratersCount === 0) {
+        return `<p class="main-rating-no-reviews">Be the first to read and review!</p>`;
+    }
+
+    let starsHtml = '';
+    // Use Math.floor to only show full stars, or Math.round for nearest star.
+    // Let's use Math.round for a more generous look.
+    const roundedRating = Math.round(overallValue); 
+    for (let i = 1; i <= 5; i++) {
+        // We'll use a slightly different class to style them if needed
+        starsHtml += `<span class="material-icons main-rating-star ${i <= roundedRating ? 'filled' : ''}">${i <= roundedRating ? 'star' : 'star_border'}</span>`;
+    }
+    
+    // Combine stars with a text description
+    return `
+        <div class="main-rating-display">
+            ${starsHtml}
+            <span class="main-rating-text">${overallValue.toFixed(1)} average rating • ${ratersCount} review(s)</span>
+        </div>
+    `;
+};
+
 // --- Rendering Functions ---
 
 const MyBooksView = () => {
@@ -494,28 +517,7 @@ if (allRatingsForThisBom) {
 
     // Add this new function inside BookOfTheMonthView, near renderAverageStars
 
-const renderMainAverageRating = (overallValue: number, ratersCount: number) => {
-    if (ratersCount === 0) {
-        return `<p class="main-rating-no-reviews">Be the first to read and review!</p>`;
-    }
 
-    let starsHtml = '';
-    // Use Math.floor to only show full stars, or Math.round for nearest star.
-    // Let's use Math.round for a more generous look.
-    const roundedRating = Math.round(overallValue); 
-    for (let i = 1; i <= 5; i++) {
-        // We'll use a slightly different class to style them if needed
-        starsHtml += `<span class="material-icons main-rating-star ${i <= roundedRating ? 'filled' : ''}">${i <= roundedRating ? 'star' : 'star_border'}</span>`;
-    }
-    
-    // Combine stars with a text description
-    return `
-        <div class="main-rating-display">
-            ${starsHtml}
-            <span class="main-rating-text">${overallValue.toFixed(1)} average rating • ${ratersCount} review(s)</span>
-        </div>
-    `;
-};
 
     // Get Comments/Reviews
     const allCommentsForThisBom = activeBomId ? globalBomComments[activeBomId] : null;
