@@ -548,7 +548,7 @@ const renderMainAverageRating = (overallValue: number, ratersCount: number) => {
     <div class="bom-text-content">
         <h3>${title}</h3>
         <p><em>by ${author}</em></p>
-        ${renderMainAverageRating(averageRatings.overallEnjoyment, totalRaters)}
+        ${renderMainAverageRating(finalOverallAverage, totalRaters)}
         <p>${description}</p>
     </div>
                         <div class="bom-main-actions">
