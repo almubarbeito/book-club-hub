@@ -482,6 +482,15 @@ h1, h2, h3 {
     overflow-y: auto; 
     box-sizing: border-box;
 }
+.modal-description-wrapper {
+  font-size: 0.9em;
+  line-height: 1.6;
+  max-height: 200px; /* Give it a max height and scroll if description is long */
+  overflow-y: auto;
+  border-left: 3px solid var(--border-color);
+  padding-left: 10px;
+  margin: 10px 0;
+}
 
 @keyframes slideIn {
     from { transform: translateY(-30px) scale(0.95); opacity: 0; }

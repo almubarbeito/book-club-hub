@@ -131,6 +131,8 @@ const mainContentId = 'main-content-area'; // Define a constant for our scrollin
 // --- NEW: Proposal Detail Modal State ---
 let showProposalDetailModal = false;
 let selectedProposalForModal: BomProposal | null = null;
+let isLoadingModalDescription = false; // <-- NEW: To show a loading indicator
+let modalBookDescription = '';
 
 // --- Book of the Month State ---
 
@@ -834,27 +836,41 @@ const renderReviewBookModal = () => {
 };
 
 const renderProposalDetailModal = () => {
-    // Only render the modal if it's supposed to be visible and we have a book selected
     if (!showProposalDetailModal || !selectedProposalForModal) return '';
 
     const { bookTitle, bookAuthor, bookCoverImageUrl, reason } = selectedProposalForModal;
 
+    // --- NEW: Logic to display the description ---
+    let descriptionHtml = '';
+    if (isLoadingModalDescription) {
+        descriptionHtml = `<div class="loading-indicator">Loading summary...</div>`;
+    } else {
+        // We add the <p> tag here
+        descriptionHtml = `<p>${modalBookDescription}</p>`;
+    }
+
     return `
-        <div class="modal open" id="proposalDetailModalContainer" role="dialog" aria-modal="true">
+        <div class="modal open" id="proposalDetailModalContainer" ...>
             <div class="modal-content">
                 <div class="modal-header">
                     <h2 id="proposalDetailModalTitle">${bookTitle}</h2>
-                    <button class="close-button" data-action="close-proposal-detail-modal" aria-label="Close dialog">×</button>
+                    <button class="close-button" data-action="close-proposal-detail-modal" ...>×</button>
                 </div>
                 
                 <div class="bom-main-layout-container">
-                    <!-- Image Column -->
                     <div class="bom-image-wrapper">
-                        ${bookCoverImageUrl ? `<img src="${bookCoverImageUrl}" alt="Cover of ${bookTitle}" class="bom-cover-image">` : '<div class="book-cover-placeholder bom-cover-placeholder">No Cover</div>'}
+                        ${bookCoverImageUrl ? `<img ...>` : '...'}
                     </div>
-                    <!-- Text Column -->
                     <div class="bom-text-wrapper">
                         <p><em>by ${bookAuthor || 'Unknown Author'}</em></p>
+                        
+                        <!-- Description Section -->
+                        <h4>Summary:</h4>
+                        <div class="modal-description-wrapper">
+                            ${descriptionHtml}
+                        </div>
+
+                        <!-- Reason Section -->
                         <h4>Reason for Proposal:</h4>
                         <p class="proposal-reason">${reason}</p>
                     </div>
@@ -1571,21 +1587,47 @@ const handleNavigation = (event) => {
     }
 };
 
-const handleShowProposalDetail = (event: Event) => {
-    // We use .closest to make sure the click works even if the user clicks on text or an image inside the item
+const handleShowProposalDetail = async (event: Event) => {
     const target = (event.target as HTMLElement).closest('.bom-proposal-item');
     if (!target) return;
 
     const proposalId = (target as HTMLElement).dataset.proposalId;
     if (!proposalId) return;
 
-    // Find the full proposal object from our state array
     const proposalToShow = bomProposals.find(p => p.id === proposalId);
 
     if (proposalToShow) {
+        // --- Setup the modal state ---
         selectedProposalForModal = proposalToShow;
         showProposalDetailModal = true;
-        updateView(); // Re-render to show the modal
+        isLoadingModalDescription = true; // Start in loading state
+        modalBookDescription = ''; // Clear old description
+        
+        // Initial render to show the modal shell and loading indicator
+        updateView(); 
+
+        // --- Now, fetch the description in the background ---
+        try {
+            const res = await fetch('/.netlify/functions/get-book-details', {
+                method: 'POST',
+                body: JSON.stringify({
+                    title: proposalToShow.bookTitle,
+                    author: proposalToShow.bookAuthor
+                })
+            });
+            if (!res.ok) throw new Error("Server fetch failed");
+            
+            const data = await res.json();
+            modalBookDescription = data.description; // Store the fetched description
+
+        } catch (error) {
+            console.error("Failed to fetch book description:", error);
+            modalBookDescription = "Could not load book summary. Please try again later.";
+        } finally {
+            isLoadingModalDescription = false; // Turn off loading
+            // Re-render AGAIN, this time with the description populated
+            updateView(); 
+        }
     }
 };
 
