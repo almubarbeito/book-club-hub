@@ -1,5 +1,6 @@
 // File: netlify/functions/get-book-details.js
 //const fetch = require('node-fetch');
+const admin = require('firebase-admin');
 
 const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
 const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY;
@@ -10,6 +11,7 @@ exports.handler = async function (event) {
   }
 
   try {
+    const fetch = (await import('node-fetch')).default;
     const { title, author } = JSON.parse(event.body);
     if (!title) return { statusCode: 400, body: "Title is required." };
 
