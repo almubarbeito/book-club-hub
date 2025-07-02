@@ -463,6 +463,31 @@ const BookOfTheMonthView = () => {
         return `${starsHtml} (${categoryValue.toFixed(1)} average)`;
     };
 
+    // Add this new function inside BookOfTheMonthView, near renderAverageStars
+
+const renderMainAverageRating = (overallValue: number, ratersCount: number) => {
+    if (ratersCount === 0) {
+        return `<p class="main-rating-no-reviews">Be the first to read and review!</p>`;
+    }
+
+    let starsHtml = '';
+    // Use Math.floor to only show full stars, or Math.round for nearest star.
+    // Let's use Math.round for a more generous look.
+    const roundedRating = Math.round(overallValue); 
+    for (let i = 1; i <= 5; i++) {
+        // We'll use a slightly different class to style them if needed
+        starsHtml += `<span class="material-icons main-rating-star ${i <= roundedRating ? 'filled' : ''}">${i <= roundedRating ? 'star' : 'star_border'}</span>`;
+    }
+    
+    // Combine stars with a text description
+    return `
+        <div class="main-rating-display">
+            ${starsHtml}
+            <span class="main-rating-text">${overallValue.toFixed(1)} average rating • ${ratersCount} review(s)</span>
+        </div>
+    `;
+};
+
     // Get Comments/Reviews
     const allCommentsForThisBom = activeBomId ? globalBomComments[activeBomId] : null;
     const bomReviews: BomComment[] = allCommentsForThisBom ? Object.values(allCommentsForThisBom).sort((a, b) => b.timestamp - a.timestamp) : [];
@@ -502,6 +527,7 @@ const BookOfTheMonthView = () => {
     <div class="bom-text-content">
         <h3>${title}</h3>
         <p><em>by ${author}</em></p>
+        ${renderMainAverageRating(averageRatings.overallEnjoyment, totalRaters)}
         <p>${description}</p>
     </div>
                         <div class="bom-main-actions">
@@ -542,23 +568,6 @@ const BookOfTheMonthView = () => {
                         </div>
                     `).join('')}
                 </div>
-            </div>
-
-            <!-- Discussion Starters Section -->
-            <div class="book-item">
-                <h3>Discussion Starters</h3>
-                ${currentUser ? `
-                    <button id="fetchDiscussionStarters" class="button" ${isLoadingDiscussionStarters ? 'disabled' : ''}>
-                        ${isLoadingDiscussionStarters ? 'Loading...' : 'Get AI Discussion Starters'}
-                    </button>
-                    ${discussionStartersError ? `<p class="error-message">${discussionStartersError}</p>` : ''}
-                    ${discussionStarters.length > 0 ? `
-                        <ul class="discussion-starters">
-                            ${discussionStarters.map(starter => `<li>${starter}</li>`).join('')}
-                        </ul>
-                    ` : ''}
-                    ${!isLoadingDiscussionStarters && discussionStarters.length === 0 && !discussionStartersError ? '<p>Click the button to generate some discussion points for this book!</p>' : ''}
-                ` : `<p>Please log in to generate discussion starters.</p>`}
             </div>
             
             <!-- Proposals Section -->

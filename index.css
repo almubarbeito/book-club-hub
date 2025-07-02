@@ -1027,6 +1027,40 @@ ul.discussion-starters li {
   flex-wrap: nowrap; /* This prevents the buttons from wrapping to the next line */
 }
 
+/* Add these new rules to your main CSS file */
+
+.main-rating-display {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Space between star group and text */
+  margin: 10px 0 20px 0; /* Creates vertical space around the rating */
+}
+
+.main-rating-star {
+  color: var(--star-empty-color); /* Uses the variable you already defined! */
+  font-size: 24px; /* A good, visible size */
+}
+
+.main-rating-star.filled {
+  color: var(--star-filled-color); /* Uses the variable you already defined! */
+}
+
+.main-rating-text {
+  font-size: 0.9em;
+  color: var(--text-secondary-color);
+  font-weight: 500;
+}
+
+.main-rating-no-reviews {
+    font-size: 0.9em;
+    font-style: italic;
+    color: var(--text-secondary-color);
+    margin: 10px 0 20px 0;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
 /* BOM Proposal Styles */
 #bom-proposal-section h3 {
     margin-bottom: 10px;
