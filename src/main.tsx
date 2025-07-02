@@ -384,7 +384,7 @@ const updateView = () => {
     }
 
     // 2. Re-render the entire app
-    updateView();
+    renderApp();
 
     // 3. After rendering, find the NEW container and restore the scroll position
     const newMainContent = document.getElementById(mainContentId);
