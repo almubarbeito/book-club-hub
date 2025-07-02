@@ -515,8 +515,6 @@ if (allRatingsForThisBom) {
     }
 }
 
-    // Add this new function inside BookOfTheMonthView, near renderAverageStars
-
 
 
     // Get Comments/Reviews
@@ -573,16 +571,16 @@ if (allRatingsForThisBom) {
                 <h3>Community Ratings</h3>
                 ${totalRaters > 0 ? `
                     <div class="rating-category">
-                        <p>Plot: <span class="rating-stars-display">${renderAverageStars(averageRatings.plot)}</span></p>
+                        <p>Plot: <span class="rating-stars-display">${renderAverageStars(detailedAverageRatings.plot)}</span></p>
                     </div>
                     <div class="rating-category">
-                        <p>Characters: <span class="rating-stars-display">${renderAverageStars(averageRatings.characters)}</span></p>
+                        <p>Characters: <span class="rating-stars-display">${renderAverageStars(detailedAverageRatings.characters)}</span></p>
                     </div>
                     <div class="rating-category">
-                        <p>Writing Style: <span class="rating-stars-display">${renderAverageStars(averageRatings.writingStyle)}</span></p>
+                        <p>Writing Style: <span class="rating-stars-display">${renderAverageStars(detailedAverageRatings.writingStyle)}</span></p>
                     </div>
                     <div class="rating-category">
-                        <p>Overall Enjoyment: <span class="rating-stars-display">${renderAverageStars(averageRatings.overallEnjoyment)}</span></p>
+                        <p>Overall Enjoyment: <span class="rating-stars-display">${renderAverageStars(detailedAverageRatings.overallEnjoyment)}</span></p>
                     </div>
                     <p class="total-raters-note">Based on ${totalRaters} review(s).</p>
                 ` : `<p>No ratings submitted yet for this book.</p>`}
