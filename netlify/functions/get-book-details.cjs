@@ -1,10 +1,10 @@
 // File: netlify/functions/get-book-details.js
-import fetch from 'node-fetch';
+const fetch = require('node-fetch');
 
 const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
 const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY;
 
-export const handler = async function (event) {
+exports.handler = async function (event) {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }

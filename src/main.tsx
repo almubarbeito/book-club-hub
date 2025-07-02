@@ -210,7 +210,7 @@ let bomProposal_targetMonthYear = ''; // e.g., "2024-08"
 
 const fetchBomProposals = async () => {
     try {
-        const res = await fetch('/.netlify/functions/get-proposals');
+        const res = await fetch('/.netlify/functions/get-proposals.cjs');
         const data = await res.json();
         bomProposals = data; // Update the global state
         updateView(); // Re-render the app with the new data
@@ -1334,7 +1334,7 @@ const handleDeleteBomProposal = async (event: Event) => {
     }
 
     try {
-        const res = await fetch('/.netlify/functions/delete-proposal', {
+        const res = await fetch('/.netlify/functions/delete-proposal.cjs', {
             method: 'POST',
             body: JSON.stringify({
                 proposalId: proposalId,
@@ -1481,7 +1481,7 @@ const handleOnboardingQuestionsSubmit = async (event) => {
 
     try {
         // --- This is the NEW fetch call to your secure backend ---
-        const res = await fetch('/.netlify/functions/onboarding', {
+        const res = await fetch('/.netlify/functions/onboarding.cjs', {
             method: 'POST',
             body: JSON.stringify({
                 ...onboardingAnswers,
@@ -1608,7 +1608,7 @@ const handleShowProposalDetail = async (event: Event) => {
 
         // --- Now, fetch the description in the background ---
         try {
-            const res = await fetch('/.netlify/functions/get-book-details', {
+            const res = await fetch('/.netlify/functions/get-book-details.cjs', {
                 method: 'POST',
                 body: JSON.stringify({
                     title: proposalToShow.bookTitle,
@@ -1838,7 +1838,7 @@ const handleFetchDiscussionStarters = async () => {
 
     try {
         // --- NEW: Fetch call to your secure backend function ---
-        const res = await fetch('/.netlify/functions/generate-starters', {
+        const res = await fetch('/.netlify/functions/generate-starters.cjs', {
             method: 'POST',
             body: JSON.stringify({
                 title: currentBomToDisplay.title,
@@ -2049,7 +2049,7 @@ const handleSubmitBomProposal = async (event) => {
     //bomProposals.push(newProposal);
     //Storage.setItem("bomProposals", bomProposals);
     try {
-        const res = await fetch('/.netlify/functions/add-proposal', {
+        const res = await fetch('/.netlify/functions/add-proposal.cjs', {
             method: 'POST',
             body: JSON.stringify(proposalDataToSend)
         });
