@@ -1305,6 +1305,7 @@ const handleAuthAction = (event) => {
 };
 
 const handleDeleteBomProposal = async (event: Event) => {
+    event.stopPropagation(); // <-- Stop the bubble!
     if (!currentUser) return;
     const target = event.currentTarget as HTMLElement;
     const proposalId = target.dataset.proposalId;
@@ -1592,31 +1593,6 @@ const handleCloseProposalDetail = () => {
     showProposalDetailModal = false;
     selectedProposalForModal = null;
     updateView(); // Re-render to hide the modal
-};
-
-const handleDeleteBomProposal = (event) => {
-    event.stopPropagation(); // <-- Stop the bubble!
-
-    if (!currentUser) return;
-
-    const target = (event.target as HTMLElement).closest('button');
-    const proposalId = target?.dataset.proposalId;
-    if (!proposalId) return;
-
-    // Find the index of the proposal to delete
-    const proposalIndex = bomProposals.findIndex(p => p.id === proposalId);
-    
-    if (proposalIndex !== -1) {
-        // Confirm before deleting
-        if (confirm("Are you sure you want to delete this proposal? This cannot be undone.")) {
-            // Remove the proposal from the array
-            bomProposals.splice(proposalIndex, 1);
-            // Save the updated array to storage
-            Storage.setItem("bomProposals", bomProposals);
-            // Re-render the view
-            rerenderWithScroll();
-        }
-    }
 };
 
 // --- Add Book Modal Handlers ---
@@ -2384,9 +2360,7 @@ const attachEventListeners = () => {
             button.removeEventListener('click', handleBomProposalVoteToggle);
             button.addEventListener('click', handleBomProposalVoteToggle);
         });
-        document.querySelectorAll('button[data-action="delete-bom-proposal"]').forEach(button => {
-        button.addEventListener('click', handleDeleteBomProposal);
-        });
+        
         const startReadingBomButton = document.querySelector('button[data-action="start-reading-bom"]');
         if (startReadingBomButton) {
             startReadingBomButton.removeEventListener('click', handleStartReadingBom);
