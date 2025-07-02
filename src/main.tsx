@@ -211,11 +211,17 @@ let bomProposal_targetMonthYear = ''; // e.g., "2024-08"
 const fetchBomProposals = async () => {
     try {
         const res = await fetch('/.netlify/functions/get-proposals.cjs');
+        if (!res.ok) {
+            // Handle cases where the fetch itself fails (e.g., 404, 500)
+            console.error(`Fetch failed with status: ${res.status}`);
+            bomProposals = []; // Set to empty array on failure
+            return;
+        }
         const data = await res.json();
         bomProposals = data; // Update the global state
-        updateView(); // Re-render the app with the new data
     } catch (error) {
-        console.error("Failed to fetch proposals:", error);
+        console.error("Error fetching or parsing proposals:", error);
+        bomProposals = []; // Ensure state is clean on error
     }
 };
 
@@ -2599,25 +2605,53 @@ const renderApp = () => {
 
 
 // --- Initial Load ---
-bookOfTheMonthHistory = Storage.getItem("bookOfTheMonthHistory", []);
-bomProposals = Storage.getItem("bomProposals", []);
-chatMessages = Storage.getItem("chatMessagesGlobal", []);
-globalBomRatings = Storage.getItem("globalBomRatings", {});
-globalBomComments = Storage.getItem("globalBomComments", {});
+// --- NEW AND CORRECT INITIAL LOAD LOGIC ---
 
+// This function will fetch the proposals from your backend
+const fetchBomProposals = async () => {
+    try {
+        const res = await fetch('/.netlify/functions/get-proposals.cjs');
+        if (!res.ok) {
+            console.error(`Proposal fetch failed with status: ${res.status}`);
+            bomProposals = Storage.getItem("bomProposals", []); // Fallback to localStorage
+            return; 
+        }
+        const data = await res.json();
+        bomProposals = data; // Update the global state with fresh data from the server
+        Storage.setItem("bomProposals", bomProposals); // Optionally save the fresh data to localStorage
+    } catch (error) {
+        console.error("Failed to fetch or parse proposals:", error);
+        bomProposals = Storage.getItem("bomProposals", []); // Fallback to localStorage on error
+    }
+};
 
-initializeAndSetCurrentBOM(); 
+// This is our main startup function
+const initializeApp = async () => {
+    // 1. Load static data from localStorage first for a fast initial paint
+    bookOfTheMonthHistory = Storage.getItem("bookOfTheMonthHistory", hardcodedBomHistory); // Use your hardcoded data!
+    chatMessages = Storage.getItem("chatMessagesGlobal", []);
+    globalBomRatings = Storage.getItem("globalBomRatings", {});
+    globalBomComments = Storage.getItem("globalBomComments", {});
 
-if (currentUser && currentUser.id) {
-    loadUserSpecificData(); 
-    if (!currentUser.onboardingComplete) {
-        currentAuthProcessView = 'onboarding_questions'; 
+    // 2. Fetch dynamic data from the server
+    await fetchBomProposals();
+
+    // 3. Now that all data is ready, set up the initial view state
+    initializeAndSetCurrentBOM(); 
+
+    if (currentUser && currentUser.id) {
+        loadUserSpecificData(); 
+        if (!currentUser.onboardingComplete) {
+            currentAuthProcessView = 'onboarding_questions'; 
+        }
+    } else {
+        currentAuthProcessViesw = 'auth_options'; 
     }
 
-    fetchBomProposals(); // Also fetch proposals if the user is already logged in
-
-} else {
-    currentAuthProcessView = 'auth_options'; 
+    // 4. Perform the first render of the entire application
     renderApp();
-}
+};
+
+// --- START THE APP ---
+initializeApp();
 
