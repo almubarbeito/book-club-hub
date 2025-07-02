@@ -1,5 +1,5 @@
 // File: netlify/functions/get-book-details.js
-const fetch = require('node-fetch');
+//const fetch = require('node-fetch');
 
 const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
 const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY;
