@@ -342,6 +342,14 @@ const loadUserSpecificData = () => {
     });
 };
 
+const renderAverageStars = (categoryValue: number) => {
+    let starsHtml = '';
+    const roundedRating = Math.round(categoryValue);
+    for (let i = 1; i <= 5; i++) {
+        starsHtml += `<span class="material-icons static-star ${i <= roundedRating ? 'filled' : ''}" aria-label="${i} star">${i <= roundedRating ? 'star' : 'star_border'}</span>`;
+    }
+    return `${starsHtml} (${categoryValue.toFixed(1)} average)`;
+};
 
 // --- Rendering Functions ---
 
