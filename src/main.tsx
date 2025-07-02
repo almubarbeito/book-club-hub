@@ -128,6 +128,10 @@ let isProcessingOnboarding = false;
 let savedScrollPosition: number | null = null;
 const mainContentId = 'main-content-area'; // Define a constant for our scrolling element's ID
 
+// --- NEW: Proposal Detail Modal State ---
+let showProposalDetailModal = false;
+let selectedProposalForModal: BomProposal | null = null;
+
 // --- Book of the Month State ---
 
 // This is the new hardcoded data.
@@ -456,11 +460,6 @@ const MyBooksView = () => {
     `;
 };
 
-// This is the complete, corrected function.
-
-// This is a special DEBUG version of the function.
-
-// This is the complete, corrected function.
 
 const BookOfTheMonthView = () => {
     // This is a good debug log to keep for now.
@@ -687,7 +686,7 @@ const renderBomProposalSection = () => {
                         
                         // This is the HTML structure for a single proposal item
                         return `
-                        <div class="bom-proposal-item ${userVotedForThis ? 'user-voted-highlight' : ''}">
+                        <div class="bom-proposal-item ${userVotedForThis ? 'user-voted-highlight' : ''}" data-action="show-proposal-detail" data-proposal-id="${proposal.id}" role="button" tabindex="0">
                             ${proposal.bookCoverImageUrl ? `<img src="${proposal.bookCoverImageUrl}" alt="Cover of ${proposal.bookTitle}" class="book-cover-thumbnail">` : '<div class="book-cover-placeholder-small">No Cover</div>'}
                             <div class="bom-proposal-details">
                                 <h4>${proposal.bookTitle}</h4>
@@ -834,6 +833,36 @@ const renderReviewBookModal = () => {
     `;
 };
 
+const renderProposalDetailModal = () => {
+    // Only render the modal if it's supposed to be visible and we have a book selected
+    if (!showProposalDetailModal || !selectedProposalForModal) return '';
+
+    const { bookTitle, bookAuthor, bookCoverImageUrl, reason } = selectedProposalForModal;
+
+    return `
+        <div class="modal open" id="proposalDetailModalContainer" role="dialog" aria-modal="true">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="proposalDetailModalTitle">${bookTitle}</h2>
+                    <button class="close-button" data-action="close-proposal-detail-modal" aria-label="Close dialog">×</button>
+                </div>
+                
+                <div class="bom-main-layout-container">
+                    <!-- Image Column -->
+                    <div class="bom-image-wrapper">
+                        ${bookCoverImageUrl ? `<img src="${bookCoverImageUrl}" alt="Cover of ${bookTitle}" class="bom-cover-image">` : '<div class="book-cover-placeholder bom-cover-placeholder">No Cover</div>'}
+                    </div>
+                    <!-- Text Column -->
+                    <div class="bom-text-wrapper">
+                        <p><em>by ${bookAuthor || 'Unknown Author'}</em></p>
+                        <h4>Reason for Proposal:</h4>
+                        <p class="proposal-reason">${reason}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+};
 
 // Chat View
 const ChatView = () => {
@@ -1539,6 +1568,30 @@ const handleNavigation = (event) => {
         Storage.setItem("currentView", currentView); 
         updateView(); 
     }
+};
+
+const handleShowProposalDetail = (event: Event) => {
+    // We use .closest to make sure the click works even if the user clicks on text or an image inside the item
+    const target = (event.target as HTMLElement).closest('.bom-proposal-item');
+    if (!target) return;
+
+    const proposalId = (target as HTMLElement).dataset.proposalId;
+    if (!proposalId) return;
+
+    // Find the full proposal object from our state array
+    const proposalToShow = bomProposals.find(p => p.id === proposalId);
+
+    if (proposalToShow) {
+        selectedProposalForModal = proposalToShow;
+        showProposalDetailModal = true;
+        renderApp(); // Re-render to show the modal
+    }
+};
+
+const handleCloseProposalDetail = () => {
+    showProposalDetailModal = false;
+    selectedProposalForModal = null;
+    renderApp(); // Re-render to hide the modal
 };
 
 // --- Add Book Modal Handlers ---
@@ -2433,6 +2486,33 @@ const attachEventListeners = () => {
             logoutButton.addEventListener('click', handleLogout);
         }
     }
+
+    // --- Listen for clicks on any proposal item ---
+document.querySelectorAll('[data-action="show-proposal-detail"]').forEach(item => {
+    item.addEventListener('click', handleShowProposalDetail);
+    // Add keypress for accessibility
+    item.addEventListener('keypress', (e: KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            handleShowProposalDetail(e);
+        }
+    });
+});
+
+// --- Listen for a click on the new modal's close button ---
+const closeDetailButton = document.querySelector('#proposalDetailModalContainer .close-button');
+if (closeDetailButton) {
+    closeDetailButton.addEventListener('click', handleCloseProposalDetail);
+}
+
+// --- Listen for clicks outside the modal to close it ---
+const detailModalContainer = document.getElementById('proposalDetailModalContainer');
+if (detailModalContainer) {
+    detailModalContainer.addEventListener('click', (e) => {
+        if (e.target === detailModalContainer) {
+            handleCloseProposalDetail();
+        }
+    });
+}
 };
 
 
@@ -2463,6 +2543,7 @@ const renderApp = () => {
             ${renderAddBookModal()}
             ${renderBomProposalModal()}
             ${renderReviewBookModal()}
+            ${renderProposalDetailModal()} 
             ${(currentUser && currentUser.onboardingComplete && currentView === 'mybooks') ? renderAddBookFAB() : ''}
         </div>
     `;
