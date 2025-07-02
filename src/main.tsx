@@ -1584,14 +1584,14 @@ const handleShowProposalDetail = (event: Event) => {
     if (proposalToShow) {
         selectedProposalForModal = proposalToShow;
         showProposalDetailModal = true;
-        renderApp(); // Re-render to show the modal
+        updateView(); // Re-render to show the modal
     }
 };
 
 const handleCloseProposalDetail = () => {
     showProposalDetailModal = false;
     selectedProposalForModal = null;
-    renderApp(); // Re-render to hide the modal
+    updateView(); // Re-render to hide the modal
 };
 
 // --- Add Book Modal Handlers ---
