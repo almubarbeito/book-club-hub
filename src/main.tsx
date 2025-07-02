@@ -1471,7 +1471,7 @@ const handleOnboardingQuestionsSubmit = async (event) => {
 
     try {
         // --- This is the NEW fetch call to your secure backend ---
-        const res = await fetch('/.netlify/functions/onboarding.cjs', {
+        const res = await fetch('/.netlify/functions/onboarding', {
             method: 'POST',
             body: JSON.stringify({
                 ...onboardingAnswers,
