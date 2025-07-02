@@ -1,0 +1,17 @@
+# File: netlify.toml
+
+[build]
+  # This is the command to build your Vite/TypeScript project
+  command = "npm run build"
+  
+  # This is the folder that gets deployed after the build is successful
+  publish = "dist"
+  
+  # This explicitly tells Netlify where to find your serverless functions
+  functions = "netlify/functions"
+
+# This is a helpful rule for Single Page Applications like yours
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
