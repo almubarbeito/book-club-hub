@@ -1,6 +1,7 @@
-// File: netlify/functions/get-book-details.js
-//const fetch = require('node-fetch');
-const admin = require('firebase-admin');
+// File: netlify/functions/get-book-details.cjs
+
+const axios = require('axios'); // Uses the new, reliable library
+const admin = require('firebase-admin'); // Keep your firebase admin
 
 const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
 const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY;
@@ -11,21 +12,26 @@ exports.handler = async function (event) {
   }
 
   try {
-    const fetch = (await import('node-fetch')).default;
     const { title, author } = JSON.parse(event.body);
-    if (!title) return { statusCode: 400, body: "Title is required." };
+    if (!title) {
+      return { statusCode: 400, body: "Title is required." };
+    }
+    if (!GOOGLE_BOOKS_API_KEY) {
+      console.error("CRITICAL: GOOGLE_BOOKS_API_KEY is not set in environment.");
+      return { statusCode: 500, body: "Server configuration error." };
+    }
 
     const query = encodeURIComponent(`intitle:${title}+inauthor:${author}`);
     const fullUrl = `${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=1&key=${GOOGLE_BOOKS_API_KEY}`;
     
-    const response = await fetch(fullUrl);
-    if (!response.ok) throw new Error("Google Books API request failed.");
+    // --- The Axios GET Request ---
+    const response = await axios.get(fullUrl);
+    const data = response.data; // The JSON is automatically parsed into response.data
+    // ----------------------------
 
-    const data = await response.json();
-    let description = "No description found for this book.";
-
-    if (data.items && data.items.length > 0) {
-      description = data.items[0].volumeInfo.description || description;
+    let description = "No summary available for this title.";
+    if (data.items && data.items.length > 0 && data.items[0].volumeInfo.description) {
+      description = data.items[0].volumeInfo.description;
     }
 
     return {
@@ -34,7 +40,19 @@ exports.handler = async function (event) {
     };
 
   } catch (error) {
-    console.error("Error in get-book-details function:", error);
+    // Axios provides more detailed error info
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error("Error fetching book details (data):", error.response.data);
+      console.error("Error fetching book details (status):", error.response.status);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error("Error fetching book details (request):", error.request);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('Error fetching book details (message):', error.message);
+    }
     return { statusCode: 500, body: JSON.stringify({ error: "Failed to get book details." }) };
   }
 };
