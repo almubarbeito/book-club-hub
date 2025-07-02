@@ -1594,6 +1594,31 @@ const handleCloseProposalDetail = () => {
     updateView(); // Re-render to hide the modal
 };
 
+const handleDeleteBomProposal = (event) => {
+    event.stopPropagation(); // <-- Stop the bubble!
+
+    if (!currentUser) return;
+
+    const target = (event.target as HTMLElement).closest('button');
+    const proposalId = target?.dataset.proposalId;
+    if (!proposalId) return;
+
+    // Find the index of the proposal to delete
+    const proposalIndex = bomProposals.findIndex(p => p.id === proposalId);
+    
+    if (proposalIndex !== -1) {
+        // Confirm before deleting
+        if (confirm("Are you sure you want to delete this proposal? This cannot be undone.")) {
+            // Remove the proposal from the array
+            bomProposals.splice(proposalIndex, 1);
+            // Save the updated array to storage
+            Storage.setItem("bomProposals", bomProposals);
+            // Re-render the view
+            rerenderWithScroll();
+        }
+    }
+};
+
 // --- Add Book Modal Handlers ---
 const resetAddBookModalState = () => {
     addBook_searchText = '';
@@ -2029,6 +2054,7 @@ const handleSubmitBomProposal = async (event) => {
 };
 
 const handleBomProposalVoteToggle = (event) => {
+    event.stopPropagation();
     if (!currentUser) return;
     const proposalId = (event.target as HTMLElement).dataset.proposalId;
     if (!proposalId) return;
@@ -2357,6 +2383,9 @@ const attachEventListeners = () => {
         document.querySelectorAll('button[data-action="toggle-bom-proposal-vote"]').forEach(button => {
             button.removeEventListener('click', handleBomProposalVoteToggle);
             button.addEventListener('click', handleBomProposalVoteToggle);
+        });
+        document.querySelectorAll('button[data-action="delete-bom-proposal"]').forEach(button => {
+        button.addEventListener('click', handleDeleteBomProposal);
         });
         const startReadingBomButton = document.querySelector('button[data-action="start-reading-bom"]');
         if (startReadingBomButton) {
