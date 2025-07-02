@@ -1,46 +1,17 @@
-# File: netlify.toml
+# File: netlify.toml - CORRECTED VERSION
 
-# The new, explicit way
+# This section defines your build process
 [build]
   command = "npm run build"
   publish = "dist"
   
-# We removed the general functions line from [build]
-
-# This is a new top-level section for functions
+# This is the correct way to define the directory for ALL functions.
+# Netlify will automatically look for .js files inside this folder.
+# This is simpler and less error-prone than declaring each one.
 [functions]
-  # This tells Netlify to include all files from this directory
-  # when bundling dependencies.
-  included_files = ["netlify/functions/**"]
+  directory = "netlify/functions"
 
-# Now we declare each function individually
-[[functions]]
-  name = "onboarding" # The name of the function
-  path = "netlify/functions/onboarding.js" # The exact path to the file
-
-[[functions]]
-  name = "generate-starters"
-  path = "netlify/functions/generate-starters.js"
-
-# Add an entry for every function file you have.
-# If you still have generate.js, add it too.
-[[functions]]
-  name = "add-proposal"
-  path = "netlify/functions/add-proposal.cjs"
-
-  [[functions]]
-  name = "delete-proposal"
-  path = "netlify/functions/delete-proposal.cjs"
-
-    [[functions]]
-  name = "get-book-details"
-  path = "netlify/functions/get-book-details.cjs"
-
-   [[functions]]
-  name = "get-book-details"
-  path = "netlify/functions/get-proposals.cjs"
-
-# This is a helpful rule for Single Page Applications like yours
+# This is a helpful rule for Single Page Applications
 [[redirects]]
   from = "/*"
   to = "/index.html"
