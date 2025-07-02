@@ -1,14 +1,44 @@
 # File: netlify.toml
 
+# The new, explicit way
 [build]
-  # This is the command to build your Vite/TypeScript project
   command = "npm run build"
-  
-  # This is the folder that gets deployed after the build is successful
   publish = "dist"
   
-  # This explicitly tells Netlify where to find your serverless functions
-  functions = "netlify/functions"
+# We removed the general functions line from [build]
+
+# This is a new top-level section for functions
+[functions]
+  # This tells Netlify to include all files from this directory
+  # when bundling dependencies.
+  included_files = ["netlify/functions/**"]
+
+# Now we declare each function individually
+[[functions]]
+  name = "onboarding" # The name of the function
+  path = "netlify/functions/onboarding.js" # The exact path to the file
+
+[[functions]]
+  name = "generate-starters"
+  path = "netlify/functions/generate-starters.js"
+
+# Add an entry for every function file you have.
+# If you still have generate.js, add it too.
+[[functions]]
+  name = "add-proposal"
+  path = "netlify/functions/add-proposal.cjs"
+
+  [[functions]]
+  name = "delete-proposal"
+  path = "netlify/functions/delete-proposal.cjs"
+
+    [[functions]]
+  name = "get-book-details"
+  path = "netlify/functions/get-book-details.cjs"
+
+   [[functions]]
+  name = "get-book-details"
+  path = "netlify/functions/get-proposals.cjs"
 
 # This is a helpful rule for Single Page Applications like yours
 [[redirects]]
