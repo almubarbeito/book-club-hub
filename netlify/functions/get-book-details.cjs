@@ -18,7 +18,6 @@ exports.handler = async function (event) {
     const query = encodeURIComponent(`intitle:${title}+inauthor:${author}`);
     const fullUrl = `${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=1&key=${GOOGLE_BOOKS_API_KEY}`;
     
-    const fetch = (await import('node-fetch')).default;
     const response = await fetch(fullUrl);
     if (!response.ok) throw new Error("Google Books API request failed.");
 
