@@ -11,6 +11,8 @@
 [functions]
   directory = "netlify/functions"
 
+  external_node_modules = ["node-fetch"]
+
 # This is a helpful rule for Single Page Applications
 [[redirects]]
   from = "/*"
