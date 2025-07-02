@@ -617,7 +617,17 @@ const renderBomProposalSection = () => {
     const canProposeMore = userProposalsForNextMonth.length < 3;
 
     const currentProposalsForNextMonth = bomProposals.filter(p => p.proposalMonthYear === nextMonthTarget)
-        .sort((a,b) => b.timestamp - a.timestamp);
+        .sort((a, b) => {
+        // Sort by number of votes in descending order (most votes first)
+        const voteDifference = b.votes.length - a.votes.length;
+
+        // If two books have the same number of votes, sort the newer one first
+        if (voteDifference === 0) {
+            return b.timestamp - a.timestamp;
+        }
+
+        return voteDifference;
+    });
 
     return `
         <div class="book-item" id="bom-proposal-section">
