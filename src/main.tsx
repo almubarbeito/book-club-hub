@@ -859,7 +859,7 @@ const renderProposalDetailModal = () => {
                 
                 <div class="bom-main-layout-container">
                     <div class="bom-image-wrapper">
-                        ${bookCoverImageUrl ? `<img ...>` : '...'}
+                        ${bookCoverImageUrl ? `<img src="${bookCoverImageUrl}" alt="Cover of ${bookTitle}" class="bom-cover-image">` : '<div class="book-cover-placeholder bom-cover-placeholder">No Cover</div>'}
                     </div>
                     <div class="bom-text-wrapper">
                         <p><em>by ${bookAuthor || 'Unknown Author'}</em></p>
