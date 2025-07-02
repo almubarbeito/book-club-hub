@@ -608,6 +608,9 @@ if (allRatingsForThisBom) {
 };
 
 
+// This is the new, correct version of the function.
+// Replace your old one with this.
+
 const renderBomProposalSection = () => {
     if (!currentUser) return '';
 
@@ -617,8 +620,6 @@ const renderBomProposalSection = () => {
 
     const currentProposalsForNextMonth = bomProposals.filter(p => p.proposalMonthYear === nextMonthTarget)
         .sort((a,b) => b.timestamp - a.timestamp);
-
-    const usersVoteForNextMonth = currentProposalsForNextMonth.find(p => p.votes.includes(currentUser!.id));
 
     return `
         <div class="book-item" id="bom-proposal-section">
@@ -638,28 +639,24 @@ const renderBomProposalSection = () => {
                 <div class="bom-proposals-list">
                     ${currentProposalsForNextMonth.map(proposal => {
                         const userVotedForThis = proposal.votes.includes(currentUser!.id);
-                        let voteButtonHtml = '';
-if (userVotedForThis) {
-    // The "Voted" button
-    voteButtonHtml = `<button class="button small-button voted" data-action="toggle-bom-proposal-vote" data-proposal-id="${proposal.id}">
-                        <span class="material-icons">how_to_vote</span> Voted (${proposal.votes.length})
-                   </button>`;
-} else {
-    // The "Vote" button
-    voteButtonHtml = `<button class="button small-button primary" data-action="toggle-bom-proposal-vote" data-proposal-id="${proposal.id}">
-                        <span class="material-icons">how_to_vote</span> Vote (${proposal.votes.length})
-                   </button>`;
-}
-                        // Check if the current user is the one who proposed this item
-                let deleteButtonHtml = ''; 
-                        if (currentUser && proposal.proposedByUserId === currentUser.id) {
-    deleteButtonHtml = `
-        <button class="button small-button danger" data-action="delete-bom-proposal" data-proposal-id="${proposal.id}">
-            <span class="material-icons">delete</span> Delete
-        </button>
-    `;
-}
+                        
+                        // Logic for the vote button
+                        const voteButtonHtml = userVotedForThis 
+                            ? `<button class="button small-button voted" data-action="toggle-bom-proposal-vote" data-proposal-id="${proposal.id}">
+                                 <span class="material-icons">how_to_vote</span> Voted (${proposal.votes.length})
+                               </button>`
+                            : `<button class="button small-button primary" data-action="toggle-bom-proposal-vote" data-proposal-id="${proposal.id}">
+                                 <span class="material-icons">how_to_vote</span> Vote (${proposal.votes.length})
+                               </button>`;
 
+                        // Logic for the delete button
+                        const deleteButtonHtml = (currentUser && proposal.proposedByUserId === currentUser.id)
+                            ? `<button class="button small-button danger" data-action="delete-bom-proposal" data-proposal-id="${proposal.id}">
+                                 <span class="material-icons">delete</span>
+                               </button>`
+                            : '';
+                        
+                        // This is the HTML structure for a single proposal item
                         return `
                         <div class="bom-proposal-item ${userVotedForThis ? 'user-voted-highlight' : ''}">
                             ${proposal.bookCoverImageUrl ? `<img src="${proposal.bookCoverImageUrl}" alt="Cover of ${proposal.bookTitle}" class="book-cover-thumbnail">` : '<div class="book-cover-placeholder-small">No Cover</div>'}
@@ -674,7 +671,8 @@ if (userVotedForThis) {
                                 </div>
                             </div>
                         </div>
-                    `}).join('')}
+                        `;
+                    }).join('')}
                 </div>
             `}
         </div>
