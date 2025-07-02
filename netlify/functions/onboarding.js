@@ -5,7 +5,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 // Securely get the API key
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 const GEMINI_TEXT_MODEL = 'gemini-1.5-flash'; // Using a modern text model
-const GEMINI_IMAGE_MODEL = 'imagen-3';      // Using a modern image model
+const GEMINI_IMAGE_MODEL = 'gemini-1.5-pro-latest';      // Using a modern image model
 
 exports.handler = async function (event) {
   // Only allow POST requests
