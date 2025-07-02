@@ -208,22 +208,6 @@ let bomProposal_formCoverUrl = '';
 let bomProposal_formReason = '';
 let bomProposal_targetMonthYear = ''; // e.g., "2024-08"
 
-const fetchBomProposals = async () => {
-    try {
-        const res = await fetch('/.netlify/functions/get-proposals.cjs');
-        if (!res.ok) {
-            // Handle cases where the fetch itself fails (e.g., 404, 500)
-            console.error(`Fetch failed with status: ${res.status}`);
-            bomProposals = []; // Set to empty array on failure
-            return;
-        }
-        const data = await res.json();
-        bomProposals = data; // Update the global state
-    } catch (error) {
-        console.error("Error fetching or parsing proposals:", error);
-        bomProposals = []; // Ensure state is clean on error
-    }
-};
 
 // User-specific state - will be loaded on login / after onboarding
 let books: Book[] = [];
