@@ -1324,7 +1324,7 @@ const handleDeleteBomProposal = async (event: Event) => {
     }
 
     try {
-        const res = await fetch('/.netlify/functions/delete-proposal.cjs', {
+        const res = await fetch('/.netlify/functions/delete-proposal', {
             method: 'POST',
             body: JSON.stringify({
                 proposalId: proposalId,
@@ -1598,7 +1598,7 @@ const handleShowProposalDetail = async (event: Event) => {
 
         // --- Now, fetch the description in the background ---
         try {
-            const res = await fetch('/.netlify/functions/get-book-details.cjs', {
+            const res = await fetch('/.netlify/functions/get-book-details', {
                 method: 'POST',
                 body: JSON.stringify({
                     title: proposalToShow.bookTitle,
@@ -1828,7 +1828,7 @@ const handleFetchDiscussionStarters = async () => {
 
     try {
         // --- NEW: Fetch call to your secure backend function ---
-        const res = await fetch('/.netlify/functions/generate-starters.cjs', {
+        const res = await fetch('/.netlify/functions/generate-starters', {
             method: 'POST',
             body: JSON.stringify({
                 title: currentBomToDisplay.title,
@@ -2039,7 +2039,7 @@ const handleSubmitBomProposal = async (event) => {
     //bomProposals.push(newProposal);
     //Storage.setItem("bomProposals", bomProposals);
     try {
-        const res = await fetch('/.netlify/functions/add-proposal.cjs', {
+        const res = await fetch('/.netlify/functions/add-proposal', {
             method: 'POST',
             body: JSON.stringify(proposalDataToSend)
         });
@@ -2594,7 +2594,7 @@ const renderApp = () => {
 // This function will fetch the proposals from your backend
 const fetchBomProposals = async () => {
     try {
-        const res = await fetch('/.netlify/functions/get-proposals.cjs');
+        const res = await fetch('/.netlify/functions/get-proposals');
         if (!res.ok) {
             console.error(`Proposal fetch failed with status: ${res.status}`);
             bomProposals = Storage.getItem("bomProposals", []); // Fallback to localStorage
