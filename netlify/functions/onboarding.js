@@ -4,8 +4,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // Securely get the API key
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-const GEMINI_TEXT_MODEL = 'gemini-1.5-flash'; // Using a modern text model
-const GEMINI_IMAGE_MODEL = 'imagen-3.0-generate-002';      // Using a modern image model
+const GEMINI_MODEL = 'gemini-1.5-pro-latest';
 
 exports.handler = async function (event) {
   // Only allow POST requests
@@ -29,7 +28,7 @@ Preferred Literary Adventure - "${adventure}",
 suggest ONE famous and iconic protagonist from a well-known classic or popular novel that aligns with these preferences.
 Return ONLY the full name of the character as a string.`;
 
-    const textModel = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
+    const textModel = genAI.getGenerativeModel({ model: GEMINI_MODEL });
     const characterResult = await textModel.generateContent(characterPrompt);
     const characterResponse = await characterResult.response;
     let characterName = characterResponse.text().trim().replace(/^["']|["']$/g, '');
@@ -44,7 +43,7 @@ Return ONLY the full name of the character as a string.`;
     const imagePrompt = `A stylized profile avatar representing the literary character: ${characterName}. Emphasize iconic visual features or themes associated with them, suitable for a small profile picture. If the character is human, show their face. Make it artistic and visually appealing. Unique style variation seed: ${uniqueSeedForImage}.`;
 
     try {
-        const imageModel = genAI.getGenerativeModel({ model: GEMINI_IMAGE_MODEL });
+        const imageModel = genAI.getGenerativeModel({ model: GEMINI_MODEL });
         const imageResult = await imageModel.generateContent([imagePrompt]);
         const imageResponse = await imageResult.response;
 
