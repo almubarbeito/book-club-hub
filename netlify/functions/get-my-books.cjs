@@ -1,18 +1,14 @@
 // File: netlify/functions/get-my-books.cjs
-// USES THE SAME PROVEN PATTERN AS get-proposals.cjs
+// CORRECTED VERSION
 
 const admin = require('firebase-admin');
 
-// Initialize Firebase Admin, but only if it hasn't been already.
-// This prevents errors if multiple functions run in the same environment.
 if (admin.apps.length === 0) {
   try {
     admin.initializeApp({
       credential: admin.credential.cert(JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf8')))
     });
-  } catch (e) {
-    console.error("Firebase admin initialization error", e);
-  }
+  } catch (e) { console.error("Firebase admin init error", e); }
 }
 
 exports.handler = async function(event) {
@@ -26,29 +22,26 @@ exports.handler = async function(event) {
       return { statusCode: 400, body: JSON.stringify({ error: 'User ID is required.' }) };
     }
 
-    // Get the Firestore instance from the initialized admin app
     const db = admin.firestore();
 
-    // The query for the user's sub-collection of books
-    const booksRef = db.collection('users').doc(userId).collection('books');
-    const snapshot = await booksRef.get();
+    // --- THIS IS THE CORRECTED LOGIC ---
+    // 1. Get a reference to the USER document itself
+    const userDocRef = db.collection('users').doc(userId);
+    const doc = await userDocRef.get();
 
-    // If the user has no books, return an empty array
-    if (snapshot.empty) {
+    // 2. Check if the document exists and has a 'books' field
+    if (!doc.exists || !doc.data().books) {
+      // If no books field, return an empty array
       return { statusCode: 200, body: JSON.stringify({ books: [] }) };
     }
 
-    // Map the documents to an array of book objects
-    const books = [];
-    snapshot.forEach(doc => {
-      books.push({ id: doc.id, ...doc.data() });
-    });
-
-    // Return the user's books
+    // 3. Return the 'books' array from the document data
+    const books = doc.data().books;
     return {
       statusCode: 200,
       body: JSON.stringify({ books }),
     };
+    // ------------------------------------
 
   } catch (error) {
     console.error("Error fetching user's books:", error);
