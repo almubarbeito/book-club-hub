@@ -1,5 +1,34 @@
 
 
+// Add this ENTIRE block to the very top of src/main.tsx
+
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, onSnapshot, doc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, runTransaction, FieldValue } from "firebase/firestore";
+
+// --- Your Firebase project's configuration ---
+// Get this from your Firebase project settings in the console
+const firebaseConfig = {
+  apiKey: "AIza...",
+  authDomain: "your-project-id.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project-id.appspot.com",
+  messagingSenderId: "...",
+  appId: "..."
+};
+
+// --- Initialize Firebase and Firestore ---
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
+// =======================================================
+// The rest of your existing code starts here...
+// =======================================================
+
+// --- Type Definitions ---
+interface LiteraryPreferences {
+    // ...
+}
+// ...
 
 // --- Type Definitions ---
 interface LiteraryPreferences {
