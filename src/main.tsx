@@ -1424,7 +1424,7 @@ const handleRegister = (event) => {
     updateView();
 };
 
-const handleLogin = (event) => {
+const handleLogin = async (event) => {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
     const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim();
@@ -1441,7 +1441,7 @@ const handleLogin = (event) => {
     currentUser = { ...user }; 
     Storage.setItem("currentUser", currentUser);
     initializeAndSetCurrentBOM(); 
-    loadUserSpecificData();
+    await loadUserSpecificData();
 
     fetchBomProposals(); // Fetch the shared data right after login
 
@@ -1450,7 +1450,7 @@ const handleLogin = (event) => {
     } else {
         currentView = Storage.getItem("currentView", "bookofthemonth"); 
     }
-    updateView();
+    //updateView();
 };
 
 const handleLogout = () => {
