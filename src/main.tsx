@@ -353,10 +353,11 @@ const loadUserSpecificData = async () => {
     } catch (error) {
         console.error("Could not load user's books:", error);
         books = [];
-    }
+    } finally {
     
     // We must re-render after fetching the data
     renderApp(); 
+    }
 };
 
 const renderAverageStars = (categoryValue: number) => {
@@ -1424,7 +1425,7 @@ const handleRegister = (event) => {
     updateView();
 };
 
-const handleLogin = async (event) => {
+const handleLogin = (event) => {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
     const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim();
