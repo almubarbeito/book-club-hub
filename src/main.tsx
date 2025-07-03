@@ -1442,7 +1442,7 @@ const handleLogin = (event) => {
     currentUser = { ...user }; 
     Storage.setItem("currentUser", currentUser);
     initializeAndSetCurrentBOM(); 
-    await loadUserSpecificData();
+    loadUserSpecificData();
 
     fetchBomProposals(); // Fetch the shared data right after login
 
