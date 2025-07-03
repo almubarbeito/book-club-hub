@@ -1,12 +1,6 @@
-// File: netlify/functions/add-proposal.js
-const admin = require('firebase-admin');
-
-// Initialize Firebase only if it hasn't been already
-if (admin.apps.length === 0) {
-  admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf8')))
-  });
-}
+// NEW, SIMPLIFIED way in update-my-books.cjs
+const admin = require('./firebase-admin-init.js'); // Require our shared init file
+const { getFirestore } = require('firebase-admin/firestore');
 
 // This is the new, more compatible version of the handler
 

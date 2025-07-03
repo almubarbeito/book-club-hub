@@ -1,17 +1,6 @@
-// File: netlify/functions/get-my-books.cjs
-const { initializeApp, cert } = require('firebase-admin/app');
+// NEW, SIMPLIFIED way in update-my-books.cjs
+const admin = require('./firebase-admin-init.js'); // Require our shared init file
 const { getFirestore } = require('firebase-admin/firestore');
-const admin = require('firebase-admin');
-
-// Initialize Firebase Admin
-try {
-  const serviceAccount = JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf8'));
-  if (!admin.apps.length) { // Prevent re-initialization
-    initializeApp({ credential: cert(serviceAccount) });
-  }
-} catch (e) {
-  console.error('Firebase admin initialization error:', e);
-}
 
 exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') {
