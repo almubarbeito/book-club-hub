@@ -317,7 +317,7 @@ const currentMonthStr = "2025-07";
 };
 
 
-const loadUserSpecificData = () => {
+const loadUserSpecificData = async () => {
     if (!currentUser || !currentUser.id) {
         books = [];
         userProfile = { 
@@ -338,6 +338,25 @@ const loadUserSpecificData = () => {
         profileImageUrl: currentUser.profileImageUrl || "",
         literaryPreferences: currentUser.literaryPreferences || {}
     });
+    try {
+        // --- NEW: Fetch books from Firebase ---
+        const res = await fetch('/.netlify/functions/get-my-books', {
+            method: 'POST',
+            body: JSON.stringify({ userId: currentUser.id })
+        });
+        const data = await res.json();
+        if (data.books) {
+            books = data.books;
+        } else {
+            books = []; // Start with an empty list if there's an error or none exist
+        }
+    } catch (error) {
+        console.error("Could not load user's books:", error);
+        books = [];
+    }
+    
+    // We must re-render after fetching the data
+    renderApp(); 
 };
 
 const renderAverageStars = (categoryValue: number) => {
@@ -1757,7 +1776,8 @@ const handleAddBookSubmit = (event) => {
             coverImageUrl: coverImageUrl || undefined,
         };
         books.push(newBook);
-        Storage.setUserItem(currentUser.id, "books", books);
+        //Storage.setUserItem(currentUser.id, "books", books);
+        saveBooksToFirebase();
         handleCloseAddBookModal(); 
     } else {
         alert("Book title is required.");
@@ -1795,12 +1815,14 @@ const handleBookAction = (event) => {
             // The actual status update to 'Read' will happen after modal submission/skip
         } else {
             books[bookIndex] = { ...books[bookIndex], status };
-            Storage.setUserItem(currentUser.id, "books", books);
+            //Storage.setUserItem(currentUser.id, "books", books);
+            saveBooksToFirebase();
         }
     } else if (action === "delete-book") {
         if (confirm("Are you sure you want to delete this book?")) {
             books.splice(bookIndex, 1);
-            Storage.setUserItem(currentUser.id, "books", books);
+            //Storage.setUserItem(currentUser.id, "books", books);
+            saveBooksToFirebase();
         }
     }
     updateView();
@@ -1894,7 +1916,8 @@ const handleStartReadingBom = () => {
         books.push(newBook);
     }
 
-    Storage.setUserItem(currentUser.id, "books", books);
+    //Storage.setUserItem(currentUser.id, "books", books);
+    saveBooksToFirebase();
     updateView(); 
 };
 
@@ -2198,6 +2221,23 @@ const handleReviewBookSkip = () => {
     processAndSaveReview(false);
 };
 
+//Helper function to save books in My books
+const saveBooksToFirebase = async () => {
+  if (!currentUser || !currentUser.id) return;
+
+  try {
+    await fetch('/.netlify/functions/update-my-books', {
+      method: 'POST',
+      body: JSON.stringify({
+        userId: currentUser.id,
+        books: books // Send the entire current list of books
+      })
+    });
+  } catch (error) {
+    console.error("Failed to save books to the server:", error);
+    // You could show a "failed to save" icon to the user here
+  }
+};
 
 // --- Chat Handlers ---
 const handleSendChatMessage = () => {
