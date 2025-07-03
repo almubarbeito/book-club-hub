@@ -2843,40 +2843,6 @@ if (detailModalContainer) {
 };
 
 
-// --- Main App Component ---
-
-
-const renderApp = () => {
-    const root = document.getElementById('root');
-    if (!root) {
-        console.error("Root element not found!");
-        return;
-    }
-    //... all the innerHTML logic from your old App function
-
-    let appContainerClass = "app-container";
-    if (!currentUser || !currentUser.onboardingComplete) {
-        appContainerClass += " auth-onboarding-active";
-    }
-
-
-    root.innerHTML = `
-        <div class="${appContainerClass}">
-            ${renderTopHeader()}
-            <div class="main-content" id="${mainContentId}">
-                ${renderCurrentView()}
-            </div>
-            ${renderBottomNav()}
-            ${renderAddBookModal()}
-            ${renderBomProposalModal()}
-            ${renderReviewBookModal()}
-            ${renderProposalDetailModal()} 
-            ${(currentUser && currentUser.onboardingComplete && currentView === 'mybooks') ? renderAddBookFAB() : ''}
-        </div>
-    `;
-    
-    attachEventListeners();
-}
 
 
 
@@ -2934,6 +2900,42 @@ const initializeApp = async () => {
     // 5. After ALL data is loaded, perform the single initial render
     renderApp();
 };
+
+// --- Main App Component ---
+
+
+const renderApp = () => {
+    const root = document.getElementById('root');
+    if (!root) {
+        console.error("Root element not found!");
+        return;
+    }
+    //... all the innerHTML logic from your old App function
+
+    let appContainerClass = "app-container";
+    if (!currentUser || !currentUser.onboardingComplete) {
+        appContainerClass += " auth-onboarding-active";
+    }
+
+
+    root.innerHTML = `
+        <div class="${appContainerClass}">
+            ${renderTopHeader()}
+            <div class="main-content" id="${mainContentId}">
+                ${renderCurrentView()}
+            </div>
+            ${renderBottomNav()}
+            ${renderAddBookModal()}
+            ${renderBomProposalModal()}
+            ${renderReviewBookModal()}
+            ${renderProposalDetailModal()} 
+            ${(currentUser && currentUser.onboardingComplete && currentView === 'mybooks') ? renderAddBookFAB() : ''}
+        </div>
+    `;
+    
+    attachEventListeners();
+}
+
 
 // --- START THE APP ---
 initializeApp();
