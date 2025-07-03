@@ -1457,6 +1457,7 @@ const handleLogin = (event) => {
 
         // Now that all data is loaded and state variables are updated,
         // we can set the correct view.
+        listenToUserData(); 
         initializeAndSetCurrentBOM(); 
         
         if (!currentUser.onboardingComplete) {
@@ -1466,7 +1467,7 @@ const handleLogin = (event) => {
         }
         
         // And finally, call updateView() ONCE at the very end.
-        updateView();
+        //updateView();
 
     })(); // The () here immediately calls the async function.
     
@@ -1474,6 +1475,10 @@ const handleLogin = (event) => {
 };
 
 const handleLogout = () => {
+    // Detach the listeners
+    unsubscribeBooks();
+    unsubscribeProposals();
+
     currentUser = null;
     Storage.setItem("currentUser", null);
     books = [];
@@ -2335,20 +2340,16 @@ const handleReviewBookSkip = () => {
 
 //Helper function to save books in My books
 const saveBooksToFirebase = async () => {
-  if (!currentUser || !currentUser.id) return;
-
-  try {
-    await fetch('/.netlify/functions/update-my-books', {
-      method: 'POST',
-      body: JSON.stringify({
-        userId: currentUser.id,
-        books: books // Send the entire current list of books
-      })
-    });
-  } catch (error) {
-    console.error("Failed to save books to the server:", error);
-    // You could show a "failed to save" icon to the user here
-  }
+    if (!currentUser || !currentUser.id) return;
+    try {
+        // This function stays the same! It just calls the backend.
+        await fetch('/.netlify/functions/update-my-books', {
+            method: 'POST',
+            body: JSON.stringify({ userId: currentUser.id, books: books })
+        });
+    } catch (error) {
+        console.error("Failed to save books:", error);
+    }
 };
 
 const saveProfileToFirebase = async (profileData: UserProfile) => {
@@ -2435,6 +2436,37 @@ const handleSendChatMessage = () => {
             }
         }
     }
+};
+
+// In src/main.tsx
+
+let unsubscribeBooks = () => {}; // A function to stop listening when the user logs out
+let unsubscribeProposals = () => {}; // Another for proposals
+
+const listenToUserData = () => {
+  if (!currentUser || !currentUser.id) return;
+
+  // We need to import these from the Firebase SDK at the top of your file
+  // import { getFirestore, collection, onSnapshot, doc } from "firebase/firestore";
+  const db = getFirestore(); // Assumes you have already initialized the main Firebase app
+
+  // 1. Listen for changes to the user's books
+  const userBooksRef = collection(db, 'users', currentUser.id, 'books');
+  unsubscribeBooks = onSnapshot(userBooksRef, (snapshot) => {
+    const freshBooks = [];
+    snapshot.forEach((doc) => {
+      freshBooks.push({ id: doc.id, ...doc.data() });
+    });
+    books = freshBooks; // Update the global state
+    updateView(); // Re-render with the fresh data
+  });
+
+  // You already have working proposal sync, but this is how it would look with a listener
+  const proposalsRef = collection(db, 'proposals');
+  unsubscribeProposals = onSnapshot(proposalsRef, (snapshot) => {
+      // ... logic to update your bomProposals array ...
+      updateView();
+  });
 };
 
 // --- Profile Handlers ---
