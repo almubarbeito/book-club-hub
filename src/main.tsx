@@ -1551,7 +1551,9 @@ const handleOnboardingQuestionsSubmit = async (event) => {
     }
 };
 
-const handleOnboardingProfileSetupSubmit = (event) => {
+// This is the new, async version of your function
+
+const handleOnboardingProfileSetupSubmit = async (event: Event) => { // <-- Made it async
     event.preventDefault();
     const form = event.target as HTMLFormElement;
     const name = (form.elements.namedItem('name') as HTMLInputElement).value.trim();
@@ -1570,37 +1572,60 @@ const handleOnboardingProfileSetupSubmit = (event) => {
         return;
     }
     
+    // --- Start of new logic ---
+
     const imageUrlToSave = generatedProfileImageBase64Data || ''; 
 
-    const userIndex = users.findIndex(u => u.id === currentUser!.id);
-    if (userIndex !== -1) {
-        users[userIndex] = {
-            ...users[userIndex],
-            name: name,
-            literaryPseudonym: generatedPseudonym, 
-            profileImageUrl: imageUrlToSave,
-            literaryPreferences: onboardingAnswers,
-            onboardingComplete: true,
-        };
-        Storage.setItem("users", users);
-        currentUser = { ...users[userIndex] }; 
-        Storage.setItem("currentUser", currentUser);
+    // 1. Prepare the complete, updated user object
+    const updatedUserObject: User = {
+        ...currentUser,
+        name: name,
+        literaryPseudonym: generatedPseudonym, 
+        profileImageUrl: imageUrlToSave,
+        literaryPreferences: onboardingAnswers,
+        onboardingComplete: true,
+    };
+    
+    // 2. Prepare the separate profile object (this might be redundant, but follows your original pattern)
+    const newUserProfile: UserProfile = {
+        name: name,
+        bio: "Just joined the Book Club Hub!", 
+        literaryPseudonym: generatedPseudonym, 
+        profileImageUrl: imageUrlToSave,
+        literaryPreferences: onboardingAnswers,
+    };
 
-        const newUserProfile: UserProfile = {
-            name: name,
-            bio: "Just joined the Book Club Hub!", 
-            literaryPseudonym: generatedPseudonym, 
-            profileImageUrl: imageUrlToSave,
-            literaryPreferences: onboardingAnswers,
-        };
-        Storage.setUserItem(currentUser.id, "profile", newUserProfile);
-        userProfile = newUserProfile; 
+    try {
+        // 3. Save the data to Firebase and WAIT for it to finish.
+        // We can do these in parallel for speed.
+        await Promise.all([
+            saveProfileToFirebase(newUserProfile), // This saves the profile data
+            saveUserToFirebase(updatedUserObject)  // This saves the full user object
+        ]);
+
+        // 4. If saving was successful, now update the local state
         
+        // Update the main 'users' array in memory
+        const userIndex = users.findIndex(u => u.id === currentUser!.id);
+        if (userIndex !== -1) {
+            users[userIndex] = updatedUserObject;
+        }
+
+        // Update the 'currentUser' and 'userProfile' in memory
+        currentUser = updatedUserObject;
+        userProfile = newUserProfile;
+        
+        // This is UI state, so it's OK to keep it in localStorage
+        Storage.setItem("currentUser", currentUser);
+        
+        // 5. Navigate to the main app view
         currentView = "bookofthemonth"; 
-        updateView();
-    } else {
-        authError = "Error saving profile. User not found."; 
-        currentAuthProcessView = 'onboarding_questions'; 
+
+    } catch (error) {
+        console.error("Failed to save onboarding data to Firebase:", error);
+        authError = "There was a problem saving your profile. Please try again.";
+    } finally {
+        // 6. Re-render the app to show the new view or an error message
         updateView();
     }
 };
@@ -1781,7 +1806,7 @@ const handleSelectSearchedBookForAdd = (event) => {
 };
 
 
-const handleAddBookSubmit = (event) => {
+const handleAddBookSubmit = async (event) => {
     event.preventDefault();
     const title = addBook_formTitle.trim();
     const author = addBook_formAuthor.trim();
@@ -1797,7 +1822,7 @@ const handleAddBookSubmit = (event) => {
         };
         books.push(newBook);
         //Storage.setUserItem(currentUser.id, "books", books);
-        saveBooksToFirebase();
+        await saveBooksToFirebase();
         handleCloseAddBookModal(); 
     } else {
         alert("Book title is required.");
@@ -1814,7 +1839,7 @@ const handleAddBookFormInputChange = (event) => {
 
 
 // --- MyBooksView Handlers ---
-const handleBookAction = (event) => {
+const handleBookAction = async (event) => {
     if (!currentUser || !currentUser.id) return;
     const target = event.target as HTMLElement;
     const action = target.dataset.action;
@@ -1836,13 +1861,13 @@ const handleBookAction = (event) => {
         } else {
             books[bookIndex] = { ...books[bookIndex], status };
             //Storage.setUserItem(currentUser.id, "books", books);
-            saveBooksToFirebase();
+            await saveBooksToFirebase();
         }
     } else if (action === "delete-book") {
         if (confirm("Are you sure you want to delete this book?")) {
             books.splice(bookIndex, 1);
             //Storage.setUserItem(currentUser.id, "books", books);
-            saveBooksToFirebase();
+            await saveBooksToFirebase();
         }
     }
     updateView();
@@ -2104,21 +2129,32 @@ const handleSubmitBomProposal = async (event) => {
     handleCloseBomProposalModal(); 
 };
 
-const handleBomProposalVoteToggle = (event) => {
+const handleBomProposalVoteToggle = async (event: Event) => { // <-- Make it async
     event.stopPropagation();
     if (!currentUser) return;
-    const proposalId = (event.target as HTMLElement).dataset.proposalId;
+    
+    // Use .closest to make sure we get the proposalId even if the user clicks an icon inside the button
+    const button = (event.target as HTMLElement).closest('button');
+    const proposalId = button?.dataset.proposalId;
+    
     if (!proposalId) return;
 
+    // --- Start of new logic ---
+
+    // Find the proposal in the local state
     const targetProposalIndex = bomProposals.findIndex(p => p.id === proposalId);
     if (targetProposalIndex === -1) return;
 
-    const targetProposal = bomProposals[targetProposalIndex];
-    const proposalMonth = targetProposal.proposalMonthYear;
+    const proposalMonth = bomProposals[targetProposalIndex].proposalMonthYear;
     const userId = currentUser.id;
+    const userHadVotedForThis = bomProposals[targetProposalIndex].votes.includes(userId);
 
-    const userVotedForTarget = targetProposal.votes.includes(userId);
-
+    // --- Optimistic UI Update ---
+    // Update the local state immediately so the UI feels instant.
+    // We will revert this change if the server call fails.
+    
+    // 1. First, remove the user's vote from ANY proposal for that month
+    const originalProposalsState = JSON.parse(JSON.stringify(bomProposals)); // Deep copy for potential rollback
     bomProposals.forEach(p => {
         if (p.proposalMonthYear === proposalMonth) {
             const voteIndex = p.votes.indexOf(userId);
@@ -2128,12 +2164,43 @@ const handleBomProposalVoteToggle = (event) => {
         }
     });
 
-    if (!userVotedForTarget) {
+    // 2. If the user had NOT voted for this proposal, add their vote now
+    if (!userHadVotedForThis) {
         bomProposals[targetProposalIndex].votes.push(userId);
     }
-
-    Storage.setItem("bomProposals", bomProposals);
+    
+    // 3. Immediately re-render to show the new vote state
     updateView();
+
+    // --- Now, sync the change with the server ---
+    try {
+        const response = await fetch('/.netlify/functions/update-proposal-vote', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                proposalId: proposalId, 
+                userId: userId,
+                proposalMonth: proposalMonth // Send the month to help the backend logic
+            })
+        });
+
+        if (!response.ok) {
+            // If the server fails, throw an error to trigger the catch block
+            throw new Error("Failed to save vote to server.");
+        }
+
+        console.log("Vote successfully synced with Firebase.");
+
+    } catch (error) {
+        console.error("Error toggling vote:", error);
+        
+        // --- Rollback UI on Failure ---
+        // If the server call failed, revert the local state to what it was before the click
+        bomProposals = originalProposalsState;
+        alert("There was an error saving your vote. Please try again.");
+        
+        // Re-render to show the reverted (correct) state
+        updateView();
+    }
 };
 
 // --- Review Book Modal Handlers ---
@@ -2186,50 +2253,75 @@ const handleReviewBookCommentInputChange = (event) => {
     reviewBook_formComment = (event.target as HTMLTextAreaElement).value;
 };
 
-const processAndSaveReview = (submitReview: boolean) => {
+const processAndSaveReview = async (submitReview: boolean) => {
     if (!currentUser || !currentUser.id || !bookToReview) {
         handleCloseReviewBookModal();
         return;
     }
 
-    // Update book status to 'Read'
+    // --- Start of new logic ---
+
+    // 1. Find the book in the local array
     const bookIndex = books.findIndex(b => b.id === bookToReview!.id);
-    if (bookIndex !== -1) {
-        books[bookIndex].status = 'Read';
-        Storage.setUserItem(currentUser.id, "books", books);
+    if (bookIndex === -1) {
+        handleCloseReviewBookModal();
+        return; // Exit if the book isn't found
     }
 
+    // 2. Update the local state first for immediate UI feedback
+    books[bookIndex].status = 'Read';
+
+    // 3. Prepare an array of promises for all the server updates
+    const promisesToAwait = [];
+
+    // Always add the promise to update the user's book list
+    promisesToAwait.push(saveBooksToFirebase());
+
+    // Only add rating/comment promises if the user is submitting a review
     if (submitReview) {
-        // Check if the reviewed book is a BoM
         const reviewedBookTitleLower = bookToReview.title.toLowerCase();
-        const reviewedBookAuthorLower = (bookToReview.author || '').toLowerCase();
         const matchingBomEntry = bookOfTheMonthHistory.find(bom => 
-            bom.title.toLowerCase() === reviewedBookTitleLower &&
-            (bom.author || '').toLowerCase() === reviewedBookAuthorLower
+            bom.title.toLowerCase() === reviewedBookTitleLower
         );
 
         if (matchingBomEntry) {
             const bomId = matchingBomEntry.id;
-            // Save ratings
+
+            // Update local state for ratings/comments immediately
             if (!globalBomRatings[bomId]) globalBomRatings[bomId] = {};
             globalBomRatings[bomId][currentUser.id] = { ...reviewBook_formRatings };
-            Storage.setItem("globalBomRatings", globalBomRatings);
 
-            // Save comment if provided
+            // Add the save operation to our list of promises
+            promisesToAwait.push(saveRatingsToFirebase(bomId, reviewBook_formRatings));
+
             if (reviewBook_formComment.trim()) {
-                if (!globalBomComments[bomId]) globalBomComments[bomId] = {};
-                globalBomComments[bomId][currentUser.id] = {
+                const newComment = {
                     id: generateId(),
                     userId: currentUser.id,
                     userNameDisplay: currentUser.literaryPseudonym || currentUser.name,
                     text: reviewBook_formComment.trim(),
                     timestamp: Date.now()
                 };
-                Storage.setItem("globalBomComments", globalBomComments);
+                if (!globalBomComments[bomId]) globalBomComments[bomId] = {};
+                globalBomComments[bomId][currentUser.id] = newComment;
+                
+                // Add the save operation to our list of promises
+                promisesToAwait.push(saveCommentToFirebase(bomId, newComment));
             }
         }
     }
-    handleCloseReviewBookModal(); // This calls App()
+
+    try {
+        // 4. Execute all save operations in parallel and wait for them all to finish
+        await Promise.all(promisesToAwait);
+        console.log("Review data and book status synced successfully.");
+    } catch (error) {
+        console.error("Failed to sync review data with server:", error);
+        // Optionally, alert the user that the save failed
+    } finally {
+        // 5. Close the modal and re-render the app
+        handleCloseReviewBookModal();
+    }
 };
 
 const handleReviewBookSubmit = (event) => {
@@ -2258,6 +2350,62 @@ const saveBooksToFirebase = async () => {
     // You could show a "failed to save" icon to the user here
   }
 };
+
+const saveProfileToFirebase = async (profileData: UserProfile) => {
+    // Make sure we have a logged-in user before trying to save
+    if (!currentUser || !currentUser.id) {
+        console.error("Cannot save profile, no current user.");
+        return; // Exit if there's no user
+    }
+
+    try {
+        // Call your new Netlify function
+        const response = await fetch('/.netlify/functions/update-profile', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                userId: currentUser.id,
+                profileData: profileData // Send the entire profile object
+            })
+        });
+
+        if (!response.ok) {
+            console.error("Failed to save profile to Firebase:", await response.text());
+        } else {
+            console.log("Profile successfully synced with Firebase.");
+        }
+
+    } catch (error) {
+        console.error("Network error while saving profile:", error);
+    }
+};
+
+const saveUserToFirebase = async (userData: User) => {
+    if (!userData.id) {
+        console.error("Cannot save user, no ID provided.");
+        return;
+    }
+    // This will call a new backend function
+    await fetch('/.netlify/functions/update-user', {
+        method: 'POST',
+        body: JSON.stringify({ userId: userData.id, userData: userData })
+    });
+};
+
+const saveRatingsToFirebase = async (bomId: string, ratings: BomRatings) => {
+    if (!currentUser?.id) return;
+    await fetch('/.netlify/functions/add-rating', {
+        method: 'POST',
+        body: JSON.stringify({ bomId, userId: currentUser.id, ratings })
+    });
+};
+
+const saveCommentToFirebase = async (bomId: string, comment: BomComment) => {
+    await fetch('/.netlify/functions/add-comment', {
+        method: 'POST',
+        body: JSON.stringify({ bomId, commentData: comment })
+    });
+};
+
 
 // --- Chat Handlers ---
 const handleSendChatMessage = () => {
@@ -2290,7 +2438,7 @@ const handleSendChatMessage = () => {
 };
 
 // --- Profile Handlers ---
-const handleProfileSave = (event) => {
+const handleProfileSave = async (event: Event) => { // <-- 1. Added async and Event type
     event.preventDefault();
     if (!currentUser || !currentUser.id) return;
 
@@ -2298,23 +2446,46 @@ const handleProfileSave = (event) => {
     const nameInput = form.elements.namedItem('name') as HTMLInputElement;
     const bioInput = form.elements.namedItem('bio') as HTMLTextAreaElement;
 
-    const name = nameInput instanceof HTMLInputElement ? nameInput.value : userProfile.name;
-    const bio = bioInput instanceof HTMLTextAreaElement ? bioInput.value : userProfile.bio;
+    const newName = nameInput.value;
+    const newBio = bioInput.value;
 
-    const updatedProfile: UserProfile = { ...userProfile, name, bio }; 
-    Storage.setUserItem(currentUser.id, "profile", updatedProfile);
-    userProfile = updatedProfile; 
+    // --- Start of new logic ---
 
-    const userIndex = users.findIndex(u => u.id === currentUser!.id); 
-    if (userIndex !== -1) {
-        users[userIndex].name = name; 
-        Storage.setItem("users", users);
-        currentUser.name = name; 
+    // 1. Prepare the data objects
+    const updatedProfile: UserProfile = { ...userProfile, name: newName, bio: newBio };
+    const updatedUser: User = { ...currentUser, name: newName }; // We only need to update the name field here
+
+    // 2. Update the local state first for a snappy UI response
+    userProfile = updatedProfile;
+    currentUser = updatedUser;
+
+    try {
+        // 3. Save both data structures to Firebase in parallel and WAIT
+        await Promise.all([
+            saveProfileToFirebase(updatedProfile), // Saves the separate profile data
+            saveUserToFirebase(updatedUser)      // Saves the updated main user object
+        ]);
+
+        // 4. Update the main 'users' array in local memory
+        const userIndex = users.findIndex(u => u.id === currentUser!.id); 
+        if (userIndex !== -1) {
+            users[userIndex] = updatedUser;
+        }
+
+        // 5. Save the updated currentUser to localStorage for session persistence
         Storage.setItem("currentUser", currentUser);
+        
+        // Let the user know it was successful
+        alert("Profile saved!");
+
+    } catch (error) {
+        console.error("Failed to save profile:", error);
+        alert("There was an error saving your profile. Please try again.");
+        // Optional: Revert the local state changes if the save fails
+    } finally {
+        // 6. Re-render the app with the updated information
+        updateView();
     }
-    
-    alert("Profile saved!"); 
-    updateView();
 };
 
 // --- General Keypress Handlers ---
