@@ -8,23 +8,21 @@ import { getFirestore, collection, onSnapshot, doc, getDocs, setDoc, addDoc, upd
 // --- Your Firebase project's configuration ---
 // Get this from your Firebase project settings in the console
 const firebaseConfig = {
-  apiKey: "AIza...",
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "...",
-  appId: "..."
+  apiKey: "AIzaSyAFIWXm3HOZkcuoCWdKg_hn9mFoFyJArqQ",
+  authDomain: "book-hub-club.firebaseapp.com",
+  projectId: "book-hub-club",
+  storageBucket: "book-hub-club.firebasestorage.app",
+  messagingSenderId: "284120564183",
+  appId: "1:284120564183:web:83e5818edc1832f54c0b92"
 };
 
 // --- Initialize Firebase and Firestore ---
 let db; // Declare 'db' at the top level so all functions can access it
 
 const initializeFirebase = () => {
-    // Only initialize if it hasn't been already
-    if (!admin.apps.length) { // Or a similar check for the client SDK if needed
+    if (getApps().length === 0) {
         const firebaseApp = initializeApp(firebaseConfig);
         db = getFirestore(firebaseApp);
-        console.log("Firebase Initialized!"); // Add a log for debugging
     }
 };
 
