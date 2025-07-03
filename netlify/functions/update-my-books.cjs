@@ -1,6 +1,19 @@
-// NEW, SIMPLIFIED way in update-my-books.cjs
-const admin = require('./firebase-admin-init.js'); // Require our shared init file
-const { getFirestore } = require('firebase-admin/firestore');
+// File: netlify/functions/get-my-books.cjs
+// USES THE SAME PROVEN PATTERN AS get-proposals.cjs
+
+const admin = require('firebase-admin');
+
+// Initialize Firebase Admin, but only if it hasn't been already.
+// This prevents errors if multiple functions run in the same environment.
+if (admin.apps.length === 0) {
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf8')))
+    });
+  } catch (e) {
+    console.error("Firebase admin initialization error", e);
+  }
+}
 
 exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') {
