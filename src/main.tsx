@@ -422,7 +422,7 @@ const renderMainAverageRating = (overallValue: number, ratersCount: number) => {
     `;
 };
 
-const updateView = () => {
+function updateView () {
     // 1. Find the scrolling container and save its position
     const mainContent = document.getElementById(mainContentId);
     if (mainContent) {
@@ -2563,7 +2563,7 @@ const handleChatInputKeypress = (e: KeyboardEvent) => {
 };
 
 
-const attachEventListeners = () => {
+function attachEventListeners () {
     if (!currentUser) {
         document.querySelectorAll('[data-auth-action]').forEach(button => {
             button.removeEventListener('click', handleAuthAction);
@@ -2869,7 +2869,7 @@ const fetchBomProposals = async () => {
 
 // This is the new, corrected initializeApp function
 
-const initializeApp = async () => {
+async function initializeApp () {
     // 1. Load static data from localStorage first
     bookOfTheMonthHistory = Storage.getItem("bookOfTheMonthHistory", hardcodedBomHistory);
     chatMessages = Storage.getItem("chatMessagesGlobal", []);
@@ -2904,7 +2904,7 @@ const initializeApp = async () => {
 // --- Main App Component ---
 
 
-const renderApp = () => {
+function renderApp = ()  {
     const root = document.getElementById('root');
     if (!root) {
         console.error("Root element not found!");
