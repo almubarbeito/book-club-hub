@@ -2879,7 +2879,7 @@ const fetchBomProposals = async () => {
 
 async function initializeApp () {
     initializeFirebase(); // Connect to Firebase first thing.
-    
+
     // 1. Load static data from localStorage first
     bookOfTheMonthHistory = Storage.getItem("bookOfTheMonthHistory", hardcodedBomHistory);
     chatMessages = Storage.getItem("chatMessagesGlobal", []);
@@ -2914,7 +2914,7 @@ async function initializeApp () {
 // --- Main App Component ---
 
 
-function renderApp = ()  {
+function renderApp ()  {
     const root = document.getElementById('root');
     if (!root) {
         console.error("Root element not found!");
