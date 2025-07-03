@@ -2,7 +2,7 @@
 
 // Add this ENTIRE block to the very top of src/main.tsx
 
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, collection, onSnapshot, doc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, runTransaction, FieldValue } from "firebase/firestore";
 
 // --- Your Firebase project's configuration ---
@@ -23,6 +23,7 @@ const initializeFirebase = () => {
     if (getApps().length === 0) {
         const firebaseApp = initializeApp(firebaseConfig);
         db = getFirestore(firebaseApp);
+        console.log("Firebase Client SDK Initialized!");
     }
 };
 
