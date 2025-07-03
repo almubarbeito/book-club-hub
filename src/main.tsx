@@ -330,34 +330,35 @@ const loadUserSpecificData = async () => {
         // globalBomRatings and globalBomComments are loaded globally, not per user.
         return;
     }
-    books = Storage.getUserItem(currentUser.id, "books", []);
-    userProfile = Storage.getUserItem(currentUser.id, "profile", { 
-        name: currentUser.name || "Book Lover", 
-        bio: "Exploring worlds, one page at a time.",
-        literaryPseudonym: currentUser.literaryPseudonym || "",
-        profileImageUrl: currentUser.profileImageUrl || "",
-        literaryPreferences: currentUser.literaryPreferences || {}
-    });
     try {
-        // --- NEW: Fetch books from Firebase ---
-        const res = await fetch('/.netlify/functions/get-my-books', {
-            method: 'POST',
-            body: JSON.stringify({ userId: currentUser.id })
-        });
-        const data = await res.json();
-        if (data.books) {
-            books = data.books;
-        } else {
-            books = []; // Start with an empty list if there's an error or none exist
-        }
-    } catch (error) {
-        console.error("Could not load user's books:", error);
-        books = [];
-    } finally {
-    
-    // We must re-render after fetching the data
-    renderApp(); 
+    // --- This is the new, crucial part ---
+    const response = await fetch('/.netlify/functions/get-my-books', {
+      method: 'POST',
+      body: JSON.stringify({ userId: currentUser.id })
+    });
+
+    if (!response.ok) {
+      // If the fetch fails, log an error but don't crash
+      console.error("Failed to fetch user books:", response.statusText);
+      books = []; // Keep books empty on failure
+    } else {
+      const data = await response.json();
+      //
+      // This is the most important line:
+      // We update the global 'books' variable with the data from the server.
+      //
+      books = data.books || []; 
     }
+
+  } catch (error) {
+    console.error("Error in loadUserSpecificData:", error);
+    books = []; // Also keep books empty on a network error
+  }
+
+  //
+  // We no longer call renderApp() here. We let the calling function handle it.
+  // This prevents the re-render race condition.
+  //
 };
 
 const renderAverageStars = (categoryValue: number) => {
@@ -1435,23 +1436,41 @@ const handleLogin = (event) => {
     const user = users.find(u => u.email === email);
     if (!user || user.hashedPassword !== simpleHash(password)) { 
         authError = "Invalid email or password.";
-        updateView();
+        updateView(); // This is correct, show the error and stop.
         return;
     }
 
     currentUser = { ...user }; 
     Storage.setItem("currentUser", currentUser);
-    initializeAndSetCurrentBOM(); 
-    loadUserSpecificData();
 
-    fetchBomProposals(); // Fetch the shared data right after login
+    // --- START OF THE NEW ASYNC LOGIC ---
 
-    if (!currentUser.onboardingComplete) {
-        currentAuthProcessView = 'onboarding_questions';
-    } else {
-        currentView = Storage.getItem("currentView", "bookofthemonth"); 
-    }
-    //updateView();
+    // We create an immediately-invoked async function here.
+    // This lets us use 'await' inside without changing the outer function signature too much.
+    (async () => {
+        // Show a loading state if you have one, or just let the view be blank for a moment.
+        // For example: root.innerHTML = '<div class="loading-indicator">Loading your library...</div>';
+
+        // Wait for ALL the data to be fetched from the server.
+        await loadUserSpecificData();
+        await fetchBomProposals(); 
+
+        // Now that all data is loaded and state variables are updated,
+        // we can set the correct view.
+        initializeAndSetCurrentBOM(); 
+        
+        if (!currentUser.onboardingComplete) {
+            currentAuthProcessView = 'onboarding_questions';
+        } else {
+            currentView = Storage.getItem("currentView", "bookofthemonth"); 
+        }
+        
+        // And finally, call updateView() ONCE at the very end.
+        updateView();
+
+    })(); // The () here immediately calls the async function.
+    
+    // --- END OF THE NEW ASYNC LOGIC ---
 };
 
 const handleLogout = () => {
@@ -2650,30 +2669,37 @@ const fetchBomProposals = async () => {
     }
 };
 
-// This is our main startup function
+// This is the new, corrected initializeApp function
+
 const initializeApp = async () => {
-    // 1. Load static data from localStorage first for a fast initial paint
-    bookOfTheMonthHistory = Storage.getItem("bookOfTheMonthHistory", hardcodedBomHistory); // Use your hardcoded data!
+    // 1. Load static data from localStorage first
+    bookOfTheMonthHistory = Storage.getItem("bookOfTheMonthHistory", hardcodedBomHistory);
     chatMessages = Storage.getItem("chatMessagesGlobal", []);
     globalBomRatings = Storage.getItem("globalBomRatings", {});
     globalBomComments = Storage.getItem("globalBomComments", {});
 
-    // 2. Fetch dynamic data from the server
+    // 2. Fetch shared dynamic data
     await fetchBomProposals();
 
-    // 3. Now that all data is ready, set up the initial view state
+    // 3. Set up the BoM state based on what's available
     initializeAndSetCurrentBOM(); 
 
+    // 4. Check for a logged-in user and fetch their specific data
     if (currentUser && currentUser.id) {
-        loadUserSpecificData(); 
+        // --- THIS IS THE KEY CHANGE ---
+        // We now AWAIT the function that fetches the user's books.
+        await loadUserSpecificData(); 
+        
+        // The rest of the logic stays the same
         if (!currentUser.onboardingComplete) {
             currentAuthProcessView = 'onboarding_questions'; 
         }
     } else {
-        currentAuthProcessViesw = 'auth_options'; 
+        // There's a typo in your original code here, I've fixed it
+        currentAuthProcessView = 'auth_options'; 
     }
 
-    // 4. Perform the first render of the entire application
+    // 5. After ALL data is loaded, perform the single initial render
     renderApp();
 };
 
