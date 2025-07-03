@@ -17,8 +17,16 @@ const firebaseConfig = {
 };
 
 // --- Initialize Firebase and Firestore ---
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
+let db; // Declare 'db' at the top level so all functions can access it
+
+const initializeFirebase = () => {
+    // Only initialize if it hasn't been already
+    if (!admin.apps.length) { // Or a similar check for the client SDK if needed
+        const firebaseApp = initializeApp(firebaseConfig);
+        db = getFirestore(firebaseApp);
+        console.log("Firebase Initialized!"); // Add a log for debugging
+    }
+};
 
 // =======================================================
 // The rest of your existing code starts here...
@@ -2870,6 +2878,8 @@ const fetchBomProposals = async () => {
 // This is the new, corrected initializeApp function
 
 async function initializeApp () {
+    initializeFirebase(); // Connect to Firebase first thing.
+    
     // 1. Load static data from localStorage first
     bookOfTheMonthHistory = Storage.getItem("bookOfTheMonthHistory", hardcodedBomHistory);
     chatMessages = Storage.getItem("chatMessagesGlobal", []);
