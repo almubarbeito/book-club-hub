@@ -1,6 +1,7 @@
 // File: netlify/functions/update-my-books.cjs
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
+const admin = require('firebase-admin');
 
 // Initialize Firebase Admin (same as above)
 try {
