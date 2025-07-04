@@ -3,7 +3,7 @@
 // Add this ENTIRE block to the very top of src/main.tsx
 
 import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, collection, onSnapshot, doc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, runTransaction, FieldValue } from "firebase/firestore";
+import { getFirestore, collection, onSnapshot, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, runTransaction, FieldValue } from "firebase/firestore";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 
 // --- Your Firebase project's configuration ---
