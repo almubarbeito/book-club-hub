@@ -4,6 +4,7 @@
 
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, collection, onSnapshot, doc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, runTransaction, FieldValue } from "firebase/firestore";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut} from "firebase/auth";
 
 // --- Your Firebase project's configuration ---
 // Get this from your Firebase project settings in the console
@@ -18,12 +19,14 @@ const firebaseConfig = {
 
 // --- Initialize Firebase and Firestore ---
 let db; // Declare 'db' at the top level so all functions can access it
+let auth;
 
 const initializeFirebase = () => {
     if (getApps().length === 0) {
         const firebaseApp = initializeApp(firebaseConfig);
         db = getFirestore(firebaseApp);
-        console.log("Firebase Client SDK Initialized!");
+        auth = getAuth(firebaseApp); 
+        console.log("Firebase Services (Auth & Firestore) Initialized!");
     }
 };
 
@@ -1404,7 +1407,9 @@ const handleDeleteBomProposal = async (event: Event) => {
     }
 };
 
-const handleRegister = (event) => {
+// This is the new, complete handleRegister function
+
+const handleRegister = async (event: Event) => {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
     const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim();
@@ -1412,6 +1417,7 @@ const handleRegister = (event) => {
     const confirmPassword = (form.elements.namedItem('confirmPassword') as HTMLInputElement).value;
     authError = null;
 
+    // --- Step 1: Frontend Validation (This part is the same) ---
     if (password !== confirmPassword) {
         authError = "Passwords do not match.";
         updateView();
@@ -1423,112 +1429,154 @@ const handleRegister = (event) => {
         return;
     }
 
-    const existingUser = users.find(u => u.email === email);
-    if (existingUser) {
-        authError = "User with this email already exists.";
+    // --- Step 2: Create the User with Firebase Auth ---
+    try {
+        // This securely creates the user on Google's servers.
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const firebaseUser = userCredential.user;
+
+        // --- Step 3: Prepare the Initial Data for Firestore ---
+        // We now use the secure firebaseUser.uid as the user's ID
+        const newUserData: User = {
+            id: firebaseUser.uid, 
+            email: firebaseUser.email!,
+            hashedPassword: '', // We NO LONGER store passwords at all. Firebase handles it.
+            onboardingComplete: false,
+            name: email.split('@')[0], // A default name
+            literaryPseudonym: '',
+            profileImageUrl: '',
+            literaryPreferences: {}
+        };
+
+        const newUserProfile: UserProfile = {
+            name: newUserData.name, 
+            bio: "Just joined the club!",
+            literaryPseudonym: '',
+            profileImageUrl: '',
+            literaryPreferences: {}
+        };
+        
+        // --- Step 4: Save the Initial Data to Firestore ---
+        // We wait for these to complete.
+        await Promise.all([
+            saveUserToFirebase(newUserData),
+            saveProfileToFirebase(newUserProfile) 
+            // We don't need to save books, they start as an empty collection
+        ]);
+
+        // --- Step 5: Update Local State and Proceed ---
+        // The user is now officially created and their data is in the database.
+        currentUser = newUserData;
+        userProfile = newUserProfile;
+        Storage.setItem("currentUser", currentUser); // Keep them logged in for this session
+
+        currentAuthProcessView = 'onboarding_questions';
+
+    } catch (error: any) {
+        // --- Step 6: Handle Firebase Errors ---
+        console.error("Firebase registration error:", error);
+        // Firebase gives nice, user-friendly error messages
+        if (error.code === 'auth/email-already-in-use') {
+            authError = "This email address is already registered.";
+        } else {
+            authError = "Could not create account. Please try again.";
+        }
+    } finally {
+        // --- Step 7: Re-render the UI ---
+        // This will either show the error message or move to the onboarding screen.
         updateView();
-        return;
     }
-
-    const userId = generateId();
-    const newUser: User = {
-        id: userId,
-        email: email,
-        hashedPassword: simpleHash(password), 
-        onboardingComplete: false,
-        name: email.split('@')[0], 
-        literaryPseudonym: '',
-        profileImageUrl: '',
-        literaryPreferences: {}
-    };
-    users.push(newUser);
-    Storage.setItem("users", users);
-
-    currentUser = { ...newUser }; 
-    Storage.setItem("currentUser", currentUser);
-    
-    Storage.setUserItem(currentUser.id, "profile", { 
-        name: currentUser.name, 
-        bio: "Just joined the club!",
-        literaryPseudonym: '',
-        profileImageUrl: '',
-        literaryPreferences: {}
-    } as UserProfile);
-    Storage.setUserItem(currentUser.id, "books", []);
-    // globalBomRatings and globalBomComments are not user-specific, no need to init here per user
-
-    currentAuthProcessView = 'onboarding_questions';
-    loadUserSpecificData(); 
-    updateView();
 };
 
-const handleLogin = (event) => {
+const handleLogin = async (event: Event) => {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
     const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim();
     const password = (form.elements.namedItem('password') as HTMLInputElement).value;
     authError = null;
+    updateView(); // Clear previous error messages immediately
 
-    const user = users.find(u => u.email === email);
-    if (!user || user.hashedPassword !== simpleHash(password)) { 
-        authError = "Invalid email or password.";
-        updateView(); // This is correct, show the error and stop.
-        return;
-    }
+    try {
+        // --- Step 1: Sign in with Firebase Auth ---
+        // This securely checks the user's credentials against Google's servers.
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const firebaseUser = userCredential.user;
 
-    currentUser = { ...user }; 
-    Storage.setItem("currentUser", currentUser);
+        // --- Step 2: Fetch the user's profile data from YOUR Firestore database ---
+        // We need a helper function for this.
+        const userDocData = await getUserDataFromFirestore(firebaseUser.uid);
 
-    // --- START OF THE NEW ASYNC LOGIC ---
+        if (!userDocData) {
+            // This is an edge case, but good to handle.
+            // It means they exist in Firebase Auth but not in your 'users' collection.
+            throw new Error("User profile not found in database.");
+        }
 
-    // We create an immediately-invoked async function here.
-    // This lets us use 'await' inside without changing the outer function signature too much.
-    (async () => {
-        // Show a loading state if you have one, or just let the view be blank for a moment.
-        // For example: root.innerHTML = '<div class="loading-indicator">Loading your library...</div>';
+        // --- Step 3: Set Local State and Fetch Other Data ---
+        currentUser = userDocData as User; // We now have the full user object
+        Storage.setItem("currentUser", currentUser); // Persist the session
 
-        // Wait for ALL the data to be fetched from the server.
-        await loadUserSpecificData();
-        await fetchBomProposals(); 
+        // Fetch all other necessary data in parallel
+        await Promise.all([
+            loadUserSpecificData(), // Fetches this user's books
+            fetchBomProposals()     // Fetches the global proposals
+        ]);
 
-        // Now that all data is loaded and state variables are updated,
-        // we can set the correct view.
-        listenToUserData(); 
-        initializeAndSetCurrentBOM(); 
-        
+        // --- Step 4: Set the View and Re-render ---
+        initializeAndSetCurrentBOM();
+        listenToUserData(); // Start real-time listeners
+
         if (!currentUser.onboardingComplete) {
             currentAuthProcessView = 'onboarding_questions';
         } else {
-            currentView = Storage.getItem("currentView", "bookofthemonth"); 
+            currentView = Storage.getItem("currentView", "bookofthemonth");
         }
-        
-        // And finally, call updateView() ONCE at the very end.
-        //updateView();
 
-    })(); // The () here immediately calls the async function.
-    
-    // --- END OF THE NEW ASYNC LOGIC ---
+    } catch (error: any) {
+        // --- Step 5: Handle Firebase Errors ---
+        console.error("Firebase login error:", error);
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            authError = "Invalid email or password. Please try again.";
+        } else {
+            authError = "An error occurred during login.";
+        }
+    } finally {
+        // --- Step 6: Final Render ---
+        updateView(); // This will show the app or the error message
+    }
 };
 
-const handleLogout = () => {
-    // Detach the listeners
-    unsubscribeBooks();
-    unsubscribeProposals();
+const handleLogout = async () => {
+    try {
+        // --- Step 1: Tell Firebase to sign the user out ---
+        await signOut(auth);
+        console.log("User signed out from Firebase.");
 
-    currentUser = null;
-    Storage.setItem("currentUser", null);
-    books = [];
-    userProfile = { name: "Book Lover", bio: "Exploring worlds, one page at a time.", literaryPseudonym: "", profileImageUrl: "", literaryPreferences: {} };
-    // globalBomRatings and globalBomComments remain as they are global
-    myBooksSearchTerm = '';
-    discussionStarters = [];
-    isLoadingDiscussionStarters = false;
-    discussionStartersError = null;
-    currentView = 'bookofthemonth'; 
-    currentAuthProcessView = 'auth_options';
-    authError = null;
-    initializeAndSetCurrentBOM(); 
-    updateView();
+        // --- Step 2: Detach real-time listeners to prevent memory leaks ---
+        if (typeof unsubscribeBooks === 'function') unsubscribeBooks();
+        if (typeof unsubscribeProposals === 'function') unsubscribeProposals();
+        
+        // --- Step 3: Clear all local state ---
+        currentUser = null;
+        Storage.setItem("currentUser", null); // Clear the session
+        books = [];
+        userProfile = { /* ... default empty profile ... */ };
+        myBooksSearchTerm = '';
+        discussionStarters = [];
+        
+        // --- Step 4: Reset the view ---
+        currentView = 'bookofthemonth';
+        currentAuthProcessView = 'auth_options';
+        authError = null;
+
+    } catch (error) {
+        console.error("Error signing out:", error);
+        // Even if Firebase logout fails, we should still clear local state
+        // to put the app in a predictable state.
+    } finally {
+        // --- Step 5: Re-render the app to show the login screen ---
+        updateView();
+    }
 };
 
 
@@ -2443,6 +2491,22 @@ const saveCommentToFirebase = async (bomId: string, comment: BomComment) => {
     });
 };
 
+const getUserDataFromFirestore = async (userId: string) => {
+    if (!userId) return null;
+    try {
+        const userDocRef = doc(db, 'users', userId); // Assumes 'db' is your initialized Firestore instance
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+            return docSnap.data() as User;
+        } else {
+            console.warn("No such user document in Firestore!");
+            return null;
+        }
+    } catch (error) {
+        console.error("Error getting user document:", error);
+        return null;
+    }
+};
 
 // --- Chat Handlers ---
 const handleSendChatMessage = () => {
