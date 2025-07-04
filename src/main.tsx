@@ -2940,40 +2940,64 @@ const fetchBomProposals = async () => {
 
 // This is the new, corrected initializeApp function
 
-async function initializeApp () {
-    initializeFirebase(); // Connect to Firebase first thing.
+function startApp() {
+    // 1. Initialize Firebase services first
+    initializeFirebase();
 
-    // 1. Load static data from localStorage first
-    bookOfTheMonthHistory = Storage.getItem("bookOfTheMonthHistory", hardcodedBomHistory);
-    chatMessages = Storage.getItem("chatMessagesGlobal", []);
-    globalBomRatings = Storage.getItem("globalBomRatings", {});
-    globalBomComments = Storage.getItem("globalBomComments", {});
-
-    // 2. Fetch shared dynamic data
-    await fetchBomProposals();
-
-    // 3. Set up the BoM state based on what's available
-    initializeAndSetCurrentBOM(); 
-
-    // 4. Check for a logged-in user and fetch their specific data
-    if (currentUser && currentUser.id) {
-        // --- THIS IS THE KEY CHANGE ---
-        // We now AWAIT the function that fetches the user's books.
-        await loadUserSpecificData(); 
+    // 2. Set up an authentication state listener.
+    // This is the most important part. This function will run automatically
+    // right now, and also any time a user logs in or logs out.
+    onAuthStateChanged(auth, async (firebaseUser) => {
         
-        // The rest of the logic stays the same
-        if (!currentUser.onboardingComplete) {
-            currentAuthProcessView = 'onboarding_questions'; 
+        // --- This block runs when a user logs in or is already logged in ---
+        if (firebaseUser) {
+            // A. Fetch the user's profile from YOUR Firestore database
+            const userDocData = await getUserDataFromFirestore(firebaseUser.uid);
+            if (userDocData) {
+                currentUser = userDocData; // Set the global currentUser
+                Storage.setItem("currentUser", currentUser); // Persist session for refresh
+                
+                // B. Fetch all other data needed for a logged-in user
+                await Promise.all([
+                    loadUserSpecificData(), // Gets the user's books
+                    fetchBomProposals()     // Gets the global proposals
+                ]);
+
+                // C. Set the correct view based on onboarding status
+                if (!currentUser.onboardingComplete) {
+                    currentAuthProcessView = 'onboarding_questions';
+                } else {
+                    currentView = Storage.getItem("currentView", "bookofthemonth");
+                }
+
+            } else {
+                // This is an edge case where a user exists in Auth but not your DB
+                console.error("User authenticated but no profile found in Firestore. Logging out.");
+                await signOut(auth); // Log them out to prevent a broken state
+                currentUser = null;
+                Storage.setItem("currentUser", null);
+                currentAuthProcessView = 'auth_options';
+            }
+
+        // --- This block runs when a user logs out or is not logged in ---
+        } else {
+            // Clear all user-specific state
+            currentUser = null;
+            Storage.setItem("currentUser", null);
+            books = [];
+            
+            // Fetch public data
+            await fetchBomProposals();
+            
+            currentAuthProcessView = 'auth_options';
         }
-    } else {
-        // There's a typo in your original code here, I've fixed it
-        currentAuthProcessView = 'auth_options'; 
-    }
 
-    // 5. After ALL data is loaded, perform the single initial render
-    renderApp();
-};
-
+        // --- Final Step: Render the app ---
+        // This runs after all authentication and data fetching is complete.
+        initializeAndSetCurrentBOM();
+        renderApp();
+    });
+}
 // --- Main App Component ---
 
 
@@ -3011,5 +3035,5 @@ function renderApp ()  {
 
 
 // --- START THE APP ---
-initializeApp();
+startApp();
 
