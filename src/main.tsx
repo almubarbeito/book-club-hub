@@ -2948,13 +2948,16 @@ function startApp() {
     // This is the most important part. This function will run automatically
     // right now, and also any time a user logs in or logs out.
     onAuthStateChanged(auth, async (firebaseUser) => {
+        console.log("Auth state changed. Firebase user:", firebaseUser); // Debug 1
         
         // --- This block runs when a user logs in or is already logged in ---
         if (firebaseUser) {
             // A. Fetch the user's profile from YOUR Firestore database
             const userDocData = await getUserDataFromFirestore(firebaseUser.uid);
+            console.log("Fetched user data from Firestore:", userDocData); // Debug 2
             if (userDocData) {
                 currentUser = userDocData; // Set the global currentUser
+                console.log("Global currentUser object is now:", currentUser); // Debug 3
                 Storage.setItem("currentUser", currentUser); // Persist session for refresh
                 
                 // B. Fetch all other data needed for a logged-in user
