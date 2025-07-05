@@ -502,7 +502,7 @@ function updateView () {
     }
     // Reset for next time
     savedScrollPosition = null; 
-};
+}
 
 // --- Rendering Functions ---
 
