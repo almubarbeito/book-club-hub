@@ -2763,7 +2763,7 @@ function attachEventListeners () {
         });
     }
 
-    // --- 2. Handle the book search functionality ---
+// --- 2. Handle the book search functionality ---
     const bookSearchInput = document.getElementById('bookSearchText');
     if (bookSearchInput) {
         // Listen for typing in the search bar
@@ -2774,7 +2774,7 @@ function attachEventListeners () {
         const keypressHandler = (e: KeyboardEvent) => handleSearchInputKeypress(e, 'performBookSearchButton');
         bookSearchInput.removeEventListener('keypress', keypressHandler as EventListener);
         bookSearchInput.addEventListener('keypress', keypressHandler as EventListener);
-    }
+    }    
     
     const performSearchButton = document.getElementById('performBookSearchButton');
     if (performSearchButton) {
