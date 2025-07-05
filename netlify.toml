@@ -1,21 +1,22 @@
-# File: netlify.toml - CORRECTED VERSION
+# This is the definitive netlify.toml for your project structure
 
-# This section defines your build process
+# The [build] settings tell Netlify what to do for your FRONTEND
 [build]
-# Base directory: where to run the build command from
-  base = "frontend/"
-  command = "npm run build"
-  publish = "dist/"
+  # "Start in the 'frontend' folder"
+  base = "frontend"
   
-# This is the correct way to define the directory for ALL functions.
-# Netlify will automatically look for .js files inside this folder.
-# This is simpler and less error-prone than declaring each one.
+  # "Inside the 'frontend' folder, run this command"
+  command = "npm run build"
+  
+  # "After the build, the final website is in the 'frontend/dist' folder"
+  publish = "frontend/dist"
+
+# The [functions] settings tell Netlify about your BACKEND
 [functions]
+  # "The functions are in a folder named 'netlify/functions' at the project root"
   directory = "netlify/functions"
 
-  external_node_modules = ["node-fetch"]
-
-# This is a helpful rule for Single Page Applications
+# The redirect rule for Single Page Applications
 [[redirects]]
   from = "/*"
   to = "/index.html"
