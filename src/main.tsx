@@ -113,37 +113,6 @@ interface BomProposal {
     votes: string[]; // Array of user IDs who voted for this
     timestamp: number;
 }
-
-
-// --- Constants & Initial Data ---
-
-// --- NEW: Central Application State ---
-let appState = {
-    currentUser: Storage.getItem("currentUser", null) as User | null,
-    currentView: Storage.getItem("currentView", "bookofthemonth"),
-    // Add all your other state variables here
-    books: [],
-    bomProposals: [],
-    authError: null,
-};
-
-// --- NEW: The ONLY function that should be used to change state ---
-function setState(newState: Partial<typeof appState>) {
-    // Merge the new state properties into the old state
-    appState = { ...appState, ...newState };
-    // Trigger a re-render AFTER the state has been updated
-    renderApp();
-}
-
-
-const DEFAULT_BOM_SEED: Omit<BomEntry, 'id' | 'monthYear' | 'setBy'> = {
-    title: "The Midnight Library",
-    author: "Matt Haig",
-    description: "Between life and death there is a library, and within that library, the shelves go on forever. Every book provides a chance to try another life you could have lived. To see how things would be if you had made other choices... Would you have done anything different, if you had the chance to undo your regrets?",
-    promptHint: "themes of regret, choices, and parallel lives",
-    coverImageUrl: "https://covers.openlibrary.org/b/id/10309991-L.jpg",
-};
-
 // --- localStorage Utilities ---
 const Storage = {
     getItem: (key, defaultValue) => {
@@ -169,6 +138,35 @@ const Storage = {
         if (!userId) return;
         Storage.setItem(`user_${userId}_${key}`, value);
     }
+};
+
+// --- Constants & Initial Data ---
+
+// --- NEW: Central Application State ---
+let appState = {
+    currentUser: null, 
+    currentView: Storage.getItem("currentView", "bookofthemonth"),
+    // Add all your other state variables here
+    books: [],
+    bomProposals: [],
+    authError: null,
+};
+
+// --- NEW: The ONLY function that should be used to change state ---
+function setState(newState: Partial<typeof appState>) {
+    // Merge the new state properties into the old state
+    appState = { ...appState, ...newState };
+    // Trigger a re-render AFTER the state has been updated
+    renderApp();
+}
+
+
+const DEFAULT_BOM_SEED: Omit<BomEntry, 'id' | 'monthYear' | 'setBy'> = {
+    title: "The Midnight Library",
+    author: "Matt Haig",
+    description: "Between life and death there is a library, and within that library, the shelves go on forever. Every book provides a chance to try another life you could have lived. To see how things would be if you had made other choices... Would you have done anything different, if you had the chance to undo your regrets?",
+    promptHint: "themes of regret, choices, and parallel lives",
+    coverImageUrl: "https://covers.openlibrary.org/b/id/10309991-L.jpg",
 };
 
 // --- State Management (Global) ---
