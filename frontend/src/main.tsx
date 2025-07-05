@@ -1,6 +1,7 @@
 
 
 // Add this ENTIRE block to the very top of src/main.tsx
+import './index.css';
 
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, collection, onSnapshot, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, runTransaction, FieldValue } from "firebase/firestore";
@@ -3002,8 +3003,7 @@ async function fetchBomProposals() {
 }
 
 // ====================================================================
-// THIS IS THE FINAL AND CORRECT STARTUP LOGIC
-// It should be at the end of your file, before any top-level calls.
+// THE FINAL AND CORRECT STARTUP LOGIC
 // ====================================================================
 
 async function startApplication() {
@@ -3011,51 +3011,50 @@ async function startApplication() {
     initializeFirebase();
 
     // 2. Fetch public data that anyone can see.
+    // We await this so the proposals are ready for the first paint.
     await fetchBomProposals();
-    initializeAndSetCurrentBOM(); // This can run now as it doesn't need a user
-
+    
     // 3. Set up the listener that reacts to login/logout state.
-    // This is the core of your app's dynamic behavior.
     onAuthStateChanged(auth, async (firebaseUser) => {
+        // --- This block runs on initial load, and on every login/logout ---
+        
         if (firebaseUser) {
-            // --- USER IS LOGGED IN ---
+            // USER IS LOGGED IN
             const userDocData = await getUserDataFromFirestore(firebaseUser.uid);
             if (userDocData) {
+                // Set all the user-specific state variables
                 currentUser = userDocData;
-                Storage.setItem("currentUser", currentUser);
+                await loadUserSpecificData(); // This fetches books and profile
                 
-                await loadUserSpecificData(); // Fetch this user's books
-
+                // Set the correct view
                 if (!currentUser.onboardingComplete) {
                     currentAuthProcessView = 'onboarding_questions';
                 } else {
                     currentView = Storage.getItem("currentView", "bookofthemonth");
                 }
             } else {
-                // Handle edge case: user in Auth but not DB
-                console.error("User in Auth but not DB. Forcing logout.");
+                // Handle edge case: user in Auth but not in your DB
                 await signOut(auth);
                 currentUser = null;
-                Storage.setItem("currentUser", null);
                 currentAuthProcessView = 'auth_options';
             }
         } else {
-            // --- USER IS LOGGED OUT ---
+            // USER IS LOGGED OUT
             currentUser = null;
-            Storage.setItem("currentUser", null);
             books = []; // Clear personal data
             currentAuthProcessView = 'auth_options';
         }
 
-        // 4. After every auth change (login/logout), re-render the entire app.
-        renderApp();
+        // --- Final Step after every auth change ---
+        // This calculates which book to show based on the current state
+        initializeAndSetCurrentBOM();
+        
+        // NOW, call your main update/render function
+        updateView(); 
     });
 }
 
-// ====================================================================
-// THE ONLY LINE TO START EVERYTHING, WRAPPED IN DOMContentLoaded
-// ====================================================================
-
+// THE ONLY GLOBAL CALL to kick everything off
 document.addEventListener('DOMContentLoaded', () => {
     startApplication();
 });
