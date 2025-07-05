@@ -21,14 +21,14 @@ const firebaseConfig = {
 let db; // Declare 'db' at the top level so all functions can access it
 let auth;
 
-const initializeFirebase = () => {
+function initializeFirebase() {
     if (getApps().length === 0) {
         const firebaseApp = initializeApp(firebaseConfig);
         db = getFirestore(firebaseApp);
         auth = getAuth(firebaseApp); 
         console.log("Firebase Services (Auth & Firestore) Initialized!");
     }
-};
+}
 
 // =======================================================
 // The rest of your existing code starts here...
@@ -333,7 +333,7 @@ function renderApp ()  {
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
-const simpleHash = (password) => {
+function simpleHash(password) {
     let hash = 0;
     for (let i = 0; i < password.length; i++) {
         const char = password.charCodeAt(i);
@@ -341,16 +341,16 @@ const simpleHash = (password) => {
         hash |= 0; 
     }
     return `hashed_${hash}_${password.length}`; 
-};
+}
 
-const getCurrentMonthYearString = (): string => {
+function getCurrentMonthYearString(): string {
     const now = new Date();
     const year = now.getFullYear();
     const month = (now.getMonth() + 1).toString().padStart(2, '0'); // JavaScript months are 0-indexed
     return `${year}-${month}`;
-};
+}
 
-const getNextMonthYearString = (): string => {
+function getNextMonthYearString(): string {
     const now = new Date();
     let year = now.getFullYear();
     let month = now.getMonth() + 1; // Current month (1-12)
@@ -361,17 +361,17 @@ const getNextMonthYearString = (): string => {
         year++;
     }
     return `${year}-${month.toString().padStart(2, '0')}`;
-};
+}
 
-const formatMonthYearForDisplay = (monthYear: string): string => {
+function formatMonthYearForDisplay(monthYear: string): string  {
     if (!monthYear || !/^\d{4}-\d{2}$/.test(monthYear)) return "Invalid Date";
     const [year, monthNum] = monthYear.split('-');
     const date = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
     return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
-};
+}
 
 
-const initializeAndSetCurrentBOM = () => {
+function initializeAndSetCurrentBOM() {
     //const currentMonthStr = getCurrentMonthYearString();
     // --- TEMPORARY CHANGE FOR TESTING ---
 const currentMonthStr = "2025-07"; 
@@ -406,10 +406,10 @@ const currentMonthStr = "2025-07";
         activeBomId = null;
         discussionStarters = [];
     }
-};
+}
 
 
-const loadUserSpecificData = async () => {
+async function loadUserSpecificData()  {
     if (!currentUser || !currentUser.id) {
         books = [];
         userProfile = { 
@@ -451,18 +451,18 @@ const loadUserSpecificData = async () => {
   // We no longer call renderApp() here. We let the calling function handle it.
   // This prevents the re-render race condition.
   //
-};
+}
 
-const renderAverageStars = (categoryValue: number) => {
+function renderAverageStars(categoryValue: number) {
     let starsHtml = '';
     const roundedRating = Math.round(categoryValue);
     for (let i = 1; i <= 5; i++) {
         starsHtml += `<span class="material-icons static-star ${i <= roundedRating ? 'filled' : ''}" aria-label="${i} star">${i <= roundedRating ? 'star' : 'star_border'}</span>`;
     }
     return `${starsHtml} (${categoryValue.toFixed(1)} average)`;
-};
+}
 
-const renderMainAverageRating = (overallValue: number, ratersCount: number) => {
+function renderMainAverageRating(overallValue: number, ratersCount: number) {
     if (ratersCount === 0) {
         return `<p class="main-rating-no-reviews">Be the first to read and review!</p>`;
     }
@@ -483,7 +483,7 @@ const renderMainAverageRating = (overallValue: number, ratersCount: number) => {
             <span class="main-rating-text">${overallValue.toFixed(1)} average rating • ${ratersCount} review(s)</span>
         </div>
     `;
-};
+}
 
 function updateView () {
     // 1. Find the scrolling container and save its position
@@ -506,18 +506,18 @@ function updateView () {
 
 // --- Rendering Functions ---
 
-const MyBooksView = () => {
+function MyBooksView() {
     const searchTerm = myBooksSearchTerm.toLowerCase();
 
     const readingBooks = books.filter(book => book.status === 'Reading');
     const otherBooks = books.filter(book => book.status !== 'Reading');
 
-    const filterBySearchTerm = (book: Book) => {
+    function filterBySearchTerm(book: Book) {
         if (!searchTerm) return true;
         const titleMatch = book.title.toLowerCase().includes(searchTerm);
         const authorMatch = (book.author || '').toLowerCase().includes(searchTerm);
         return titleMatch || authorMatch;
-    };
+    }
 
     const filteredReadingBooks = readingBooks.filter(filterBySearchTerm);
     const filteredOtherBooks = otherBooks.filter(filterBySearchTerm);
@@ -563,10 +563,10 @@ const MyBooksView = () => {
             ${booksHtml}
         </div>
     `;
-};
+}
 
 
-const BookOfTheMonthView = () => {
+function BookOfTheMonthView() {
     // This is a good debug log to keep for now.
     console.log("Rendering BookOfTheMonthView. currentBomToDisplay is:", currentBomToDisplay);
 
@@ -728,13 +728,13 @@ if (allRatingsForThisBom) {
             ${currentUser ? renderBomProposalSection() : ''}
         </div>
     `;
-};
+}
 
 
 // This is the new, correct version of the function.
 // Replace your old one with this.
 
-const renderBomProposalSection = () => {
+function renderBomProposalSection() {
     if (!currentUser) return '';
 
     const nextMonthTarget = getNextMonthYearString();
@@ -810,9 +810,9 @@ const renderBomProposalSection = () => {
             `}
         </div>
     `;
-};
+}
 
-const renderBomProposalModal = () => {
+function renderBomProposalModal() {
     if (!showBomProposalModal || !currentUser) return '';
 
     const targetMonthDisplay = formatMonthYearForDisplay(bomProposal_targetMonthYear);
@@ -884,19 +884,19 @@ const renderBomProposalModal = () => {
             </div>
         </div>
     `;
-};
+}
 
 
-const renderReviewBookModal = () => {
+function renderReviewBookModal() {
     if (!showReviewBookModal || !bookToReview || !currentUser) return '';
 
-    const renderRatingStarsInput = (category: keyof BomRatings, currentValue: number) => {
+    function renderRatingStarsInput(category: keyof BomRatings, currentValue: number) {
         let starsHtml = '';
         for (let i = 1; i <= 5; i++) {
             starsHtml += `<span class="material-icons interactive-star ${i <= currentValue ? 'filled' : ''}" data-category="${category}" data-value="${i}" role="button" tabindex="0" aria-label="${i} star for ${category}">star</span>`;
         }
         return starsHtml;
-    };
+    }
     
     return `
         <div class="modal open" id="reviewBookModalContainer" role="dialog" aria-labelledby="reviewBookModalTitle" aria-modal="true">
@@ -936,9 +936,9 @@ const renderReviewBookModal = () => {
             </div>
         </div>
     `;
-};
+}
 
-const renderProposalDetailModal = () => {
+function renderProposalDetailModal() {
     if (!showProposalDetailModal || !selectedProposalForModal) return '';
 
     const { bookTitle, bookAuthor, bookCoverImageUrl, reason } = selectedProposalForModal;
@@ -981,10 +981,10 @@ const renderProposalDetailModal = () => {
             </div>
         </div>
     `;
-};
+}
 
 // Chat View
-const ChatView = () => {
+function ChatView() {
     return `
         <div class="page" id="chat-view">
             <div class="chat-messages" id="chatMessagesContainer" aria-live="polite">
@@ -1002,10 +1002,10 @@ const ChatView = () => {
             </div>
         </div>
     `;
-};
+}
 
 // Profile View
-const ProfileView = () => {
+function ProfileView() {
     const { profileImageUrl, literaryPseudonym, name, bio, literaryPreferences } = userProfile;
     const placeholderId = `profileAvatarPlaceholder-${currentUser!.id}`; 
     const imageId = `profileImage-${currentUser!.id}`; 
@@ -1057,7 +1057,7 @@ const ProfileView = () => {
             </div>
         </div>
     `;
-};
+}
 
 
 // --- Auth & Onboarding Views ---
@@ -1184,7 +1184,7 @@ const OnboardingProcessingView = () => `
     </div>
 `;
 
-const OnboardingProfileSetupView = () => {
+function OnboardingProfileSetupView() {
     const placeholderId = 'onboardingProfileImagePlaceholder';
     const imageId = 'onboardingProfileImagePreview';
     const initials = (generatedPseudonym || 'U').substring(0,2).toUpperCase();
@@ -1225,10 +1225,10 @@ const OnboardingProfileSetupView = () => {
         </div>
     </div>
 `;
-};
+}
 
 
-const renderCurrentView = () => {
+function renderCurrentView() {
     if (!currentUser) { 
         switch (currentAuthProcessView) {
             case 'login': return LoginView();
@@ -1256,9 +1256,9 @@ const renderCurrentView = () => {
             currentView = "bookofthemonth"; 
             return BookOfTheMonthView();
     }
-};
+}
 
-const getHeaderTitle = () => {
+function getHeaderTitle() {
     if (!currentUser || !currentUser.onboardingComplete) return "Book Club Hub";
 
     switch (currentView) {
@@ -1268,9 +1268,9 @@ const getHeaderTitle = () => {
         case "profile": return "My Profile";
         default: return "Book Club Hub";
     }
-};
+}
 
-const renderTopHeader = () => {
+function renderTopHeader() {
     let profileIconContent = '<span class="material-icons">account_circle</span>'; 
     if (currentUser && currentUser.onboardingComplete) {
         const initials = (userProfile.literaryPseudonym || userProfile.name || 'U').substring(0, 1).toUpperCase();
@@ -1305,10 +1305,10 @@ const renderTopHeader = () => {
         ` : ''}
     </header>
 `;
-};
+}
 
 
-const renderBottomNav = () => {
+function renderBottomNav() {
     if (!currentUser || !currentUser.onboardingComplete) return ''; 
 
     const navItems = [
@@ -1331,9 +1331,9 @@ const renderBottomNav = () => {
             `).join('')}
         </nav>
     `;
-};
+}
 
-const renderAddBookFAB = () => {
+function renderAddBookFAB() {
     if (!currentUser || !currentUser.onboardingComplete) return '';
     return `
     <button class="fab" id="addBookFab" aria-label="Add new book">
@@ -1342,7 +1342,7 @@ const renderAddBookFAB = () => {
 `;
 }
 
-const renderAddBookModal = () => {
+function renderAddBookModal() {
     if (!showAddBookModal || !currentUser || !currentUser.onboardingComplete) return '';
 
     let searchResultsHtml = '';
@@ -1410,20 +1410,20 @@ const renderAddBookModal = () => {
             </div>
         </div>
     `;
-};
+}
 
 // --- Event Handlers & Logic ---
 
-const handleAuthAction = (event) => {
+function handleAuthAction(event) {
     const action = (event.target as HTMLElement).dataset.authAction;
     authError = null; 
     if (action === 'show-login') currentAuthProcessView = 'login';
     else if (action === 'show-register') currentAuthProcessView = 'register';
     else if (action === 'show-auth-options') currentAuthProcessView = 'auth_options';
     updateView();
-};
+}
 
-const handleDeleteBomProposal = async (event: Event) => {
+async function handleDeleteBomProposal(event: Event) {
     event.stopPropagation(); // <-- Stop the bubble!
     if (!currentUser) return;
     const target = event.currentTarget as HTMLElement;
@@ -1458,11 +1458,11 @@ const handleDeleteBomProposal = async (event: Event) => {
         console.error("Error deleting proposal:", error);
         alert(`Could not delete proposal: ${error.message}`);
     }
-};
+}
 
 // This is the new, complete handleRegister function
 
-const handleRegister = async (event: Event) => {
+async function handleRegister(event: Event) {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
     const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim();
@@ -1539,9 +1539,9 @@ const handleRegister = async (event: Event) => {
         // This will either show the error message or move to the onboarding screen.
         updateView();
     }
-};
+}
 
-const handleLogin = async (event: Event) => {
+async function handleLogin(event: Event) {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
     const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim();
@@ -1597,9 +1597,9 @@ const handleLogin = async (event: Event) => {
         // --- Step 6: Final Render ---
         updateView(); // This will show the app or the error message
     }
-};
+}
 
-const handleLogout = async () => {
+async function handleLogout() {
     try {
         // --- Step 1: Tell Firebase to sign the user out ---
         await signOut(auth);
@@ -1630,12 +1630,12 @@ const handleLogout = async () => {
         // --- Step 5: Re-render the app to show the login screen ---
         updateView();
     }
-};
+}
 
 
 // Inside your app.js, find the handleOnboardingQuestionsSubmit function
 
-const handleOnboardingQuestionsSubmit = async (event) => {
+async function handleOnboardingQuestionsSubmit(event) {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
     onboardingAnswers = {
@@ -1691,11 +1691,11 @@ const handleOnboardingQuestionsSubmit = async (event) => {
         isProcessingOnboarding = false;
         updateView(); // Re-render to show the final profile setup view
     }
-};
+}
 
 // This is the new, async version of your function
 
-const handleOnboardingProfileSetupSubmit = async (event: Event) => { // <-- Made it async
+async function handleOnboardingProfileSetupSubmit(event: Event) { // <-- Made it async
     event.preventDefault();
     const form = event.target as HTMLFormElement;
     const name = (form.elements.namedItem('name') as HTMLInputElement).value.trim();
@@ -1770,10 +1770,10 @@ const handleOnboardingProfileSetupSubmit = async (event: Event) => { // <-- Made
         // 6. Re-render the app to show the new view or an error message
         updateView();
     }
-};
+}
 
 
-const handleNavigation = (event) => {
+function handleNavigation(event) {
     const target = event.currentTarget as HTMLElement;
     const view = target.dataset.view;
     if (view && currentUser && currentUser.onboardingComplete) { 
@@ -1781,9 +1781,9 @@ const handleNavigation = (event) => {
         Storage.setItem("currentView", currentView); 
         updateView(); 
     }
-};
+}
 
-const handleShowProposalDetail = async (event: Event) => {
+async function handleShowProposalDetail(event: Event) {
     const target = (event.target as HTMLElement).closest('.bom-proposal-item');
     if (!target) return;
 
@@ -1825,16 +1825,16 @@ const handleShowProposalDetail = async (event: Event) => {
             updateView(); 
         }
     }
-};
+}
 
-const handleCloseProposalDetail = () => {
+function handleCloseProposalDetail() {
     showProposalDetailModal = false;
     selectedProposalForModal = null;
     updateView(); // Re-render to hide the modal
-};
+}
 
 // --- Add Book Modal Handlers ---
-const resetAddBookModalState = () => {
+function resetAddBookModalState() {
     addBook_searchText = '';
     addBook_searchResults = [];
     addBook_isLoadingSearch = false;
@@ -1842,23 +1842,23 @@ const resetAddBookModalState = () => {
     addBook_formTitle = '';
     addBook_formAuthor = '';
     addBook_formCoverUrl = '';
-};
+}
 
-const handleAddBookFabClick = () => {
+function handleAddBookFabClick() {
     resetAddBookModalState();
     showAddBookModal = true;
     updateView();
-};
+}
 
-const handleCloseAddBookModal = () => {
+function handleCloseAddBookModal() {
     showAddBookModal = false;
     resetAddBookModalState();
     updateView();
-};
+}
 
-const handleAddBookSearchInputChange = (event) => {
+function handleAddBookSearchInputChange(event) {
     addBook_searchText = (event.target as HTMLInputElement).value;
-};
+}
 
 // In src/main.tsx
 
@@ -1868,7 +1868,7 @@ const BOOKS_API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY;
 
 // In src/main.tsx, add this new helper function
 
-const handleSearchInputKeypress = (event: KeyboardEvent, searchButtonId: string) => {
+function handleSearchInputKeypress(event: KeyboardEvent, searchButtonId: string) {
     // Check if the key pressed was "Enter"
     if (event.key === 'Enter') {
         // Prevent the default Enter key behavior (like submitting a form)
@@ -1882,8 +1882,8 @@ const handleSearchInputKeypress = (event: KeyboardEvent, searchButtonId: string)
             searchButton.click();
         }
     }
-};
-const handlePerformAddBookSearch = async () => {
+}
+async function handlePerformAddBookSearch() {
     if (!addBook_searchText.trim()) {
         addBook_searchError = "Please enter a search term.";
         addBook_searchResults = [];
@@ -1931,9 +1931,9 @@ const handlePerformAddBookSearch = async () => {
         addBook_isLoadingSearch = false;
         updateView(); // Re-render to show results or error
     }
-};
+}
 
-const handleSelectSearchedBookForAdd = (event) => {
+function handleSelectSearchedBookForAdd(event) {
     const index = parseInt((event.target as HTMLElement).dataset.index!, 10);
     const selectedBook = addBook_searchResults[index];
 
@@ -1945,10 +1945,10 @@ const handleSelectSearchedBookForAdd = (event) => {
         addBook_searchText = ''; 
         updateView(); 
     }
-};
+}
 
 
-const handleAddBookSubmit = async (event) => {
+async function handleAddBookSubmit(event) {
     event.preventDefault();
     const title = addBook_formTitle.trim();
     const author = addBook_formAuthor.trim();
@@ -1969,19 +1969,19 @@ const handleAddBookSubmit = async (event) => {
     } else {
         alert("Book title is required.");
     }
-};
+}
 
-const handleAddBookFormInputChange = (event) => {
+function handleAddBookFormInputChange(event) {
     const { name, value } = event.target as HTMLInputElement;
     if (name === 'title') addBook_formTitle = value;
     else if (name === 'author') addBook_formAuthor = value;
     else if (name === 'coverImageUrl') addBook_formCoverUrl = value;
     //updateView(); 
-};
+}
 
 
 // --- MyBooksView Handlers ---
-const handleBookAction = async (event) => {
+async function handleBookAction(event) {
     if (!currentUser || !currentUser.id) return;
     const target = event.target as HTMLElement;
     const action = target.dataset.action;
@@ -2013,18 +2013,18 @@ const handleBookAction = async (event) => {
         }
     }
     updateView();
-};
+}
 
-const handleMyBooksSearchInputChange = (event) => {
+function handleMyBooksSearchInputChange(event) {
     myBooksSearchTerm = (event.target as HTMLInputElement).value;
     updateView(); 
-};
+}
 
 
 // --- Book of the Month Handlers (Discussion) ---
 // Inside your app.js, replace the old function with this one
 
-const handleFetchDiscussionStarters = async () => {
+async function handleFetchDiscussionStarters() {
     if (!currentBomToDisplay) {
         discussionStartersError = "No Book of the Month is currently selected to generate starters.";
         updateView();
@@ -2075,9 +2075,9 @@ const handleFetchDiscussionStarters = async () => {
         isLoadingDiscussionStarters = false;
         updateView(); // Re-render to show the results or the error
     }
-};
+}
 
-const handleStartReadingBom = () => {
+function handleStartReadingBom() {
     if (!currentUser || !currentUser.id || !currentBomToDisplay) return;
 
     const bomTitleLower = currentBomToDisplay.title.toLowerCase();
@@ -2106,10 +2106,10 @@ const handleStartReadingBom = () => {
     //Storage.setUserItem(currentUser.id, "books", books);
     saveBooksToFirebase();
     updateView(); 
-};
+}
 
 // --- BOM Proposal Modal Handlers ---
-const resetBomProposalModalState = () => {
+function resetBomProposalModalState() {
     bomProposal_searchText = '';
     bomProposal_searchResults = [];
     bomProposal_isLoadingSearch = false;
@@ -2118,27 +2118,27 @@ const resetBomProposalModalState = () => {
     bomProposal_formAuthor = '';
     bomProposal_formCoverUrl = '';
     bomProposal_formReason = '';
-};
+}
 
-const handleShowBomProposalModal = () => {
+function handleShowBomProposalModal() {
     resetBomProposalModalState();
     bomProposal_targetMonthYear = getNextMonthYearString();
     showBomProposalModal = true;
     updateView();
-};
+}
 
-const handleCloseBomProposalModal = () => {
+function handleCloseBomProposalModal() {
     showBomProposalModal = false;
     resetBomProposalModalState();
     updateView();
-};
+}
 
-const handleBomProposalBookSearchInputChange = (event) => {
+function handleBomProposalBookSearchInputChange(event) {
     bomProposal_searchText = (event.target as HTMLInputElement).value;
-};
+}
 
 // This is the corrected version of the function
-const handlePerformBomProposalBookSearch = async () => {
+async function handlePerformBomProposalBookSearch() {
     if (!bomProposal_searchText.trim()) {
         bomProposal_searchError = "Please enter a search term.";
         bomProposal_searchResults = [];
@@ -2188,9 +2188,9 @@ const handlePerformBomProposalBookSearch = async () => {
         bomProposal_isLoadingSearch = false;
         updateView();
     }
-};
+}
 
-const handleSelectSearchedBomProposalBook = (event) => {
+function handleSelectSearchedBomProposalBook(event) {
     const index = parseInt((event.target as HTMLElement).dataset.index!, 10);
     const selectedBook = bomProposal_searchResults[index];
     if (selectedBook) {
@@ -2201,16 +2201,16 @@ const handleSelectSearchedBomProposalBook = (event) => {
         bomProposal_searchText = ''; 
         updateView();
     }
-};
+}
 
-const handleBomProposalFormInputChange = (event) => {
+function handleBomProposalFormInputChange(event) {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement;
     if (target.name === 'reason') {
         bomProposal_formReason = target.value;
     }
-};
+}
 
-const handleSubmitBomProposal = async (event) => {
+async function handleSubmitBomProposal(event) {
     event.preventDefault();
     if (!currentUser) return;
 
@@ -2269,9 +2269,9 @@ const handleSubmitBomProposal = async (event) => {
     }
 
     handleCloseBomProposalModal(); 
-};
+}
 
-const handleBomProposalVoteToggle = async (event: Event) => { // <-- Make it async
+async function handleBomProposalVoteToggle(event: Event) { // <-- Make it async
     event.stopPropagation();
     if (!currentUser) return;
     
@@ -2343,22 +2343,22 @@ const handleBomProposalVoteToggle = async (event: Event) => { // <-- Make it asy
         // Re-render to show the reverted (correct) state
         updateView();
     }
-};
+}
 
 // --- Review Book Modal Handlers ---
-const resetReviewBookModalState = () => {
+function resetReviewBookModalState() {
     bookToReview = null;
     reviewBook_formRatings = { plot: 0, characters: 0, writingStyle: 0, overallEnjoyment: 0 };
     reviewBook_formComment = '';
-};
+}
 
-const handleCloseReviewBookModal = () => {
+function handleCloseReviewBookModal() {
     showReviewBookModal = false;
     resetReviewBookModalState();
     updateView();
-};
+}
 
-const handleReviewBookRating = (event) => {
+function handleReviewBookRating(event) {
     if (!currentUser || !currentUser.id || !bookToReview) return;
     const target = event.target as HTMLElement;
     if (!target.matches('.rating-stars .interactive-star')) return;
@@ -2388,14 +2388,14 @@ const handleReviewBookRating = (event) => {
              }
         }
     }
-};
+}
 
 
-const handleReviewBookCommentInputChange = (event) => {
+function handleReviewBookCommentInputChange(event) {
     reviewBook_formComment = (event.target as HTMLTextAreaElement).value;
-};
+}
 
-const processAndSaveReview = async (submitReview: boolean) => {
+async function processAndSaveReview(submitReview: boolean) {
     if (!currentUser || !currentUser.id || !bookToReview) {
         handleCloseReviewBookModal();
         return;
@@ -2464,19 +2464,19 @@ const processAndSaveReview = async (submitReview: boolean) => {
         // 5. Close the modal and re-render the app
         handleCloseReviewBookModal();
     }
-};
+}
 
-const handleReviewBookSubmit = (event) => {
+function handleReviewBookSubmit(event) {
     event.preventDefault();
     processAndSaveReview(true);
-};
+}
 
-const handleReviewBookSkip = () => {
+function handleReviewBookSkip() {
     processAndSaveReview(false);
-};
+}
 
 //Helper function to save books in My books
-const saveBooksToFirebase = async () => {
+async function saveBooksToFirebase() {
     if (!currentUser || !currentUser.id) return;
     try {
         // This function stays the same! It just calls the backend.
@@ -2487,9 +2487,9 @@ const saveBooksToFirebase = async () => {
     } catch (error) {
         console.error("Failed to save books:", error);
     }
-};
+}
 
-const saveProfileToFirebase = async (profileData: UserProfile) => {
+async function saveProfileToFirebase(profileData: UserProfile) {
     // Make sure we have a logged-in user before trying to save
     if (!currentUser || !currentUser.id) {
         console.error("Cannot save profile, no current user.");
@@ -2515,9 +2515,9 @@ const saveProfileToFirebase = async (profileData: UserProfile) => {
     } catch (error) {
         console.error("Network error while saving profile:", error);
     }
-};
+}
 
-const saveUserToFirebase = async (userData: User) => {
+async function saveUserToFirebase(userData: User) {
     if (!userData.id) {
         console.error("Cannot save user, no ID provided.");
         return;
@@ -2527,24 +2527,24 @@ const saveUserToFirebase = async (userData: User) => {
         method: 'POST',
         body: JSON.stringify({ userId: userData.id, userData: userData })
     });
-};
+}
 
-const saveRatingsToFirebase = async (bomId: string, ratings: BomRatings) => {
+async function saveRatingsToFirebase(bomId: string, ratings: BomRatings) {
     if (!currentUser?.id) return;
     await fetch('/.netlify/functions/add-rating', {
         method: 'POST',
         body: JSON.stringify({ bomId, userId: currentUser.id, ratings })
     });
-};
+}
 
-const saveCommentToFirebase = async (bomId: string, comment: BomComment) => {
+async function saveCommentToFirebase(bomId: string, comment: BomComment) {
     await fetch('/.netlify/functions/add-comment', {
         method: 'POST',
         body: JSON.stringify({ bomId, commentData: comment })
     });
-};
+}
 
-const getUserDataFromFirestore = async (userId: string) => {
+async function getUserDataFromFirestore(userId: string) {
     if (!userId) return null;
     try {
         const userDocRef = doc(db, 'users', userId); // Assumes 'db' is your initialized Firestore instance
@@ -2559,10 +2559,10 @@ const getUserDataFromFirestore = async (userId: string) => {
         console.error("Error getting user document:", error);
         return null;
     }
-};
+}
 
 // --- Chat Handlers ---
-const handleSendChatMessage = () => {
+function handleSendChatMessage() {
     if (!currentUser || !currentUser.id) return;
     const input = document.getElementById('chatMessageInput');
     
@@ -2589,14 +2589,14 @@ const handleSendChatMessage = () => {
             }
         }
     }
-};
+}
 
 // In src/main.tsx
 
 let unsubscribeBooks = () => {}; // A function to stop listening when the user logs out
 let unsubscribeProposals = () => {}; // Another for proposals
 
-const listenToUserData = () => {
+function listenToUserData() {
   if (!currentUser || !currentUser.id) return;
 
   // We need to import these from the Firebase SDK at the top of your file
@@ -2620,10 +2620,10 @@ const listenToUserData = () => {
       // ... logic to update your bomProposals array ...
       updateView();
   });
-};
+}
 
 // --- Profile Handlers ---
-const handleProfileSave = async (event: Event) => { // <-- 1. Added async and Event type
+async function handleProfileSave(event: Event) { // <-- 1. Added async and Event type
     event.preventDefault();
     if (!currentUser || !currentUser.id) return;
 
@@ -2671,20 +2671,20 @@ const handleProfileSave = async (event: Event) => { // <-- 1. Added async and Ev
         // 6. Re-render the app with the updated information
         updateView();
     }
-};
+}
 
 // --- General Keypress Handlers ---
-const handleReviewBookRatingKeypress = (e: KeyboardEvent) => {
+function handleReviewBookRatingKeypress(e: KeyboardEvent) {
     if (e.key === 'Enter' || e.key === ' ') {
         handleReviewBookRating(e);
     }
-};
+}
 
-const handleChatInputKeypress = (e: KeyboardEvent) => {
+function handleChatInputKeypress(e: KeyboardEvent) {
     if (e.key === 'Enter') {
         handleSendChatMessage();
     }
-};
+}
 
 
 function attachEventListeners () {
@@ -2797,9 +2797,9 @@ function attachEventListeners () {
 
     const modalContainer = document.getElementById('addBookModalContainer');
     if (modalContainer) {
-        const closeModalOnClickOutside = (e: Event) => {
+        function closeModalOnClickOutside(e: Event) {
             if (e.target === modalContainer) handleCloseAddBookModal();
-        };
+        }
         modalContainer.removeEventListener('click', closeModalOnClickOutside); 
         modalContainer.addEventListener('click', closeModalOnClickOutside);
     }
@@ -2850,7 +2850,7 @@ function attachEventListeners () {
         }
         const modalContainer = document.getElementById('bomProposalModalContainer');
         if (modalContainer) {
-            const closeModalOnClickOutside = (e) => { if (e.target === modalContainer) handleCloseBomProposalModal(); };
+            function closeModalOnClickOutside(e) { if (e.target === modalContainer) handleCloseBomProposalModal(); }
             modalContainer.removeEventListener('click', closeModalOnClickOutside); 
             modalContainer.addEventListener('click', closeModalOnClickOutside);
         }
@@ -2913,7 +2913,7 @@ function attachEventListeners () {
         }
         const modalContainer = document.getElementById('reviewBookModalContainer');
         if (modalContainer) {
-            const closeModalOnClickOutside = (e) => { if (e.target === modalContainer) handleCloseReviewBookModal(); };
+            function closeModalOnClickOutside(e) { if (e.target === modalContainer) handleCloseReviewBookModal(); }
             modalContainer.removeEventListener('click', closeModalOnClickOutside); 
             modalContainer.addEventListener('click', closeModalOnClickOutside);
         }
@@ -2976,7 +2976,7 @@ if (detailModalContainer) {
         }
     });
 }
-};
+}
 
 
 
@@ -2986,7 +2986,7 @@ if (detailModalContainer) {
 // --- NEW AND CORRECT INITIAL LOAD LOGIC ---
 
 // This function will fetch the proposals from your backend
-const fetchBomProposals = async () => {
+async function fetchBomProposals() {
     try {
         const res = await fetch('/.netlify/functions/get-proposals');
         if (!res.ok) {
@@ -3001,7 +3001,7 @@ const fetchBomProposals = async () => {
         console.error("Failed to fetch or parse proposals:", error);
         bomProposals = Storage.getItem("bomProposals", []); // Fallback to localStorage on error
     }
-};
+}
 
 // This is the new, corrected initializeApp function
 
