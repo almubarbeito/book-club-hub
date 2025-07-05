@@ -1,11 +1,11 @@
-# Final, corrected netlify.toml for a root package.json
+# The final, prefix-based netlify.toml
 
 [build]
-  # The publish directory is still the frontend's dist folder
-  publish = "frontend/dist"
+  # The command is now run from the root, but targets the frontend folder
+  command = "npm run build --prefix frontend"
   
-  # The command to run from the root directory
-  command = "npm install && cd frontend && npm run build"
+  # The final website is still in the 'frontend/dist' folder
+  publish = "frontend/dist"
 
 [functions]
   directory = "netlify/functions"
