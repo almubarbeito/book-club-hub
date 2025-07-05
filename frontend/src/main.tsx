@@ -2272,6 +2272,15 @@ async function handleSubmitBomProposal(event) {
 
 async function handleBomProposalVoteToggle(event: Event) { // <-- Make it async
     event.stopPropagation();
+
+    // --- NEW: Add a guard clause at the very top ---
+    if (!currentUser || !currentUser.id) {
+        console.error("VOTE FAILED: Cannot vote because currentUser is not set.");
+        alert("You must be logged in to vote.");
+        return;
+    }
+    // ------------------------------------------------
+    
     if (!currentUser) return;
     
     // Use .closest to make sure we get the proposalId even if the user clicks an icon inside the button
