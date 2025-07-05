@@ -3068,5 +3068,12 @@ function startApp() {
 }
 
 // --- START THE APP ---
-startApp();
+// --- NEW, ROBUST WAY TO START THE APP ---
+
+// This special event listener waits for the entire HTML page to be ready.
+document.addEventListener('DOMContentLoaded', () => {
+  // Only when the document is fully loaded and parsed,
+  // we start the application.
+  initializeApp();
+});
 
