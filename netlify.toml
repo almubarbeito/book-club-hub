@@ -1,22 +1,16 @@
-# This is the FINAL, corrected netlify.toml
+# The new, script-based netlify.toml
 
-# The [build] settings are for your FRONTEND
 [build]
-  # "Start all build operations inside this folder"
-  base = "frontend"
+  # The ONLY command Netlify will run. It runs our custom script from the root.
+  command = "./build-script.sh"
   
-  # "Run this command (npm install, then vite build)"
-  command = "npm run build"
-  
-  # "The final website is in the 'dist' folder, which is INSIDE the 'base' directory"
-  publish = "dist"
+  # The final, published site is now the 'dist' folder inside 'frontend'
+  publish = "frontend/dist"
 
-# The [functions] settings are relative to the ROOT of the repository
-[functions]
-  # "My functions are in a top-level folder called 'netlify/functions'"
-  directory = "netlify/functions"
+# We no longer need a [functions] block because we are manually placing them
+# in the publish directory, which is a special location Netlify always checks.
+# Netlify will automatically discover functions placed inside the publish directory.
 
-# The redirect rule remains the same
 [[redirects]]
   from = "/*"
   to = "/index.html"
