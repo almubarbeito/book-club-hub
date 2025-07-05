@@ -1,14 +1,17 @@
 // The new, simplified vite.config.ts
 
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vite'
+import path from 'path' // We need to import the 'path' module
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  // No need for plugins right now unless you use React/JSX syntax
+  // This explicitly tells Vite that the project root (where index.html is)
+  // is the current directory it's being run from.
+  root: path.resolve(__dirname, '.'),
   
-  // This is the only build configuration we need for now.
   build: {
-    // This will generate the source map so we can debug the ReferenceError
-    sourcemap: true, 
+    // We also need to tell it where to put the output files,
+    // relative to the new root.
+    outDir: 'dist',
+    sourcemap: true,
   }
-});
+})
