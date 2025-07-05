@@ -1,22 +1,22 @@
-# This is the definitive netlify.toml for your project structure
+# This is the FINAL, corrected netlify.toml
 
-# The [build] settings tell Netlify what to do for your FRONTEND
+# The [build] settings are for your FRONTEND
 [build]
-  # "Start in the 'frontend' folder"
+  # "Start all build operations inside this folder"
   base = "frontend"
   
-  # "Inside the 'frontend' folder, run this command"
+  # "Run this command (npm install, then vite build)"
   command = "npm run build"
   
-  # "After the build, the final website is in the 'frontend/dist' folder"
-  publish = "frontend/dist"
+  # "The final website is in the 'dist' folder, which is INSIDE the 'base' directory"
+  publish = "dist"
 
-# The [functions] settings tell Netlify about your BACKEND
+# The [functions] settings are relative to the ROOT of the repository
 [functions]
-  # "The functions are in a folder named 'netlify/functions' at the project root"
+  # "My functions are in a top-level folder called 'netlify/functions'"
   directory = "netlify/functions"
 
-# The redirect rule for Single Page Applications
+# The redirect rule remains the same
 [[redirects]]
   from = "/*"
   to = "/index.html"
