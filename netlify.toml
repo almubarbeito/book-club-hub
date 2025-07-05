@@ -2,8 +2,10 @@
 
 # This section defines your build process
 [build]
+# Base directory: where to run the build command from
+  base = "frontend/"
   command = "npm run build"
-  publish = "dist"
+  publish = "dist/"
   
 # This is the correct way to define the directory for ALL functions.
 # Netlify will automatically look for .js files inside this folder.
