@@ -1,15 +1,14 @@
-# The new, script-based netlify.toml
+# Final, corrected netlify.toml for a root package.json
 
 [build]
-  # The ONLY command Netlify will run. It runs our custom script from the root.
-  command = "./build-script.sh"
-  
-  # The final, published site is now the 'dist' folder inside 'frontend'
+  # The publish directory is still the frontend's dist folder
   publish = "frontend/dist"
+  
+  # The command to run from the root directory
+  command = "npm install && cd frontend && npm run build"
 
-# We no longer need a [functions] block because we are manually placing them
-# in the publish directory, which is a special location Netlify always checks.
-# Netlify will automatically discover functions placed inside the publish directory.
+[functions]
+  directory = "netlify/functions"
 
 [[redirects]]
   from = "/*"
