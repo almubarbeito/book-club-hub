@@ -3001,77 +3001,61 @@ async function fetchBomProposals() {
     }
 }
 
-// This is the new, corrected initializeApp function
+// ====================================================================
+// THIS IS THE FINAL AND CORRECT STARTUP LOGIC
+// It should be at the end of your file, before any top-level calls.
+// ====================================================================
 
-function startApp() {
-    // 1. Initialize Firebase services first
+async function startApplication() {
+    // 1. Initialize Firebase first. This makes 'auth' and 'db' available.
     initializeFirebase();
 
-    // 2. Set up an authentication state listener.
-    // This is the most important part. This function will run automatically
-    // right now, and also any time a user logs in or logs out.
-    onAuthStateChanged(auth, async (firebaseUser) => {
-        console.log("Auth state changed. Firebase user:", firebaseUser); // Debug 1
-        
-        // --- This block runs when a user logs in or is already logged in ---
-        if (firebaseUser) {
-            // A. Fetch the user's profile from YOUR Firestore database
-            const userDocData = await getUserDataFromFirestore(firebaseUser.uid);
-            console.log("Fetched user data from Firestore:", userDocData); // Debug 2
-            if (userDocData) {
-                currentUser = userDocData; // Set the global currentUser
-                console.log("Global currentUser object is now:", currentUser); // Debug 3
-                Storage.setItem("currentUser", currentUser); // Persist session for refresh
-                
-                // B. Fetch all other data needed for a logged-in user
-                await Promise.all([
-                    loadUserSpecificData(), // Gets the user's books
-                    fetchBomProposals()     // Gets the global proposals
-                ]);
+    // 2. Fetch public data that anyone can see.
+    await fetchBomProposals();
+    initializeAndSetCurrentBOM(); // This can run now as it doesn't need a user
 
-                // C. Set the correct view based on onboarding status
+    // 3. Set up the listener that reacts to login/logout state.
+    // This is the core of your app's dynamic behavior.
+    onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+            // --- USER IS LOGGED IN ---
+            const userDocData = await getUserDataFromFirestore(firebaseUser.uid);
+            if (userDocData) {
+                currentUser = userDocData;
+                Storage.setItem("currentUser", currentUser);
+                
+                await loadUserSpecificData(); // Fetch this user's books
+
                 if (!currentUser.onboardingComplete) {
                     currentAuthProcessView = 'onboarding_questions';
                 } else {
                     currentView = Storage.getItem("currentView", "bookofthemonth");
                 }
-
             } else {
-                // This is an edge case where a user exists in Auth but not your DB
-                console.error("User authenticated but no profile found in Firestore. Logging out.");
-                await signOut(auth); // Log them out to prevent a broken state
+                // Handle edge case: user in Auth but not DB
+                console.error("User in Auth but not DB. Forcing logout.");
+                await signOut(auth);
                 currentUser = null;
                 Storage.setItem("currentUser", null);
                 currentAuthProcessView = 'auth_options';
             }
-
-        // --- This block runs when a user logs out or is not logged in ---
         } else {
-            // Clear all user-specific state
+            // --- USER IS LOGGED OUT ---
             currentUser = null;
             Storage.setItem("currentUser", null);
-            books = [];
-            
-            // Fetch public data
-            await fetchBomProposals();
-            
+            books = []; // Clear personal data
             currentAuthProcessView = 'auth_options';
         }
 
-        // --- Final Step: Render the app ---
-        // This runs after all authentication and data fetching is complete.
-        initializeAndSetCurrentBOM();
+        // 4. After every auth change (login/logout), re-render the entire app.
         renderApp();
     });
 }
 
-// --- START THE APP ---
-// --- NEW, ROBUST WAY TO START THE APP ---
+// ====================================================================
+// THE ONLY LINE TO START EVERYTHING, WRAPPED IN DOMContentLoaded
+// ====================================================================
 
-// This special event listener waits for the entire HTML page to be ready.
 document.addEventListener('DOMContentLoaded', () => {
-  // Only when the document is fully loaded and parsed,
-  // we start the application.
-  initializeApp();
+    startApplication();
 });
-
