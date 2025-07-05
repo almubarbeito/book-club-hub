@@ -117,6 +117,24 @@ interface BomProposal {
 
 // --- Constants & Initial Data ---
 
+// --- NEW: Central Application State ---
+let appState = {
+    currentUser: Storage.getItem("currentUser", null) as User | null,
+    currentView: Storage.getItem("currentView", "bookofthemonth"),
+    // Add all your other state variables here
+    books: [],
+    bomProposals: [],
+    authError: null,
+};
+
+// --- NEW: The ONLY function that should be used to change state ---
+function setState(newState: Partial<typeof appState>) {
+    // Merge the new state properties into the old state
+    appState = { ...appState, ...newState };
+    // Trigger a re-render AFTER the state has been updated
+    renderApp();
+}
+
 
 const DEFAULT_BOM_SEED: Omit<BomEntry, 'id' | 'monthYear' | 'setBy'> = {
     title: "The Midnight Library",
@@ -277,7 +295,42 @@ let reviewBook_formRatings: BomRatings = { plot: 0, characters: 0, writingStyle:
 let reviewBook_formComment = '';
 
 
-// --- Helper Functions ---
+// --- Render & Helper Functions ---
+// --- Main App Component ---
+
+
+function renderApp ()  {
+    const root = document.getElementById('root');
+    if (!root) {
+        console.error("Root element not found!");
+        return;
+    }
+    //... all the innerHTML logic from your old App function
+
+    let appContainerClass = "app-container";
+    if (!currentUser || !currentUser.onboardingComplete) {
+        appContainerClass += " auth-onboarding-active";
+    }
+
+
+    root.innerHTML = `
+        <div class="${appContainerClass}">
+            ${renderTopHeader()}
+            <div class="main-content" id="${mainContentId}">
+                ${renderCurrentView()}
+            </div>
+            ${renderBottomNav()}
+            ${renderAddBookModal()}
+            ${renderBomProposalModal()}
+            ${renderReviewBookModal()}
+            ${renderProposalDetailModal()} 
+            ${(currentUser && currentUser.onboardingComplete && currentView === 'mybooks') ? renderAddBookFAB() : ''}
+        </div>
+    `;
+    
+    attachEventListeners();
+}
+
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 const simpleHash = (password) => {
@@ -1923,7 +1976,7 @@ const handleAddBookFormInputChange = (event) => {
     if (name === 'title') addBook_formTitle = value;
     else if (name === 'author') addBook_formAuthor = value;
     else if (name === 'coverImageUrl') addBook_formCoverUrl = value;
-    updateView(); 
+    //updateView(); 
 };
 
 
@@ -2696,49 +2749,61 @@ function attachEventListeners () {
     }
     
     if (showAddBookModal) {
-        const addBookForm = document.getElementById('addBookForm');
-        if (addBookForm) {
-            addBookForm.removeEventListener('submit', handleAddBookSubmit);
-            addBookForm.addEventListener('submit', handleAddBookSubmit);
-            addBookForm.querySelectorAll('input[name="title"], input[name="author"], input[name="coverImageUrl"]').forEach(input => {
-                input.removeEventListener('input', handleAddBookFormInputChange);
-                input.addEventListener('input', handleAddBookFormInputChange);
-            });
-        }
-        const closeButton = document.querySelector('#addBookModalContainer .close-button[data-action="close-add-book-modal"]');
-        if(closeButton) {
-            closeButton.removeEventListener('click', handleCloseAddBookModal);
-            closeButton.addEventListener('click', handleCloseAddBookModal);
-        }
-        const modalContainer = document.getElementById('addBookModalContainer');
-        if (modalContainer) {
-            const closeModalOnClickOutside = (e) => { if (e.target === modalContainer) handleCloseAddBookModal(); };
-            modalContainer.removeEventListener('click', closeModalOnClickOutside); 
-            modalContainer.addEventListener('click', closeModalOnClickOutside);
-        }
-        const bookSearchInput = document.getElementById('bookSearchText');
-        if (bookSearchInput) {
-            bookSearchInput.removeEventListener('input', handleAddBookSearchInputChange);
-            bookSearchInput.addEventListener('input', handleAddBookSearchInputChange);
-            // Add the keypress listener here
-        const keypressHandler = (e: KeyboardEvent) => handleSearchInputKeypress(e, 'performBookSearchButton');
-        bookSearchInput.removeEventListener('keypress', keypressHandler);
-        bookSearchInput.addEventListener('keypress', keypressHandler);
-        }
-        const performSearchButton = document.getElementById('performBookSearchButton');
-        if (performSearchButton) {
-            performSearchButton.removeEventListener('click', handlePerformAddBookSearch);
-            performSearchButton.addEventListener('click', handlePerformAddBookSearch);
-        }
-        
-       
-            
-         
-        document.querySelectorAll('#addBookModalContainer .book-search-result-item button[data-action="select-searched-book"]').forEach(button => {
-            button.removeEventListener('click', handleSelectSearchedBookForAdd);
-            button.addEventListener('click', handleSelectSearchedBookForAdd);
+    // --- 1. Handle the main form for adding the book ---
+    const addBookForm = document.getElementById('addBookForm');
+    if (addBookForm) {
+        // Listen for the final submission
+        addBookForm.removeEventListener('submit', handleAddBookSubmit);
+        addBookForm.addEventListener('submit', handleAddBookSubmit);
+
+        // Listen for typing in the Title, Author, and Cover fields
+        addBookForm.querySelectorAll('input').forEach(input => {
+            input.removeEventListener('input', handleAddBookFormInputChange);
+            input.addEventListener('input', handleAddBookFormInputChange);
         });
     }
+
+    // --- 2. Handle the book search functionality ---
+    const bookSearchInput = document.getElementById('bookSearchText');
+    if (bookSearchInput) {
+        // Listen for typing in the search bar
+        bookSearchInput.removeEventListener('input', handleAddBookSearchInputChange);
+        bookSearchInput.addEventListener('input', handleAddBookSearchInputChange);
+
+        // Listen for the "Enter" key to trigger the search button
+        const keypressHandler = (e: KeyboardEvent) => handleSearchInputKeypress(e, 'performBookSearchButton');
+        bookSearchInput.removeEventListener('keypress', keypressHandler as EventListener);
+        bookSearchInput.addEventListener('keypress', keypressHandler as EventListener);
+    }
+    
+    const performSearchButton = document.getElementById('performBookSearchButton');
+    if (performSearchButton) {
+        performSearchButton.removeEventListener('click', handlePerformAddBookSearch);
+        performSearchButton.addEventListener('click', handlePerformAddBookSearch);
+    }
+
+    // --- 3. Handle selecting a book from the search results ---
+    document.querySelectorAll('#addBookModalContainer .book-search-result-item button[data-action="select-searched-book"]').forEach(button => {
+        button.removeEventListener('click', handleSelectSearchedBookForAdd);
+        button.addEventListener('click', handleSelectSearchedBookForAdd);
+    });
+
+    // --- 4. Handle closing the modal ---
+    const closeButton = document.querySelector('#addBookModalContainer .close-button');
+    if (closeButton) {
+        closeButton.removeEventListener('click', handleCloseAddBookModal);
+        closeButton.addEventListener('click', handleCloseAddBookModal);
+    }
+
+    const modalContainer = document.getElementById('addBookModalContainer');
+    if (modalContainer) {
+        const closeModalOnClickOutside = (e: Event) => {
+            if (e.target === modalContainer) handleCloseAddBookModal();
+        };
+        modalContainer.removeEventListener('click', closeModalOnClickOutside); 
+        modalContainer.addEventListener('click', closeModalOnClickOutside);
+    }
+}
 
     if (currentView === "bookofthemonth") {
         const fetchButton = document.getElementById('fetchDiscussionStarters');
@@ -3001,41 +3066,6 @@ function startApp() {
         renderApp();
     });
 }
-// --- Main App Component ---
-
-
-function renderApp ()  {
-    const root = document.getElementById('root');
-    if (!root) {
-        console.error("Root element not found!");
-        return;
-    }
-    //... all the innerHTML logic from your old App function
-
-    let appContainerClass = "app-container";
-    if (!currentUser || !currentUser.onboardingComplete) {
-        appContainerClass += " auth-onboarding-active";
-    }
-
-
-    root.innerHTML = `
-        <div class="${appContainerClass}">
-            ${renderTopHeader()}
-            <div class="main-content" id="${mainContentId}">
-                ${renderCurrentView()}
-            </div>
-            ${renderBottomNav()}
-            ${renderAddBookModal()}
-            ${renderBomProposalModal()}
-            ${renderReviewBookModal()}
-            ${renderProposalDetailModal()} 
-            ${(currentUser && currentUser.onboardingComplete && currentView === 'mybooks') ? renderAddBookFAB() : ''}
-        </div>
-    `;
-    
-    attachEventListeners();
-}
-
 
 // --- START THE APP ---
 startApp();
