@@ -1,7 +1,12 @@
-// A simple, standard vite.config.ts
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  // We can remove the 'root' and 'build.outDir' properties for now,
-  // as Vite's defaults will work correctly with this new build command.
+  // This tells Vite where to find the index.html and src folder
+  root: __dirname,
+  
+  build: {
+    // This tells Vite where to put the final 'dist' folder.
+    // It will be created at the root of the project.
+    outDir: '../dist' 
+  }
 })
