@@ -1506,7 +1506,7 @@ async function handleRegister(event: Event) {
 
         // Step 3: Save this initial document to Firestore.
         // We MUST 'await' this to make sure it exists before onAuthStateChanged tries to fetch it.
-        await saveUserToFirestore(newUserData);
+        await saveUserToFirebase(newUserData);
 
         // STEP 4: DO NOTHING ELSE!
         // The onAuthStateChanged listener will now take over automatically.
