@@ -6,6 +6,9 @@ const initializeFirebaseAdmin = require('./firebase-admin-init.cjs');
 // 2. Call the function to get the initialized admin object
 const admin = initializeFirebaseAdmin();
 
+// Get the FieldValue class from the admin namespace BEFORE the handler.
+const FieldValue = admin.firestore.FieldValue;
+
 exports.handler = async function(event) {
     if (event.httpMethod !== 'POST') return { statusCode: 405 };
     try {
