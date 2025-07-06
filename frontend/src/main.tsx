@@ -1464,6 +1464,8 @@ async function handleDeleteBomProposal(event: Event) {
 
 // This is the new, complete handleRegister function
 
+// The new, simplified, and correct handleRegister function
+
 async function handleRegister(event: Event) {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
@@ -1472,7 +1474,7 @@ async function handleRegister(event: Event) {
     const confirmPassword = (form.elements.namedItem('confirmPassword') as HTMLInputElement).value;
     authError = null;
 
-    // --- Step 1: Frontend Validation (This part is the same) ---
+    // --- Frontend Validation ---
     if (password !== confirmPassword) {
         authError = "Passwords do not match.";
         updateView();
@@ -1484,57 +1486,44 @@ async function handleRegister(event: Event) {
         return;
     }
 
-    // --- Step 2: Create the User with Firebase Auth ---
+    // --- Create User and Initial Document ---
     try {
-        // This securely creates the user on Google's servers.
+        // Step 1: Create the user in Firebase Authentication
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const firebaseUser = userCredential.user;
 
-        // --- Step 3: Prepare the Initial Data for Firestore ---
-        // We now use the secure firebaseUser.uid as the user's ID
+        // Step 2: Prepare the initial data for your Firestore database
         const newUserData: User = {
-            id: firebaseUser.uid, 
+            id: firebaseUser.uid,
             email: firebaseUser.email!,
-            hashedPassword: '', // We NO LONGER store passwords at all. Firebase handles it.
+            hashedPassword: '', // This field can be removed entirely if you want
             onboardingComplete: false,
-            name: email.split('@')[0], // A default name
+            name: email.split('@')[0],
             literaryPseudonym: '',
             profileImageUrl: '',
             literaryPreferences: {}
         };
 
-        const newUserProfile: UserProfile = {
-            name: newUserData.name, 
-            bio: "Just joined the club!",
-            literaryPseudonym: '',
-            profileImageUrl: '',
-            literaryPreferences: {}
-        };
+        // Step 3: Save this initial document to Firestore.
+        // We MUST 'await' this to make sure it exists before onAuthStateChanged tries to fetch it.
+        await saveUserToFirestore(newUserData);
+
+        // STEP 4: DO NOTHING ELSE!
+        // The onAuthStateChanged listener will now take over automatically.
+        // It will see the new user, fetch the document we just created,
+        // set currentUser, set the view, and call updateView().
         
-        // --- Step 4: Save the Initial Data to Firestore ---
-        // We wait for these to complete.
-       await saveUserToFirebase(newUserData);
-
-        // --- Step 5: Update Local State and Proceed ---
-        // The user is now officially created and their data is in the database.
-        currentUser = newUserData;
-        userProfile = newUserProfile;
-        Storage.setItem("currentUser", currentUser); // Keep them logged in for this session
-
-        currentAuthProcessView = 'onboarding_questions';
+        console.log("Registration successful. Handing off to onAuthStateChanged.");
 
     } catch (error: any) {
-        // --- Step 6: Handle Firebase Errors ---
+        // --- Handle Firebase Errors ---
         console.error("Firebase registration error:", error);
-        // Firebase gives nice, user-friendly error messages
         if (error.code === 'auth/email-already-in-use') {
             authError = "This email address is already registered.";
         } else {
             authError = "Could not create account. Please try again.";
         }
-    } finally {
-        // --- Step 7: Re-render the UI ---
-        // This will either show the error message or move to the onboarding screen.
+        // Only call updateView() if there was an error, to show the message.
         updateView();
     }
 }
