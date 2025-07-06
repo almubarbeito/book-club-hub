@@ -1,7 +1,7 @@
-// File: netlify/functions/add-comment.cjs
-const admin = require('./firebase-admin-init.cjs');
-// ... (Your standard Firebase init block) ...
-if (admin.apps.length === 0) { /* ... */ }
+// --- THIS IS THE CORRECTED TOP SECTION ---
+const initializeFirebaseAdmin = require('./firebase-admin-init.cjs');
+const admin = initializeFirebaseAdmin();
+// ----------------------------------------
 
 exports.handler = async function(event) {
     if (event.httpMethod !== 'POST') return { statusCode: 405 };

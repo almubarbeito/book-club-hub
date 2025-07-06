@@ -1,12 +1,7 @@
-// File: netlify/functions/delete-proposal.js
-const admin = require('./firebase-admin-init.cjs');
-
-// Initialize Firebase only if it hasn't been already
-if (admin.apps.length === 0) {
-  admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf8')))
-  });
-}
+// --- THIS IS THE CORRECTED TOP SECTION ---
+const initializeFirebaseAdmin = require('./firebase-admin-init.cjs');
+const admin = initializeFirebaseAdmin();
+// ----------------------------------------
 
 exports.handler = async function (event) {
   // Only allow DELETE requests (or POST if you prefer)

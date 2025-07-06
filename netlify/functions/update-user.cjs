@@ -1,18 +1,7 @@
-// The definitive, debug-ready update-user.cjs
-const admin = require('./firebase-admin-init.cjs');
-
-function initializeFirebaseAdmin() {
-    if (admin.apps.length === 0) {
-        try {
-            admin.initializeApp({
-                credential: admin.credential.cert(JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf8')))
-            });
-            console.log('[update-user] Firebase Admin SDK Initialized.');
-        } catch (e) {
-            console.error('[update-user] Firebase admin initialization error:', e);
-        }
-    }
-}
+// --- THIS IS THE CORRECTED TOP SECTION ---
+const initializeFirebaseAdmin = require('./firebase-admin-init.cjs');
+const admin = initializeFirebaseAdmin();
+// ----------------------------------------
 
 exports.handler = async function(event) {
     initializeFirebaseAdmin();

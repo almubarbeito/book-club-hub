@@ -1,8 +1,10 @@
 // File: netlify/functions/update-proposal-vote.cjs
 
-const admin = require('./firebase-admin-init.cjs');
-// ... (Your standard Firebase init block) ...
-if (admin.apps.length === 0) { /* ... */ }
+// 1. Require the initializer FUNCTION, not the admin object
+const initializeFirebaseAdmin = require('./firebase-admin-init.cjs');
+
+// 2. Call the function to get the initialized admin object
+const admin = initializeFirebaseAdmin();
 
 exports.handler = async function(event) {
     if (event.httpMethod !== 'POST') return { statusCode: 405 };

@@ -1,15 +1,10 @@
 // File: netlify/functions/get-my-books.cjs
 // CORRECTED VERSION
 
-const admin = require('./firebase-admin-init.cjs');
-
-if (admin.apps.length === 0) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert(JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf8')))
-    });
-  } catch (e) { console.error("Firebase admin init error", e); }
-}
+// --- THIS IS THE CORRECTED TOP SECTION ---
+const initializeFirebaseAdmin = require('./firebase-admin-init.cjs');
+const admin = initializeFirebaseAdmin();
+// ----------------------------------------
 
 exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') {

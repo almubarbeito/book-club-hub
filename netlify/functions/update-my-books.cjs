@@ -1,17 +1,7 @@
-// File: netlify/functions/update-my-books.cjs
-
-const admin = require('./firebase-admin-init.cjs');
-
-// Initialize Firebase Admin, but only if it hasn't been already.
-if (admin.apps.length === 0) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert(JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf8')))
-    });
-  } catch (e) {
-    console.error("Firebase admin initialization error in update-my-books", e);
-  }
-}
+// --- THIS IS THE CORRECTED TOP SECTION ---
+const initializeFirebaseAdmin = require('./firebase-admin-init.cjs');
+const admin = initializeFirebaseAdmin();
+// ----------------------------------------
 
 exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') {
