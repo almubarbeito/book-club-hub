@@ -1,13 +1,16 @@
 // File: netlify/functions/update-proposal-vote.cjs
 
-// 1. Require the initializer FUNCTION, not the admin object
+// NEW, CORRECTED TOP SECTION
+
+// 1. Get the main 'firebase-admin' module
+const admin = require('firebase-admin');
+
+// 2. Get the FieldValue class directly from the main export
+const { FieldValue } = require('firebase-admin/firestore');
+
+// 3. Run our standard initializer function
 const initializeFirebaseAdmin = require('./firebase-admin-init.cjs');
-
-// 2. Call the function to get the initialized admin object
-const admin = initializeFirebaseAdmin();
-
-// Get the FieldValue class from the admin namespace BEFORE the handler.
-const FieldValue = admin.firestore.FieldValue;
+initializeFirebaseAdmin(); // This just ensures the app is initialized
 
 exports.handler = async function(event) {
     if (event.httpMethod !== 'POST') return { statusCode: 405 };
