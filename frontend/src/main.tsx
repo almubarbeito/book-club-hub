@@ -1540,61 +1540,34 @@ async function handleRegister(event: Event) {
     }
 }
 
+// This is the new, simplified, and correct handleLogin function
+
 async function handleLogin(event: Event) {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
     const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim();
     const password = (form.elements.namedItem('password') as HTMLInputElement).value;
+    
+    // Clear any previous error messages and re-render to show a loading state
     authError = null;
-    updateView(); // Clear previous error messages immediately
+    updateView(); 
 
     try {
-        // --- Step 1: Sign in with Firebase Auth ---
-        // This securely checks the user's credentials against Google's servers.
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const firebaseUser = userCredential.user;
-
-        // --- Step 2: Fetch the user's profile data from YOUR Firestore database ---
-        // We need a helper function for this.
-        const userDocData = await getUserDataFromFirestore(firebaseUser.uid);
-
-        if (!userDocData) {
-            // This is an edge case, but good to handle.
-            // It means they exist in Firebase Auth but not in your 'users' collection.
-            throw new Error("User profile not found in database.");
-        }
-
-        // --- Step 3: Set Local State and Fetch Other Data ---
-        currentUser = userDocData as User; // We now have the full user object
-        Storage.setItem("currentUser", currentUser); // Persist the session
-
-        // Fetch all other necessary data in parallel
-        await Promise.all([
-            loadUserSpecificData(), // Fetches this user's books
-            fetchBomProposals()     // Fetches the global proposals
-        ]);
-
-        // --- Step 4: Set the View and Re-render ---
-        initializeAndSetCurrentBOM();
-        listenToUserData(); // Start real-time listeners
-
-        if (!currentUser.onboardingComplete) {
-            currentAuthProcessView = 'onboarding_questions';
-        } else {
-            currentView = Storage.getItem("currentView", "bookofthemonth");
-        }
+        // --- The ONLY job of this function is to call this one line. ---
+        await signInWithEmailAndPassword(auth, email, password);
+        
+        // THAT'S IT! We don't do anything else.
+        // The onAuthStateChanged listener will now automatically take over.
 
     } catch (error: any) {
-        // --- Step 5: Handle Firebase Errors ---
+        // If sign-in fails, we handle the error and re-render.
         console.error("Firebase login error:", error);
         if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
             authError = "Invalid email or password. Please try again.";
         } else {
             authError = "An error occurred during login.";
         }
-    } finally {
-        // --- Step 6: Final Render ---
-        updateView(); // This will show the app or the error message
+        updateView(); // Show the error message
     }
 }
 
