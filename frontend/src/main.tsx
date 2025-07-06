@@ -1513,11 +1513,7 @@ async function handleRegister(event: Event) {
         
         // --- Step 4: Save the Initial Data to Firestore ---
         // We wait for these to complete.
-        await Promise.all([
-            saveUserToFirebase(newUserData),
-            saveProfileToFirebase(newUserProfile) 
-            // We don't need to save books, they start as an empty collection
-        ]);
+       await saveUserToFirebase(newUserData);
 
         // --- Step 5: Update Local State and Proceed ---
         // The user is now officially created and their data is in the database.
@@ -1715,10 +1711,7 @@ async function handleOnboardingProfileSetupSubmit(event: Event) { // <-- Made it
     try {
         // 3. Save the data to Firebase and WAIT for it to finish.
         // We can do these in parallel for speed.
-        await Promise.all([
-            saveProfileToFirebase(newUserProfile), // This saves the profile data
-            saveUserToFirebase(updatedUserObject)  // This saves the full user object
-        ]);
+        await saveUserToFirebase(updatedUserObject);
 
         // 4. If saving was successful, now update the local state
         
@@ -2630,10 +2623,7 @@ async function handleProfileSave(event: Event) { // <-- 1. Added async and Event
 
     try {
         // 3. Save both data structures to Firebase in parallel and WAIT
-        await Promise.all([
-            saveProfileToFirebase(updatedProfile), // Saves the separate profile data
-            saveUserToFirebase(updatedUser)      // Saves the updated main user object
-        ]);
+        await saveUserToFirebase(updatedUserObject);
 
         // 4. Update the main 'users' array in local memory
         const userIndex = users.findIndex(u => u.id === currentUser!.id); 
