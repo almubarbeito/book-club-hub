@@ -1,6 +1,6 @@
 // This function fetches all proposals.
 // File: netlify/functions/get-proposals.js
-const admin = require('firebase-admin');
+const admin = require('./firebase-admin-init.cjs');
 
 // Initialize Firebase only if it hasn't been already
 if (admin.apps.length === 0) {

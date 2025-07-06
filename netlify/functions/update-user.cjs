@@ -1,5 +1,5 @@
 // The definitive, debug-ready update-user.cjs
-const admin = require('firebase-admin');
+const admin = require('./firebase-admin-init.cjs');
 
 function initializeFirebaseAdmin() {
     if (admin.apps.length === 0) {

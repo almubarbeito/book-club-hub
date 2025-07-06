@@ -1,7 +1,7 @@
 // File: netlify/functions/get-my-books.cjs
 // CORRECTED VERSION
 
-const admin = require('firebase-admin');
+const admin = require('./firebase-admin-init.cjs');
 
 if (admin.apps.length === 0) {
   try {

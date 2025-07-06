@@ -1,5 +1,5 @@
 // File: netlify/functions/delete-proposal.js
-const admin = require('firebase-admin');
+const admin = require('./firebase-admin-init.cjs');
 
 // Initialize Firebase only if it hasn't been already
 if (admin.apps.length === 0) {

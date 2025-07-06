@@ -1,6 +1,6 @@
 // File: netlify/functions/update-proposal-vote.cjs
 
-const admin = require('firebase-admin');
+const admin = require('./firebase-admin-init.cjs');
 // ... (Your standard Firebase init block) ...
 if (admin.apps.length === 0) { /* ... */ }
 

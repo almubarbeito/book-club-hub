@@ -1,6 +1,6 @@
 // File: netlify/functions/update-my-books.cjs
 
-const admin = require('firebase-admin');
+const admin = require('./firebase-admin-init.cjs');
 
 // Initialize Firebase Admin, but only if it hasn't been already.
 if (admin.apps.length === 0) {
