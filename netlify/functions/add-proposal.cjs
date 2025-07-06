@@ -1,6 +1,5 @@
 // NEW, SIMPLIFIED way in update-my-books.cjs
-const admin = require('./firebase-admin-init.js'); // Require our shared init file
-const { getFirestore } = require('firebase-admin/firestore');
+const admin = require('./firebase-admin-init.cjs'); // Require our shared init file
 
 // This is the new, more compatible version of the handler
 
