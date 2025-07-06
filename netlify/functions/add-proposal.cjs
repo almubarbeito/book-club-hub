@@ -1,7 +1,10 @@
-// --- THIS IS THE CORRECTED TOP SECTION ---
+// File: netlify/functions/add-proposal.cjs
+// --- The New, Correct Initialization ---
+const admin = require('firebase-admin');
+const { FieldValue } = require('firebase-admin/firestore'); // Import FieldValue directly
 const initializeFirebaseAdmin = require('./firebase-admin-init.cjs');
-const admin = initializeFirebaseAdmin();
-// ----------------------------------------
+initializeFirebaseAdmin(); // Ensure the app is initialized
+// ------------------------------------
 
 // This is the new, more compatible version of the handler
 
@@ -16,7 +19,7 @@ exports.handler = async function (event) {
 
     const docToAdd = {
       ...proposalData, // The spread operator is usually fine here
-      timestamp: admin.firestore.FieldValue.serverTimestamp()
+      timestamp: FieldValue.serverTimestamp()
     };
     
     const docRef = await db.collection('proposals').add(docToAdd);
