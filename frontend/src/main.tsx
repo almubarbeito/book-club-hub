@@ -1504,9 +1504,16 @@ async function handleRegister(event: Event) {
             literaryPreferences: {}
         };
 
+         // --- STEP 3: THE CRITICAL FIX ---
+        // Save the new user's document directly from the client-side.
+        // This is safe to do here because the user is authenticated.
+        // This is much faster than calling a backend function.
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        await setDoc(userDocRef, newUserData);
+
         // Step 3: Save this initial document to Firestore.
         // We MUST 'await' this to make sure it exists before onAuthStateChanged tries to fetch it.
-        await saveUserToFirebase(newUserData);
+        //await saveUserToFirebase(newUserData);
 
         // STEP 4: DO NOTHING ELSE!
         // The onAuthStateChanged listener will now take over automatically.
@@ -2483,16 +2490,30 @@ async function saveProfileToFirebase(profileData: UserProfile) {
     }
 }
 
+// The new, robust saveUserToFirebase helper
 async function saveUserToFirebase(userData: User) {
     if (!userData.id) {
-        console.error("Cannot save user, no ID provided.");
-        return;
+        // This stops the function and shows an error in the console
+        throw new Error("Cannot save user without an ID.");
     }
-    // This will call a new backend function
-    await fetch('/.netlify/functions/update-user', {
+    
+    console.log("[saveUserToFirebase] Sending this data to backend:", userData);
+    
+    const response = await fetch('/.netlify/functions/update-user', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: userData.id, userData: userData })
     });
+    
+    // THIS IS THE NEW PART: Check if the backend call was successful
+    if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("SAVE_USER_ERROR: Backend failed to save user.", errorBody);
+        // This will trigger the 'catch' block in the function that called this helper
+        throw new Error("Failed to update user on the server.");
+    }
+    
+    console.log("[saveUserToFirebase] Backend confirmed user data was saved.");
 }
 
 async function saveRatingsToFirebase(bomId: string, ratings: BomRatings) {
