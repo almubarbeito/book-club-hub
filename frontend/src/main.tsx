@@ -2995,51 +2995,62 @@ async function fetchBomProposals() {
 
 // The final, correct startup logic
 
+// ====================================================================
+// THIS IS THE FINAL AND CORRECT STARTUP LOGIC
+// Replace your old initializeApp and DOMContentLoaded with this.
+// ====================================================================
+
 async function startApplication() {
-    // 1. Initialize Firebase first.
+    // 1. Initialize Firebase first. This makes 'auth' and 'db' available.
     initializeFirebase();
 
-    // 2. Set up the listener that will handle all future auth changes.
+    // 2. Fetch public data that anyone can see.
+    await fetchBomProposals();
+    initializeAndSetCurrentBOM();
+
+    // 3. Set up the listener that reacts to login/logout state.
     onAuthStateChanged(auth, async (firebaseUser) => {
-        // This callback will run once Firebase has the auth status.
+        
         if (firebaseUser) {
-            // ... all your correct logic for a logged-in user ...
+            // --- USER IS LOGGED IN ---
             const userDocData = await getUserDataFromFirestore(firebaseUser.uid);
             if (userDocData) {
                 currentUser = userDocData;
-                Storage.setItem("currentUser", currentUser);
-                await loadUserSpecificData();
+                Storage.setItem("currentUser", currentUser); // Persist session for refresh
+                
+                await loadUserSpecificData(); // Fetch this user's books
+
                 if (!currentUser.onboardingComplete) {
                     currentAuthProcessView = 'onboarding_questions';
                 } else {
                     currentView = Storage.getItem("currentView", "bookofthemonth");
                 }
             } else {
-                await signOut(auth); // Will re-trigger this listener
-                return;
+                // Handle edge case: user in Auth but not in your DB
+                console.error("User in Auth but not DB. Forcing logout.");
+                await signOut(auth); // This will re-trigger the listener with null
+                return; 
             }
         } else {
             // --- USER IS LOGGED OUT ---
             currentUser = null;
             Storage.removeItem("currentUser");
-            books = [];
+            books = []; // Clear personal data
             currentAuthProcessView = 'auth_options';
         }
 
-        // The listener's job is done, now render with the final state.
-        updateView();
+        // 4. After all state is set, call your main render function.
+        // Make sure this is the correct name of your render function.
+        updateView(); 
     });
 
-    // 3. THIS IS THE MISSING PIECE: Perform an immediate, initial render.
-    // This shows the user something (e.g., the login page or a loading spinner)
-    // while we wait for onAuthStateChanged to fire.
-    // We will also fetch public data here.
-    await fetchBomProposals();
-    initializeAndSetCurrentBOM();
-    updateView(); 
+    // 5. Perform an initial render to show something immediately
+    // while waiting for the onAuthStateChanged to fire.
+    updateView();
 }
 
-// The call at the very bottom of your file
+
+// --- THE ONLY GLOBAL CALL to kick everything off ---
 document.addEventListener('DOMContentLoaded', () => {
     startApplication();
 });
