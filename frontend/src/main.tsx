@@ -131,6 +131,9 @@ const Storage = {
     setItem: (key, value) => {
         localStorage.setItem(key, JSON.stringify(value));
     },
+     removeItem: (key) => {
+        localStorage.removeItem(key);
+    },
     getUserItem: (userId, key, defaultValue) => {
         if (!userId) return defaultValue;
         return Storage.getItem(`user_${userId}_${key}`, defaultValue);
@@ -2988,55 +2991,63 @@ async function fetchBomProposals() {
 // THE FINAL AND CORRECT STARTUP LOGIC
 // ====================================================================
 
+// This is the new, definitive startApplication function
+
 async function startApplication() {
-    // 1. Initialize Firebase first. This makes 'auth' and 'db' available.
+    // 1. Initialize Firebase first
     initializeFirebase();
 
-    // 2. Fetch public data that anyone can see.
-    // We await this so the proposals are ready for the first paint.
-    await fetchBomProposals();
-    
-    // 3. Set up the listener that reacts to login/logout state.
+    // 2. Set up the one true authentication listener
     onAuthStateChanged(auth, async (firebaseUser) => {
-        // --- This block runs on initial load, and on every login/logout ---
         
+        // --- This block runs when a user IS logged in ---
         if (firebaseUser) {
-            // USER IS LOGGED IN
             const userDocData = await getUserDataFromFirestore(firebaseUser.uid);
+
             if (userDocData) {
-                // Set all the user-specific state variables
+                // A. Set the global state in memory
                 currentUser = userDocData;
-                await loadUserSpecificData(); // This fetches books and profile
-                
-                // Set the correct view
+
+                // B. THIS IS THE CRITICAL FIX: Persist the session to localStorage
+                Storage.setItem("currentUser", currentUser);
+
+                // C. Load all necessary data
+                await Promise.all([
+                    loadUserSpecificData(),
+                    fetchBomProposals()
+                ]);
+
+                // D. Determine the correct view
                 if (!currentUser.onboardingComplete) {
                     currentAuthProcessView = 'onboarding_questions';
                 } else {
                     currentView = Storage.getItem("currentView", "bookofthemonth");
                 }
             } else {
-                // Handle edge case: user in Auth but not in your DB
-                await signOut(auth);
-                currentUser = null;
-                currentAuthProcessView = 'auth_options';
+                // Handle edge case of user in Auth but not DB
+                await signOut(auth); // This will re-trigger this listener with firebaseUser = null
+                return; // Stop execution here
             }
+
+        // --- This block runs when a user IS NOT logged in ---
         } else {
-            // USER IS LOGGED OUT
+            // A. Clear the global state in memory
             currentUser = null;
-            books = []; // Clear personal data
+            books = [];
+
+            // B. THIS IS THE CRITICAL FIX: Clear the session from localStorage
+            Storage.removeItem("currentUser");
+
+            // C. Fetch any public data needed for the logged-out view
+            await fetchBomProposals();
+
+            // D. Set the view to the login page
             currentAuthProcessView = 'auth_options';
         }
 
-        // --- Final Step after every auth change ---
-        // This calculates which book to show based on the current state
+        // --- Final Step for ALL cases ---
+        // This runs after all state is definitively set, either for a logged-in or logged-out user.
         initializeAndSetCurrentBOM();
-        
-        // NOW, call your main update/render function
         updateView(); 
     });
 }
-
-// THE ONLY GLOBAL CALL to kick everything off
-document.addEventListener('DOMContentLoaded', () => {
-    startApplication();
-});
