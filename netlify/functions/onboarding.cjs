@@ -20,43 +20,42 @@ exports.handler = async function (event) {
       return { statusCode: 400, body: "Missing required preferences." };
     }
 
-    // --- First AI Call: Generate Character Name ---
-    const characterPrompt = `Based on these literary preferences:
-Genre - ${genre},
-Reading Pace - ${pace},
-Preferred Literary Adventure - "${adventure}",
-suggest ONE famous and iconic protagonist from a well-known classic or popular novel that aligns with these preferences.
-Return ONLY the full name of the character as a string.`;
-
-    const textModel = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-    const characterResult = await textModel.generateContent(characterPrompt);
-    const characterResponse = await characterResult.response;
-    let characterName = characterResponse.text().trim().replace(/^["']|["']$/g, '');
-
-    if (!characterName) {
-      characterName = "The Ardent Reader"; // Fallback name
-    }
-
-    // --- Second AI Call: Generate Image ---
-    let imageBase64Data = ''; // Default empty string
+// --- NEW: The Single, Combined Prompt ---
     const uniqueSeedForImage = userId.substring(0, 5) + userId.slice(-3);
-    const imagePrompt = `A stylized profile avatar representing the literary character: ${characterName}. Emphasize iconic visual features or themes associated with them, suitable for a small profile picture. If the character is human, show their face. Make it artistic and visually appealing. Unique style variation seed: ${uniqueSeedForImage}.`;
+    const combinedPrompt = `
+      Based on these literary preferences:
+      - Genre: ${genre}
+      - Reading Pace: ${pace}
+      - Preferred Literary Adventure: "${adventure}"
 
-    try {
-        const imageModel = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-        const imageResult = await imageModel.generateContent([imagePrompt]);
-        const imageResponse = await imageResult.response;
+      Follow these two steps:
+      1. First, suggest ONE famous and iconic protagonist from a well-known classic or popular novel that aligns with these preferences.
+      2. Second, generate a stylized, artistic profile avatar of that literary character. The style should be suitable for a small profile picture. If the character is human, show their face. Use this unique style seed: ${uniqueSeedForImage}.
 
-        // Assuming the response structure for images might be different, adapt as necessary.
-        // This is a placeholder for how you might get the base64 data.
-        // You'll need to check the actual response structure from the Gemini API.
-        const firstPart = imageResponse.candidates[0].content.parts[0];
-        if (firstPart && firstPart.inlineData) {
-            imageBase64Data = `data:${firstPart.inlineData.mimeType};base64,${firstPart.inlineData.data}`;
+      Your response MUST contain both the character name and the generated image.
+    `;
+
+    // --- The Single AI Call ---
+    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+    const result = await model.generateContent([combinedPrompt]); // We only call the AI once
+    const response = await result.response;
+
+    let characterName = "The Ardent Reader"; // Default fallback
+    let imageBase64Data = ''; // Default fallback
+
+    // --- Process the Multi-Part Response ---
+    if (response.candidates && response.candidates[0].content && response.candidates[0].content.parts) {
+        // Find the text part
+        const textPart = response.candidates[0].content.parts.find(part => part.text);
+        if (textPart) {
+            characterName = textPart.text.trim().replace(/["']/g, '') || characterName;
         }
-    } catch (imgError) {
-      console.error("Image generation failed, proceeding without image:", imgError);
-      // We don't return an error here, we just proceed without an image
+
+        // Find the image part
+        const imagePart = response.candidates[0].content.parts.find(part => part.inlineData);
+        if (imagePart && imagePart.inlineData) {
+            imageBase64Data = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+        }
     }
 
     // --- Final Step: Send BOTH results back to the frontend ---
