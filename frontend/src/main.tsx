@@ -900,11 +900,11 @@ function renderBomProposalModal() {
                 <form id="bomProposalForm" class="form">
                     <div>
                         <label for="bomProposalBookTitle">Book Title:</label>
-                        <input type="text" id="bomProposalBookTitle" name="title" required value="${bomProposal_formTitle}" readonly>
+                        <input type="text" id="bomProposalBookTitle" name="title" required value="${bomProposal_formTitle}" autocomplete="off" readonly>
                     </div>
                     <div>
                         <label for="bomProposalBookAuthor">Author:</label>
-                        <input type="text" id="bomProposalBookAuthor" name="author" value="${bomProposal_formAuthor}" readonly>
+                        <input type="text" id="bomProposalBookAuthor" name="author" value="${bomProposal_formAuthor}" autocomplete="off" readonly>
                     </div>
                     <div>
                         <label for="bomProposalBookCoverUrl">Cover Image URL (optional):</label>
@@ -2844,29 +2844,11 @@ document.onclick = (e) => {
 
 // --- 2. Handle the book search functionality ---
     const bookSearchInput = document.getElementById('bookSearchText');
-    if (bookSearchInput) {
-        // Listen for typing in the search bar
-        bookSearchInput.removeEventListener('input', handleAddBookSearchInputChange);
-        bookSearchInput.addEventListener('input', handleAddBookSearchInputChange);
-
-        // Listen for the "Enter" key to trigger the search button
-        const keypressHandler = (e: KeyboardEvent) => handleSearchInputKeypress(e, 'performBookSearchButton');
-        bookSearchInput.removeEventListener('keypress', keypressHandler as EventListener);
-        bookSearchInput.addEventListener('keypress', keypressHandler as EventListener);
-    }    
+if (bookSearchInput) {
+    bookSearchInput.oninput = handleAddBookSearchInputChange;
+    bookSearchInput.onkeydown = (e) => handleSearchInputKeypress(e as KeyboardEvent, 'performBookSearchButton');
+}  
     
-    const performBomSearchBtn = document.getElementById('performBomProposalBookSearchButton');
-
-    if (performBomSearchBtn) {
-        // 2. Limpiamos y asignamos la función correcta de PROPUESTAS
-        performBomSearchBtn.onclick = async (e) => {
-            e.preventDefault();
-            console.log("Iniciando búsqueda de propuesta...");
-        
-            // ¡OJO! Asegúrate de que el nombre de la función sea este:
-         await handlePerformBomProposalBookSearch();
-    };
-}
 
     // --- 3. Handle selecting a book from the search results ---
     document.querySelectorAll('#addBookModalContainer .book-search-result-item button[data-action="select-searched-book"]').forEach(button => {
@@ -3019,20 +3001,24 @@ if (detailModalContainer) {
     });
 }
 
+// --- BLOQUE ÚNICO Y FINAL PARA PROPUESTAS ---
 if (showBomProposalModal) {
-
-    // 1. EL BUSCADOR (INPUT) - Para detectar el Enter
     console.log("DOM: Modal de propuestas detectado.");
 
     const bomSearchInput = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
     const performBomSearchBtn = document.getElementById('performBomProposalBookSearchButton');
 
     if (bomSearchInput) {
+        // VITAL: Guardar lo que se escribe, si no la búsqueda va vacía
+        bomSearchInput.oninput = (e) => {
+            bomProposal_searchText = (e.target as HTMLInputElement).value;
+        };
+        // Controlar el Enter
         bomSearchInput.onkeydown = async (e: KeyboardEvent) => {
             if (e.key === 'Enter') {
-                e.preventDefault(); // EVITA EL REFRESCO
+                e.preventDefault();
                 e.stopPropagation();
-                console.log("EVENTO: Enter detectado.");
+                console.log("EVENTO: Enter en búsqueda de propuesta.");
                 await handlePerformBomProposalBookSearch();
             }
         };
@@ -3040,37 +3026,48 @@ if (showBomProposalModal) {
 
     if (performBomSearchBtn) {
         performBomSearchBtn.onclick = async (e) => {
-            e.preventDefault(); // EVITA EL REFRESCO
+            e.preventDefault();
             e.stopPropagation();
-            console.log("EVENTO: Click en Search.");
+            console.log("EVENTO: Click en Search de propuesta.");
             await handlePerformBomProposalBookSearch();
         };
     }
-}
 
-    // 3. LOS BOTONES "SELECT" (Cuando ya hay resultados)
+    // BOTONES "SELECT" (Seleccionar libro buscado)
     document.querySelectorAll('[data-action="select-searched-bom-proposal-book"]').forEach(btn => {
         (btn as HTMLElement).onclick = (e) => {
             const index = parseInt((e.currentTarget as HTMLElement).dataset.index || '0');
             const selectedBook = bomProposal_searchResults[index];
             if (selectedBook) {
-                console.log("EVENTO: Libro seleccionado:", selectedBook.title);
                 bomProposal_formTitle = selectedBook.title;
                 bomProposal_formAuthor = selectedBook.author;
                 bomProposal_formCoverUrl = selectedBook.cover || '';
-                updateView();
+                updateView(); // Esto cerrará la lista y llenará el form
             }
         };
     });
 
-    // 4. BOTÓN CERRAR (X)
+    // BOTÓN CERRAR (X)
     const closeBtn = document.querySelector('[data-action="close-bom-proposal-modal"]');
     if (closeBtn) {
         (closeBtn as HTMLElement).onclick = () => {
             showBomProposalModal = false;
+            bomProposal_searchText = ''; // Limpiamos para la próxima
+            bomProposal_searchResults = [];
             updateView();
         };
     }
+    
+    // FORMULARIO DE ENVÍO (Submit final)
+    const bomForm = document.getElementById('bomProposalForm');
+    if (bomForm) {
+        bomForm.onsubmit = async (e) => {
+            e.preventDefault();
+            await handleSubmitBomProposal(e);
+        };
+    }
+}
+
 }
 
 
