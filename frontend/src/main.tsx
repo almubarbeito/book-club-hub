@@ -887,13 +887,13 @@ function renderBomProposalModal() {
                 <div class="book-search-section">
     <label for="bomProposalBookSearchText">Search for a book to propose:</label>
     <div class="search-input-group">
-    <input 
+    <<input 
     type="text" 
     id="bomProposalBookSearchText" 
     placeholder="Enter title or author" 
     value="${bomProposal_searchText}"
-    oninput="bomProposal_searchText = this.value" 
-    onkeydown="if(event.key==='Enter'){ event.preventDefault(); document.getElementById('performBomProposalBookSearchButton').click(); }"
+    oninput="window.bomProposal_searchText = this.value" 
+    onkeydown="if(event.key==='Enter'){ event.preventDefault(); event.stopPropagation(); handlePerformBomProposalBookSearch(); }"
 >
     <button 
         type="button" 
@@ -2856,6 +2856,8 @@ if (showBomProposalModal) {
     if (bomForm) {
         bomForm.onsubmit = async (e) => {
             e.preventDefault();
+            e.stopImmediatePropagation(); // Detiene cualquier otro comportamiento del navegador
+        console.log("DEBUG: Submit detectado correctamente");
             await handleSubmitBomProposal(e);
         };
     }
