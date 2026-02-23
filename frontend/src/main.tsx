@@ -1307,7 +1307,7 @@ function renderCurrentView() {
     switch (currentView) {
         case "mybooks": return MyBooksView();
         case "bookofthemonth": return BookOfTheMonthView();
-        case "chat": return ChatView();
+        case "proposals": return ProposalsView();
         case "profile": return ProfileView();
         default:
             currentView = "bookofthemonth"; 
