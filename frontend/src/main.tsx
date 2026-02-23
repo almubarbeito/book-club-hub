@@ -716,26 +716,22 @@ if (allRatingsForThisBom) {
     return `
         <div class="page" id="bom-view">
 
-            <!-- Main Book of the Month Section -->
             <div class="book-item">
-                <h2>Book of the Month: ${formatMonthYearForDisplay(monthYear)}</h2>
+                <h2>Reading in ${formatMonthYearForDisplay(monthYear)}</h2>
                 
                 <div class="bom-main-layout-container">
-                    <!-- Column 1: Image -->
                     <div class="bom-image-wrapper">
                         <img src="${(coverImageUrl || '').replace('http://', 'https://')}" 
                              alt="Cover of ${title}" 
                              class="bom-cover-image">
                     </div>
-                    <!-- Column 2: Text -->
                     <div class="bom-text-wrapper">
-                         <!-- NEW wrapper for the growing content -->
-    <div class="bom-text-content">
-        <h3>${title}</h3>
-        <p><em>by ${author}</em></p>
-        ${renderMainAverageRating(finalOverallAverage, totalRaters)}
-        <p>${description}</p>
-    </div>
+                        <div class="bom-text-content">
+                            <h3>${title}</h3>
+                            <p><em>by ${author}</em></p>
+                            ${renderMainAverageRating(finalOverallAverage, totalRaters)}
+                            <p>${description}</p>
+                        </div>
                         <div class="bom-main-actions">
                             ${startReadingButtonHtml}
                         </div>
@@ -743,43 +739,31 @@ if (allRatingsForThisBom) {
                 </div>
             </div>
 
-            <!-- Community Ratings Section -->
             <div class="book-item">
                 <h3>Community Ratings</h3>
                 ${totalRaters > 0 ? `
-                    <div class="rating-category">
-                        <p>Plot: <span class="rating-stars-display">${renderAverageStars(detailedAverageRatings.plot)}</span></p>
-                    </div>
-                    <div class="rating-category">
-                        <p>Characters: <span class="rating-stars-display">${renderAverageStars(detailedAverageRatings.characters)}</span></p>
-                    </div>
-                    <div class="rating-category">
-                        <p>Writing Style: <span class="rating-stars-display">${renderAverageStars(detailedAverageRatings.writingStyle)}</span></p>
-                    </div>
-                    <div class="rating-category">
-                        <p>Overall Enjoyment: <span class="rating-stars-display">${renderAverageStars(detailedAverageRatings.overallEnjoyment)}</span></p>
-                    </div>
+                    <div class="rating-category"><p>Plot: ${renderAverageStars(detailedAverageRatings.plot)}</p></div>
+                    <div class="rating-category"><p>Characters: ${renderAverageStars(detailedAverageRatings.characters)}</p></div>
+                    <div class="rating-category"><p>Writing Style: ${renderAverageStars(detailedAverageRatings.writingStyle)}</p></div>
+                    <div class="rating-category"><p>Overall Enjoyment: ${renderAverageStars(detailedAverageRatings.overallEnjoyment)}</p></div>
                     <p class="total-raters-note">Based on ${totalRaters} review(s).</p>
                 ` : `<p>No ratings submitted yet for this book.</p>`}
             </div>
             
-            <!-- Thoughts from Readers Section -->
             <div class="book-item">
                 <h3>Thoughts from Readers</h3>
                 <div id="bomReviewsList">
-                    ${bomReviews.length === 0 ? "<p>No reviews yet. Be the first to read and review!</p>" : bomReviews.map(review => `
+                    ${bomReviews.length === 0 ? "<p>No reviews yet.</p>" : bomReviews.map(review => `
                         <div class="comment-item">
-                            <p><strong>${review.userNameDisplay}</strong> <span class="comment-timestamp">${new Date(review.timestamp).toLocaleString()}</span></p>
+                            <p><strong>${review.userNameDisplay}</strong></p>
                             <p>${review.text.replace(/\n/g, '<br>')}</p>
                         </div>
                     `).join('')}
                 </div>
             </div>
-            
-            <!-- Proposals Section -->
-            ${currentUser ? renderBomProposalSection() : ''}
         </div>
     `;
+
 }
 
 
@@ -934,6 +918,23 @@ function renderBomProposalModal() {
                     <button type="submit">Submit Proposal</button>
                 </form>
             </div>
+        </div>
+    `;
+}
+
+function ProposalsView() {
+    // Al meter el modal aquí, nos aseguramos de que el buscador de libros 
+    // esté disponible cuando el usuario quiera proponer algo.
+    return `
+        <div class="page" id="proposals-view">
+            <div class="proposals-hero">
+                <h1>Community Proposals</h1>
+                <p>Help us choose our next adventure. The most voted book on the 1st of each month wins!</p>
+            </div>
+            
+            ${renderBomProposalSection()}
+            
+            ${renderBomProposalModal()}
         </div>
     `;
 }
@@ -1320,7 +1321,7 @@ function getHeaderTitle() {
     switch (currentView) {
         case "mybooks": return "My Books";
         case "bookofthemonth": return "Book of the Month";
-        case "chat": return currentBomToDisplay ? `Chat: ${currentBomToDisplay.title}` : "Chat";
+        case "proposals": return "Propose & Vote";
         case "profile": return "My Profile";
         default: return "Book Club Hub";
     }
@@ -1370,7 +1371,7 @@ function renderBottomNav() {
     const navItems = [
         { id: "bookofthemonth", icon: "auto_stories", label: "Book of Month" },
         { id: "mybooks", icon: "menu_book", label: "My Books" },
-        { id: "chat", icon: "chat", label: "Chat" },
+        { id: "proposals", icon: "how_to_vote", label: "Proposals" },
     ];
     return `
         <nav class="bottom-nav">
