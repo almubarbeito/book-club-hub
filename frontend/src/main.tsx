@@ -927,7 +927,7 @@ function renderBomProposalModal() {
                         <label for="bomProposalReason">Why are you proposing this book?</label>
                         <textarea id="bomProposalReason" name="reason" required rows="3" placeholder="Share a few words about why this would be a great Book of the Month.">${bomProposal_formReason}</textarea>
                     </div>
-                    <button type="submit" class="button full-width" data-action="submit-bom-proposal">Submit Proposal</button>
+                    <button type="button" class="button full-width" data-action="submit-bom-proposal" onclick="handleSubmitBomProposal(event)">Submit Proposal</button>
                 </form>
             </div>
         </div>
@@ -2258,9 +2258,15 @@ function handleBomProposalFormInputChange(event) {
 }
 
 async function handleSubmitBomProposal(event) {
-    event.preventDefault();
+    // 1. IMPORTANTE: El preventDefault solo funciona si el evento existe 
+    // (al ser type="button" a veces el evento se comporta distinto)
+    if (event && event.preventDefault) {
+        event.preventDefault();
+    }
+
     if (!currentUser) return;
 
+    // 2. CAPTURA MANUAL: Aseguramos que leemos el textarea justo ahora
     const reasonTextarea = document.getElementById('bomProposalReason') as HTMLTextAreaElement | null;
     if (reasonTextarea) {
         bomProposal_formReason = reasonTextarea.value; 
@@ -2278,10 +2284,14 @@ async function handleSubmitBomProposal(event) {
     const userProposalsForTargetMonth = bomProposals.filter(
         p => p.proposedByUserId === currentUser!.id && p.proposalMonthYear === bomProposal_targetMonthYear
     );
+    
     if (userProposalsForTargetMonth.length >= 3) {
         alert("You have already submitted the maximum of 3 proposals for this month.");
         return;
     }
+
+    // 3. ESTADO DE CARGA: Deshabilitamos el botón para evitar dobles clics
+    // (Opcional pero recomendado: podrías añadir una variable bomProposal_isSubmitting)
 
     const proposalDataToSend = {
         bookTitle: bomProposal_formTitle.trim(),
@@ -2291,32 +2301,35 @@ async function handleSubmitBomProposal(event) {
         proposedByUserId: currentUser.id,
         proposedByUserName: currentUser.literaryPseudonym || currentUser.name,
         proposalMonthYear: bomProposal_targetMonthYear,
-        votes: [], // A new proposal always starts with an empty votes array
+        votes: [],
     };
-    //bomProposals.push(newProposal);
-    //Storage.setItem("bomProposals", bomProposals);
+
     try {
         const res = await fetch('/.netlify/functions/add-proposal', {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' }, // Añadido header por seguridad
             body: JSON.stringify(proposalDataToSend)
         });
 
         if (!res.ok) {
-            // This is better error handling. It checks if the server responded with an error.
             throw new Error('Server responded with an error while saving.');
         }
 
-        // We successfully added the proposal. Now, refresh the list from the server.
-        // The 'await' here ensures we wait for the fresh list before doing anything else.
+        // 4. RECARGA Y CIERRE: 
         await fetchBomProposals();
+        handleCloseBomProposalModal(); 
+        
+        // 5. ¡VITAL!: Forzar el renderizado de la pestaña para que aparezca el libro nuevo
+        updateView(); 
 
     } catch (error) {
         console.error("Failed to submit proposal:", error);
         alert("Sorry, your proposal could not be saved. Please try again.");
     }
-
-    handleCloseBomProposalModal(); 
 }
+
+// NO OLVIDES ESTA LÍNEA justo debajo de la función:
+(window as any).handleSubmitBomProposal = handleSubmitBomProposal;
 
 async function handleBomProposalVoteToggle(event: Event) { // <-- Make it async
     event.stopPropagation();
