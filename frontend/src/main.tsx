@@ -888,12 +888,13 @@ function renderBomProposalModal() {
     <label for="bomProposalBookSearchText">Search for a book to propose:</label>
     <div class="search-input-group">
     <input 
-        type="text" 
-        id="bomProposalBookSearchText" 
-        placeholder="Enter title or author" 
-        value="${bomProposal_searchText}"
-        onkeydown="if(event.key==='Enter'){ event.preventDefault(); this.nextElementSibling.click(); }"
-    >
+    type="text" 
+    id="bomProposalBookSearchText" 
+    placeholder="Enter title or author" 
+    value="${bomProposal_searchText}"
+    oninput="bomProposal_searchText = this.value" 
+    onkeydown="if(event.key==='Enter'){ event.preventDefault(); document.getElementById('performBomProposalBookSearchButton').click(); }"
+>
     <button 
         type="button" 
         id="performBomProposalBookSearchButton" 
@@ -2179,18 +2180,11 @@ async function handlePerformBomProposalBookSearch(event?: Event) {
         event.stopPropagation();
     }
 
-    // --- CAMBIO CLAVE: Buscamos el input dentro del modal activo ---
-    const modal = document.getElementById('bomProposalModalContainer');
-    const input = modal?.querySelector('input[type="text"]') as HTMLInputElement;
-    
-    if (input) {
-        bomProposal_searchText = input.value;
-    }
-
-    console.log("DEBUG: Valor capturado físicamente:", bomProposal_searchText);
+   console.log("DEBUG: Iniciando búsqueda con:", bomProposal_searchText);
 
     if (!bomProposal_searchText || !bomProposal_searchText.trim()) {
         bomProposal_searchError = "Please enter a search term.";
+        bomProposal_searchResults = [];
         updateView();
         return;
     }
