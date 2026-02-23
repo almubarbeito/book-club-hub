@@ -888,13 +888,13 @@ function renderBomProposalModal() {
     <label for="bomProposalBookSearchText">Search for a book to propose:</label>
     <div class="search-input-group">
         <input 
-            type="text" 
-            id="bomProposalBookSearchText" 
-            placeholder="Enter title or author" 
-            value="${bomProposal_searchText}" 
-            oninput="window.bomProposal_searchText = this.value" 
-            onkeydown="if(event.key==='Enter'){ event.preventDefault(); event.stopPropagation(); handlePerformBomProposalBookSearch(); }"
-        >
+    type="text" 
+    id="bomProposalBookSearchText" 
+    placeholder="Enter title or author" 
+    value="${bomProposal_searchText}" 
+    oninput="window.bomProposal_searchText = this.value" 
+    onkeydown="if(event.key==='Enter'){ event.preventDefault(); event.stopPropagation(); document.getElementById('performBomProposalBookSearchButton').click(); }"
+>
         <button 
             type="button" 
             id="performBomProposalBookSearchButton" 
@@ -2233,6 +2233,8 @@ async function handlePerformBomProposalBookSearch() {
         setTimeout(() => attachEventListeners(), 0);
     }
 }
+(window as any).handlePerformBomProposalBookSearch = handlePerformBomProposalBookSearch;
+(window as any).bomProposal_searchText = bomProposal_searchText;
 
 function handleSelectSearchedBomProposalBook(event) {
     const index = parseInt((event.target as HTMLElement).dataset.index!, 10);
@@ -2780,6 +2782,10 @@ document.onclick = (e) => {
             // Pasamos el evento para que la función extraiga el index
             handleSelectSearchedBomProposalBook(e);
             break;
+            case "perform-bom-search":
+    e.preventDefault();
+    handlePerformBomProposalBookSearch();
+    break;
     }
 };
 
