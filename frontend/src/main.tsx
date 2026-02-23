@@ -91,7 +91,7 @@ interface BomComment {
 }
 
 interface BomEntry {
-    id: string; // e.g., "2024-07_the_midnight_library"
+    id: string; // e.g., "2026-02_the_midnight_library"
     monthYear: string; // e.g., "2024-07"
     title: string;
     author: string;
@@ -200,12 +200,12 @@ const hardcodedBomHistory: BomEntry[] = [
     // The original default book (we can keep it as a past entry)
     {
         id: "2024-07_the_midnight_library",
-        monthYear: "2024-07", // A past month
-        title: "The Midnight Library",
-        author: "Matt Haig",
+        monthYear: "2026-02", // A past month
+        title: "Las gratitudes",
+        author: "Jacqueline Harpman",
         description: "Between life and death there is a library, and within that library, the shelves go on forever. Every book provides a chance to try another life you could have lived. To see how things would be if you had made other choices... Would you have done anything different, if you had the chance to undo your regrets?",
         promptHint: "themes of regret, choices, and parallel lives",
-        coverImageUrl: "https://covers.openlibrary.org/b/id/10309991-L.jpg",
+        coverImageUrl: "http://books.google.com/books/content?id=7wygEQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
         setBy: 'default',
         discussionStarters: []
     },
@@ -2752,6 +2752,21 @@ function handleChatInputKeypress(e: KeyboardEvent) {
 
 
 function attachEventListeners () {
+
+    const showProposalModalButton = document.querySelector('button[data-action="show-bom-proposal-modal"]');
+        if (showProposalModalButton) {
+            showProposalModalButton.removeEventListener('click', handleShowBomProposalModal);
+            showProposalModalButton.addEventListener('click', handleShowBomProposalModal);
+        }
+        document.querySelectorAll('button[data-action="toggle-bom-proposal-vote"]').forEach(button => {
+            button.removeEventListener('click', handleBomProposalVoteToggle);
+            button.addEventListener('click', handleBomProposalVoteToggle);
+        });
+        document.querySelectorAll('button[data-action="delete-bom-proposal"]').forEach(button => {
+        button.removeEventListener('click', handleDeleteBomProposal);
+        button.addEventListener('click', handleDeleteBomProposal);
+    });
+
     if (!currentUser) {
         document.querySelectorAll('[data-auth-action]').forEach(button => {
             button.removeEventListener('click', handleAuthAction);
@@ -2869,31 +2884,20 @@ function attachEventListeners () {
     }
 }
 
-    if (currentView === "bookofthemonth") {
+    if (currentView === "bookofthemonth" || currentView === "proposals") {
         const fetchButton = document.getElementById('fetchDiscussionStarters');
         if (fetchButton) {
             fetchButton.removeEventListener('click', handleFetchDiscussionStarters);
             fetchButton.addEventListener('click', handleFetchDiscussionStarters);
         }
-        const showProposalModalButton = document.querySelector('button[data-action="show-bom-proposal-modal"]');
-        if (showProposalModalButton) {
-            showProposalModalButton.removeEventListener('click', handleShowBomProposalModal);
-            showProposalModalButton.addEventListener('click', handleShowBomProposalModal);
-        }
-        document.querySelectorAll('button[data-action="toggle-bom-proposal-vote"]').forEach(button => {
-            button.removeEventListener('click', handleBomProposalVoteToggle);
-            button.addEventListener('click', handleBomProposalVoteToggle);
-        });
+        
         
         const startReadingBomButton = document.querySelector('button[data-action="start-reading-bom"]');
         if (startReadingBomButton) {
             startReadingBomButton.removeEventListener('click', handleStartReadingBom);
             startReadingBomButton.addEventListener('click', handleStartReadingBom);
         }
-        document.querySelectorAll('button[data-action="delete-bom-proposal"]').forEach(button => {
-        button.removeEventListener('click', handleDeleteBomProposal);
-        button.addEventListener('click', handleDeleteBomProposal);
-    });
+        
     }
 
     if (showBomProposalModal) {
