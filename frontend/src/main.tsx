@@ -891,19 +891,17 @@ function renderBomProposalModal() {
     type="text" 
     id="bomProposalBookSearchText" 
     placeholder="Enter title or author" 
-    value="${bomProposal_searchText}" 
-    oninput="window.bomProposal_searchText = this.value" 
-    onkeydown="if(event.key==='Enter'){ event.preventDefault(); event.stopPropagation(); document.getElementById('performBomProposalBookSearchButton').click(); }"
+    value="${bomProposal_searchText}"
+    oninput="window.bomProposal_searchText = this.value"
 >
-        <button 
-            type="button" 
-            id="performBomProposalBookSearchButton" 
-            data-action="perform-bom-search"
-            class="button" 
-            ${bomProposal_isLoadingSearch ? 'disabled' : ''}
-        >
-            ${bomProposal_isLoadingSearch ? 'Searching...' : 'Search'}
-        </button>
+<button 
+    type="button" 
+    id="performBomProposalBookSearchButton" 
+    data-action="perform-bom-search" 
+    class="button"
+>
+    Search
+</button>
     </div>
                     ${searchResultsHtml}
                 </div>
@@ -2175,13 +2173,22 @@ function handleBomProposalBookSearchInputChange(event) {
 }
 
 // This is the corrected version of the function
-async function handlePerformBomProposalBookSearch() {
-    // ESTO LEE EL TEXTO DIRECTAMENTE DE LA CAJA ANTES DE HACER NADA
-    const input = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
-    if (input) bomProposal_searchText = input.value;
+async function handlePerformBomProposalBookSearch(event?: Event) {
+    // BLOQUEO DE SEGURIDAD: Evita que el formulario refresque la página
+    if (event && event.preventDefault) {
+        event.preventDefault();
+    }
 
-    console.log("DEBUG: Buscando ->", bomProposal_searchText);
-    if (!bomProposal_searchText.trim()) {
+    // FUERZA BRUTA: Leemos el texto directamente del elemento del DOM
+    const input = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
+    if (input) {
+        bomProposal_searchText = input.value;
+    }
+
+    console.log("DEBUG: Valor real en el input:", bomProposal_searchText);
+
+    if (!bomProposal_searchText || !bomProposal_searchText.trim()) {
+        console.log("DEBUG: Abortando porque el texto está vacío");
         bomProposal_searchError = "Please enter a search term.";
         bomProposal_searchResults = [];
         updateView();
