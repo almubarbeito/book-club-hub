@@ -2852,14 +2852,6 @@ function attachEventListeners () {
     }
 }
 
-    ¡Tienes toda la razón! Separarlos no solo es más limpio, sino que te ayudará a diagnosticar exactamente qué falla. Al tenerlos juntos, si un elemento no existe en una de las vistas (por ejemplo, el botón de "Start Reading" no está en la pestaña Proposals), a veces el script puede detenerse o ignorar el resto.
-
-Vamos a dividirlos por "responsabilidad". Así debería quedar tu attachEventListeners para que sea infalible:
-
-1. Separa las Vistas en attachEventListeners
-Sustituye ese bloque por estos dos bloques independientes:
-
-TypeScript
 // --- BLOQUE 1: EXCLUSIVO DE BOOK OF THE MONTH ---
 if (currentView === "bookofthemonth") {
     const fetchButton = document.getElementById('fetchDiscussionStarters');
