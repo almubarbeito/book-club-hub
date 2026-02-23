@@ -934,7 +934,7 @@ function ProposalsView() {
             
             ${renderBomProposalSection()}
             
-            ${renderBomProposalModal()}
+            ${showBomProposalModal ? renderBomProposalModal() : ''}
         </div>
     `;
 }
@@ -2734,6 +2734,36 @@ function handleChatInputKeypress(e: KeyboardEvent) {
 
 
 function attachEventListeners () {
+ // --- DELEGACIÓN DE EVENTOS GLOBAL ---
+document.onclick = (e) => {
+    const target = e.target as HTMLElement;
+    // Buscamos el elemento con data-action más cercano al click
+    const actionElement = target.closest('[data-action]');
+    if (!actionElement) return;
+
+    const action = actionElement.getAttribute('data-action');
+    const proposalId = actionElement.getAttribute('data-proposal-id');
+
+    // Manejamos las acciones del modal y de la lista
+    switch (action) {
+        case "close-bom-proposal-modal":
+            handleCloseBomProposalModal();
+            break;
+        case "show-bom-proposal-modal":
+            handleShowBomProposalModal();
+            break;
+        case "toggle-bom-proposal-vote":
+            if (proposalId) handleBomProposalVoteToggle(proposalId);
+            break;
+        case "delete-bom-proposal":
+            if (proposalId) handleDeleteBomProposal(proposalId);
+            break;
+        case "select-searched-bom-proposal-book":
+            // Pasamos el evento para que la función extraiga el index
+            handleSelectSearchedBomProposalBook(e);
+            break;
+    }
+};
 
     
     if (!currentUser) {
@@ -2985,8 +3015,12 @@ if (showBomProposalModal) {
     // 1. Botón de búsqueda (Search) - EL MÁS IMPORTANTE
     const performSearchBtn = document.getElementById('performBomProposalBookSearchButton');
     if (performSearchBtn) {
-        performSearchBtn.removeEventListener('click', handlePerformBomProposalBookSearch);
-        performSearchBtn.addEventListener('click', handlePerformBomProposalBookSearch);
+       // Usamos onclick directamente para evitar duplicados y asegurar conexión
+        performSearchBtn.onclick = (e) => {
+            e.preventDefault();
+            console.log("Buscando libro...");
+            handlePerformBomProposalBookSearch();
+        };
     }
 
     // 2. Input de búsqueda (para detectar cambios o Enter)
@@ -3006,14 +3040,18 @@ if (showBomProposalModal) {
     // 4. Formulario y botón de cerrar (simplificados)
     const bomProposalForm = document.getElementById('bomProposalForm');
     if (bomProposalForm) {
-        bomProposalForm.removeEventListener('submit', handleSubmitBomProposal);
-        bomProposalForm.addEventListener('submit', handleSubmitBomProposal);
+       bomProposalForm.onsubmit = (e) => {
+            e.preventDefault();
+            handleSubmitBomProposal(e);
+        };
     }
 
     const closeButton = document.querySelector('button[data-action="close-bom-proposal-modal"]');
     if (closeButton) {
-        closeButton.removeEventListener('click', handleCloseBomProposalModal);
-        closeButton.addEventListener('click', handleCloseBomProposalModal);
+        (closeButton as HTMLElement).onclick = () => {
+            console.log("Cerrando modal...");
+            handleCloseBomProposalModal();
+        };
     }
 }
 }
