@@ -2854,11 +2854,18 @@ document.onclick = (e) => {
         bookSearchInput.addEventListener('keypress', keypressHandler as EventListener);
     }    
     
-    const performSearchButton = document.getElementById('performBookSearchButton');
-    if (performSearchButton) {
-        performSearchButton.removeEventListener('click', handlePerformAddBookSearch);
-        performSearchButton.addEventListener('click', handlePerformAddBookSearch);
-    }
+    const performBomSearchBtn = document.getElementById('performBomProposalBookSearchButton');
+
+    if (performBomSearchBtn) {
+        // 2. Limpiamos y asignamos la función correcta de PROPUESTAS
+        performBomSearchBtn.onclick = async (e) => {
+            e.preventDefault();
+            console.log("Iniciando búsqueda de propuesta...");
+        
+            // ¡OJO! Asegúrate de que el nombre de la función sea este:
+         await handlePerformBomProposalBookSearch();
+    };
+}
 
     // --- 3. Handle selecting a book from the search results ---
     document.querySelectorAll('#addBookModalContainer .book-search-result-item button[data-action="select-searched-book"]').forEach(button => {
