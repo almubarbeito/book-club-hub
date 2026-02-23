@@ -927,7 +927,7 @@ function renderBomProposalModal() {
                         <label for="bomProposalReason">Why are you proposing this book?</label>
                         <textarea id="bomProposalReason" name="reason" required rows="3" placeholder="Share a few words about why this would be a great Book of the Month.">${bomProposal_formReason}</textarea>
                     </div>
-                    <button type="button" class="button full-width" onclick="window.handleSubmitBomProposal(event)">Submit Proposal</button>
+                    <button type="button" class="button full-width" onclick="window.handleSubmitBomProposal(this.form)>Submit Proposal</button>
                 </form>
             </div>
         </div>
@@ -2258,29 +2258,28 @@ function handleBomProposalFormInputChange(event) {
     }
 }
 
-async function handleSubmitBomProposal(event) {
-    if (event) {
-        event.preventDefault();
-        event.stopPropagation();
+async function handleSubmitBomProposal(formElement: HTMLFormElement | Event) {
+    // Si lo llamamos con 'event', prevenimos refresco; si es el form, extraemos los datos
+    let form: HTMLFormElement;
+    
+    if (formElement instanceof Event) {
+        formElement.preventDefault();
+        formElement.stopPropagation();
+        form = (formElement.target as HTMLFormElement);
+    } else {
+        form = formElement;
     }
 
-    // --- EL CAMBIO CRÍTICO ---
-    // Buscamos el elemento físicamente en el DOM justo ahora
-    const textarea = document.getElementById('bomProposalReason') as HTMLTextAreaElement;
-    
-    if (textarea) {
-        // Guardamos lo que hay escrito en la caja en la variable global
-        bomProposal_formReason = textarea.value;
-        console.log("DEBUG: Motivo capturado del DOM:", bomProposal_formReason);
+    // LEER DIRECTAMENTE DEL FORMULARIO QUE CONTIENE EL BOTÓN
+    // Usamos el atributo 'name' del textarea que es 'reason'
+    const reasonInput = form.querySelector('[name="reason"]') as HTMLTextAreaElement;
+    if (reasonInput) {
+        bomProposal_formReason = reasonInput.value;
     }
+
+    console.log("DEBUG FINAL - Texto capturado:", bomProposal_formReason);
 
     if (!currentUser) return;
-
-    // 2. CAPTURA MANUAL: Aseguramos que leemos el textarea justo ahora
-    const reasonTextarea = document.getElementById('bomProposalReason') as HTMLTextAreaElement | null;
-    if (reasonTextarea) {
-        bomProposal_formReason = reasonTextarea.value; 
-    }
 
     if (!bomProposal_formTitle.trim()) {
         alert("Please select a book to propose.");
