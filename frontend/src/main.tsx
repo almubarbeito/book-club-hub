@@ -888,18 +888,21 @@ function renderBomProposalModal() {
                 <div class="book-search-section">
                     <label for="bomProposalBookSearchText">Search for a book to propose:</label>
                     <div class="search-input-group">
-                        <input 
-                            type="text" 
-                            id="bomProposalBookSearchText" 
-                            placeholder="Enter title or author" 
-                            value="${bomProposal_searchText}"
-                            oninput="window.bomProposal_searchText = this.value"
-                            onkeydown="if(event.key==='Enter'){ event.preventDefault(); event.stopPropagation(); window.handlePerformBomProposalBookSearch(); }"
-                        >
-                        <button type="button" class="button" onclick="window.handlePerformBomProposalBookSearch()">
-                            ${bomProposal_isLoadingSearch ? 'Searching...' : 'Search'}
-                        </button>
-                    </div>
+    <input 
+        type="text" 
+        id="bomProposalBookSearchText" 
+        placeholder="Enter title or author" 
+        value="${bomProposal_searchText}"
+        onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.handlePerformBomProposalBookSearch(); }"
+    >
+    <button 
+        type="button" 
+        class="button"
+        onclick="window.handlePerformBomProposalBookSearch()"
+    >
+        ${bomProposal_isLoadingSearch ? 'Searching...' : 'Search'}
+    </button>
+</div>
                     ${searchResultsHtml}
                 </div>
                 
@@ -1457,6 +1460,99 @@ function renderAddBookModal() {
             </div>
         </div>
     `;
+}
+
+// --- FUNCIONES DE PROPUESTAS (BLOQUE ÚNICO) ---
+
+async function handlePerformBomProposalBookSearch() {
+    // 1. Leemos el valor directamente del input para que nunca salga vacío
+    const searchInput = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
+    const term = searchInput ? searchInput.value.trim() : "";
+
+    if (!term) {
+        bomProposal_searchError = "Please enter a search term.";
+        updateView();
+        return;
+    }
+
+    // Actualizamos variable global y estado de carga
+    bomProposal_searchText = term;
+    bomProposal_isLoadingSearch = true;
+    bomProposal_searchError = null;
+    bomProposal_searchResults = [];
+    updateView(); 
+
+    try {
+        const query = encodeURIComponent(term);
+        const res = await fetch(`${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=5&key=${BOOKS_API_KEY}`);
+        const data = await res.json();
+
+        if (data.items) {
+            bomProposal_searchResults = data.items.map((item: any) => ({
+                title: item.volumeInfo.title || "No Title",
+                author: item.volumeInfo.authors?.join(', ') || "Unknown Author",
+                cover: item.volumeInfo.imageLinks?.thumbnail || null,
+            }));
+        }
+    } catch (error) {
+        bomProposal_searchError = "Error fetching books.";
+    } finally {
+        bomProposal_isLoadingSearch = false;
+        updateView();
+    }
+}
+
+async function handleSubmitBomProposal(formElement: HTMLFormElement) {
+    if (!currentUser) return;
+
+    // Capturamos el motivo directamente del textarea antes de validar
+    const reasonTextarea = document.getElementById('bomProposalReason') as HTMLTextAreaElement;
+    if (reasonTextarea) {
+        bomProposal_formReason = reasonTextarea.value;
+    }
+
+    if (!bomProposal_formTitle.trim()) {
+        alert("Please select a book to propose.");
+        return;
+    }
+    if (!bomProposal_formReason || !bomProposal_formReason.trim()) {
+        alert("Please provide a reason for your proposal.");
+        return;
+    }
+
+    const proposalDataToSend = {
+        bookTitle: bomProposal_formTitle.trim(),
+        bookAuthor: bomProposal_formAuthor.trim(),
+        bookCoverImageUrl: bomProposal_formCoverUrl.trim() || '',
+        reason: bomProposal_formReason.trim(),
+        proposedByUserId: currentUser.id,
+        proposedByUserName: currentUser.literaryPseudonym || currentUser.name,
+        proposalMonthYear: bomProposal_targetMonthYear,
+        votes: [],
+    };
+
+    try {
+        const res = await fetch('/.netlify/functions/add-proposal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(proposalDataToSend)
+        });
+
+        if (!res.ok) throw new Error('Server error');
+
+        await fetchBomProposals();
+        showBomProposalModal = false;
+        
+        // Reset de variables
+        bomProposal_formTitle = ''; bomProposal_formAuthor = ''; 
+        bomProposal_formCoverUrl = ''; bomProposal_formReason = '';
+        bomProposal_searchText = ''; bomProposal_searchResults = [];
+        
+        updateView();
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Failed to save proposal.");
+    }
 }
 
 // --- Event Handlers & Logic ---
@@ -2171,71 +2267,6 @@ function handleBomProposalBookSearchInputChange(event) {
     bomProposal_searchText = (event.target as HTMLInputElement).value;
 }
 
-// This is the corrected version of the function
-async function handlePerformBomProposalBookSearch(event?: Event) {
-   if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-    }
-
-   console.log("DEBUG: Iniciando búsqueda con:", bomProposal_searchText);
-
-    if (!bomProposal_searchText || !bomProposal_searchText.trim()) {
-        bomProposal_searchError = "Please enter a search term.";
-        bomProposal_searchResults = [];
-        updateView();
-        return;
-    }
-
-    bomProposal_isLoadingSearch = true;
-    bomProposal_searchError = null;
-    bomProposal_searchResults = [];
-    updateView();
-
-    try {
-        // Assumes BOOKS_API_KEY and GOOGLE_BOOKS_API_URL are defined globally in the file
-        if (!BOOKS_API_KEY) {
-            throw new Error("Books API Key is not configured.");
-        }
-
-        const query = encodeURIComponent(bomProposal_searchText.trim());
-        const fullUrl = `${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=5&key=${BOOKS_API_KEY}`;
-        
-        const res = await fetch(fullUrl);
-
-        if (!res.ok) {
-            throw new Error(`Google Books API error: ${res.status}`);
-        }
-
-        const data = await res.json();
-        
-        if (data.items && data.items.length > 0) {
-            bomProposal_searchResults = data.items.map(item => {
-                const volumeInfo = item.volumeInfo;
-                return {
-                    title: volumeInfo.title || "No Title",
-                    author: volumeInfo.authors ? volumeInfo.authors.join(', ') : "Unknown Author",
-                    cover: volumeInfo.imageLinks?.thumbnail || volumeInfo.imageLinks?.smallThumbnail || null,
-                };
-            });
-        } else {
-            bomProposal_searchResults = [];
-        }
-
-    } catch (error) {
-        console.error("Error searching books for BOM Proposal:", error);
-        bomProposal_searchError = "Failed to search for books. Please try again.";
-    } finally {
-        bomProposal_isLoadingSearch = false;
-        updateView();
-        // ¡IMPORTANTE! Tenemos que volver a conectar los botones que acabamos de crear
-        setTimeout(() => attachEventListeners(), 0);
-    }
-}
-(window as any).handlePerformBomProposalBookSearch = handlePerformBomProposalBookSearch;
-(window as any).bomProposal_searchText = bomProposal_searchText;
-(window as any).bomProposal_formReason = bomProposal_formReason;
-
 function handleSelectSearchedBomProposalBook(event) {
     const index = parseInt((event.target as HTMLElement).dataset.index!, 10);
     const selectedBook = bomProposal_searchResults[index];
@@ -2256,57 +2287,6 @@ function handleBomProposalFormInputChange(event) {
     }
 }
 
-async function handleSubmitBomProposal(formElement: HTMLFormElement) {
-    // 1. Capturamos el texto del textarea justo ahora
-    const reasonTextarea = document.getElementById('bomProposalReason') as HTMLTextAreaElement;
-    if (reasonTextarea) {
-        bomProposal_formReason = reasonTextarea.value;
-    }
-
-    // 2. Validaciones básicas
-    if (!currentUser) return;
-    if (!bomProposal_formTitle.trim()) {
-        alert("Please select a book first.");
-        return;
-    }
-    if (!bomProposal_formReason || !bomProposal_formReason.trim()) {
-        alert("Please provide a reason.");
-        return;
-    }
-
-    // 3. Preparar datos
-    const proposalDataToSend = {
-        bookTitle: bomProposal_formTitle.trim(),
-        bookAuthor: bomProposal_formAuthor.trim(),
-        bookCoverImageUrl: bomProposal_formCoverUrl.trim() || '',
-        reason: bomProposal_formReason.trim(),
-        proposedByUserId: currentUser.id,
-        proposedByUserName: currentUser.literaryPseudonym || currentUser.name,
-        proposalMonthYear: bomProposal_targetMonthYear,
-        votes: [],
-    };
-
-    try {
-        console.log("Enviando a Netlify:", proposalDataToSend);
-        const res = await fetch('/.netlify/functions/add-proposal', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(proposalDataToSend)
-        });
-
-        if (!res.ok) throw new Error('Error en el servidor');
-
-        // Éxito: Limpiamos y cerramos
-        await fetchBomProposals();
-        showBomProposalModal = false; // Cerramos manualmente para evitar bucles
-        resetProposalForm(); // Crea esta función para limpiar las variables
-        updateView();
-
-    } catch (error) {
-        console.error("Error:", error);
-        alert("Failed to save. Check console.");
-    }
-}
 
 function resetProposalForm() {
     bomProposal_formTitle = '';
@@ -2316,10 +2296,6 @@ function resetProposalForm() {
     bomProposal_searchText = '';
     bomProposal_searchResults = [];
 }
-
-// NO OLVIDES ESTA LÍNEA justo debajo de la función:
-(window as any).handleSubmitBomProposal = handleSubmitBomProposal;
-(window as any).bomProposal_formReason = bomProposal_formReason;
 
 async function handleBomProposalVoteToggle(event: Event) { // <-- Make it async
     event.stopPropagation();
@@ -3210,3 +3186,9 @@ function startApplication() {
 
 // The only global call to kick everything off.
 document.addEventListener('DOMContentLoaded', startApplication);
+
+// --- REGISTRO GLOBAL DE PROPUESTAS (PONER AL FINAL DEL ARCHIVO) ---
+(window as any).handlePerformBomProposalBookSearch = handlePerformBomProposalBookSearch;
+(window as any).handleSubmitBomProposal = handleSubmitBomProposal;
+(window as any).bomProposal_searchText = bomProposal_searchText;
+(window as any).bomProposal_formReason = bomProposal_formReason;
