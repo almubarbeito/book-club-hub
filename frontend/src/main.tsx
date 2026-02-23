@@ -885,13 +885,26 @@ function renderBomProposalModal() {
                 </div>
 
                 <div class="book-search-section">
-                    <label for="bomProposalBookSearchText">Search for a book to propose:</label>
-                    <div class="search-input-group">
-                        <input type="text" id="bomProposalBookSearchText" placeholder="Enter title or author" value="${bomProposal_searchText}" oninput="bomProposal_searchText = this.value" onkeydown="if(event.key==='Enter'){ event.preventDefault(); event.stopPropagation(); document.getElementById('performBomProposalBookSearchButton').click(); }">
-                        <button type="button" id="performBomProposalBookSearchButton" class="button" ${bomProposal_isLoadingSearch ? 'disabled' : ''}>
-    ${bomProposal_isLoadingSearch ? 'Searching...' : 'Search'}
-</button>
-                    </div>
+    <label for="bomProposalBookSearchText">Search for a book to propose:</label>
+    <div class="search-input-group">
+        <input 
+            type="text" 
+            id="bomProposalBookSearchText" 
+            placeholder="Enter title or author" 
+            value="${bomProposal_searchText}" 
+            oninput="window.bomProposal_searchText = this.value" 
+            onkeydown="if(event.key==='Enter'){ event.preventDefault(); event.stopPropagation(); handlePerformBomProposalBookSearch(); }"
+        >
+        <button 
+            type="button" 
+            id="performBomProposalBookSearchButton" 
+            data-action="perform-bom-search"
+            class="button" 
+            ${bomProposal_isLoadingSearch ? 'disabled' : ''}
+        >
+            ${bomProposal_isLoadingSearch ? 'Searching...' : 'Search'}
+        </button>
+    </div>
                     ${searchResultsHtml}
                 </div>
                 
@@ -2163,7 +2176,11 @@ function handleBomProposalBookSearchInputChange(event) {
 
 // This is the corrected version of the function
 async function handlePerformBomProposalBookSearch() {
-    console.log("DEBUG: La función de búsqueda ha sido llamada");
+    // ESTO LEE EL TEXTO DIRECTAMENTE DE LA CAJA ANTES DE HACER NADA
+    const input = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
+    if (input) bomProposal_searchText = input.value;
+
+    console.log("DEBUG: Buscando ->", bomProposal_searchText);
     if (!bomProposal_searchText.trim()) {
         bomProposal_searchError = "Please enter a search term.";
         bomProposal_searchResults = [];
