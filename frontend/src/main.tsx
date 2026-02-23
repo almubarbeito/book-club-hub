@@ -3023,7 +3023,7 @@ if (showBomProposalModal) {
     // 1. INPUT DE TEXTO: Manejar el "Enter"
     const bomInput = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
     if (bomInput) {
-        bomInput.onkeypress = async (e: KeyboardEvent) => {
+        bomInput.onekeypress = async (e: KeyboardEvent) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 console.log("DEBUG: Enter detectado en Propuestas");
