@@ -873,57 +873,57 @@ function renderBomProposalModal() {
                 `).join('')}
             </ul>
         `;
+    } else if (bomProposal_searchText && !bomProposal_isLoadingSearch && bomProposal_searchResults.length === 0) {
+         searchResultsHtml = `<p>No books found for "${bomProposal_searchText}".</p>`;
     }
 
     return `
         <div class="modal open" id="bomProposalModalContainer">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2>Propose Book for ${targetMonthDisplay}</h2>
+                    <h2 id="bomProposalModalTitle">Propose Book for ${targetMonthDisplay}</h2>
                     <button type="button" class="close-button" data-action="close-bom-proposal-modal">&times;</button>
                 </div>
 
                 <div class="book-search-section">
-                    <label>Search for a book:</label>
+                    <label for="bomProposalBookSearchText">Search for a book to propose:</label>
                     <div class="search-input-group">
                         <input 
                             type="text" 
                             id="bomProposalBookSearchText" 
-                            placeholder="Enter title..." 
+                            placeholder="Enter title or author" 
                             value="${bomProposal_searchText}"
                             oninput="window.bomProposal_searchText = this.value"
                             onkeydown="if(event.key==='Enter'){ event.preventDefault(); event.stopPropagation(); window.handlePerformBomProposalBookSearch(); }"
                         >
-                        <button type="button" class="button" onclick="window.handlePerformBomProposalBookSearch()">Search</button>
+                        <button type="button" class="button" onclick="window.handlePerformBomProposalBookSearch()">
+                            ${bomProposal_isLoadingSearch ? 'Searching...' : 'Search'}
+                        </button>
                     </div>
                     ${searchResultsHtml}
                 </div>
                 
                 <hr class="modal-divider">
 
-                <form id="bomProposalForm" onsubmit="event.preventDefault(); return false;">
-                    <div class="form-group">
-                        <label>Book Title:</label>
-                        <input type="text" id="bomProposalBookTitle" value="${bomProposal_formTitle}" readonly class="readonly-input">
+                <form id="bomProposalForm" class="form" onsubmit="event.preventDefault(); return false;">
+                    <div>
+                        <label for="bomProposalBookTitle">Book Title:</label>
+                        <input type="text" id="bomProposalBookTitle" name="title" required value="${bomProposal_formTitle}" readonly>
                     </div>
-                    <div class="form-group">
-                        <label>Why are you proposing this book?</label>
-                        <textarea 
-                            id="bomProposalReason" 
-                            name="reason" 
-                            required 
-                            rows="3" 
-                            oninput="window.bomProposal_formReason = this.value"
-                        >${bomProposal_formReason}</textarea>
+                    <div>
+                        <label for="bomProposalBookAuthor">Author:</label>
+                        <input type="text" id="bomProposalBookAuthor" name="author" value="${bomProposal_formAuthor}" readonly>
                     </div>
-                    
-                    <button 
-                        type="button" 
-                        id="submitProposalBtn"
-                        class="button full-width" 
-                        style="margin-top: 20px; display: block !important;"
-                        onclick="window.handleSubmitBomProposal(this.form)"
-                    >
+                    <div>
+                        <label for="bomProposalBookCoverUrl">Cover Image URL (optional):</label>
+                        <input type="url" id="bomProposalBookCoverUrl" name="coverImageUrl" value="${bomProposal_formCoverUrl}" readonly>
+                        ${bomProposal_formCoverUrl ? `<img src="${bomProposal_formCoverUrl}" alt="Preview" class="modal-cover-preview">` : ''}
+                    </div>
+                    <div>
+                        <label for="bomProposalReason">Why are you proposing this book?</label>
+                        <textarea id="bomProposalReason" name="reason" required rows="3" oninput="window.bomProposal_formReason = this.value">${bomProposal_formReason}</textarea>
+                    </div>
+                    <button type="button" class="button full-width" onclick="window.handleSubmitBomProposal(this.form)">
                         Submit Proposal
                     </button>
                 </form>
@@ -2257,38 +2257,24 @@ function handleBomProposalFormInputChange(event) {
 }
 
 async function handleSubmitBomProposal(formElement: HTMLFormElement) {
-    // Si por alguna razón no recibimos el form, lo buscamos
-    const form = formElement || document.getElementById('bomProposalForm');
-    
-    if (form) {
-        const textarea = form.querySelector('[name="reason"]') as HTMLTextAreaElement;
-        if (textarea) bomProposal_formReason = textarea.value;
+    // 1. Capturamos el texto del textarea justo ahora
+    const reasonTextarea = document.getElementById('bomProposalReason') as HTMLTextAreaElement;
+    if (reasonTextarea) {
+        bomProposal_formReason = reasonTextarea.value;
     }
 
-    console.log("DEBUG: Intentando enviar motivo ->", bomProposal_formReason);
-
+    // 2. Validaciones básicas
+    if (!currentUser) return;
     if (!bomProposal_formTitle.trim()) {
         alert("Please select a book first.");
         return;
     }
-
     if (!bomProposal_formReason || !bomProposal_formReason.trim()) {
         alert("Please provide a reason.");
         return;
     }
 
-    const userProposalsForTargetMonth = bomProposals.filter(
-        p => p.proposedByUserId === currentUser!.id && p.proposalMonthYear === bomProposal_targetMonthYear
-    );
-    
-    if (userProposalsForTargetMonth.length >= 3) {
-        alert("You have already submitted the maximum of 3 proposals for this month.");
-        return;
-    }
-
-    // 3. ESTADO DE CARGA: Deshabilitamos el botón para evitar dobles clics
-    // (Opcional pero recomendado: podrías añadir una variable bomProposal_isSubmitting)
-
+    // 3. Preparar datos
     const proposalDataToSend = {
         bookTitle: bomProposal_formTitle.trim(),
         bookAuthor: bomProposal_formAuthor.trim(),
@@ -2301,27 +2287,34 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
     };
 
     try {
+        console.log("Enviando a Netlify:", proposalDataToSend);
         const res = await fetch('/.netlify/functions/add-proposal', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }, // Añadido header por seguridad
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(proposalDataToSend)
         });
 
-        if (!res.ok) {
-            throw new Error('Server responded with an error while saving.');
-        }
+        if (!res.ok) throw new Error('Error en el servidor');
 
-        // 4. RECARGA Y CIERRE: 
+        // Éxito: Limpiamos y cerramos
         await fetchBomProposals();
-        handleCloseBomProposalModal(); 
-        
-        // 5. ¡VITAL!: Forzar el renderizado de la pestaña para que aparezca el libro nuevo
-        updateView(); 
+        showBomProposalModal = false; // Cerramos manualmente para evitar bucles
+        resetProposalForm(); // Crea esta función para limpiar las variables
+        updateView();
 
     } catch (error) {
-        console.error("Failed to submit proposal:", error);
-        alert("Sorry, your proposal could not be saved. Please try again.");
+        console.error("Error:", error);
+        alert("Failed to save. Check console.");
     }
+}
+
+function resetProposalForm() {
+    bomProposal_formTitle = '';
+    bomProposal_formAuthor = '';
+    bomProposal_formCoverUrl = '';
+    bomProposal_formReason = '';
+    bomProposal_searchText = '';
+    bomProposal_searchResults = [];
 }
 
 // NO OLVIDES ESTA LÍNEA justo debajo de la función:
