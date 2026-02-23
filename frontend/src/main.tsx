@@ -867,7 +867,7 @@ function renderBomProposalModal() {
                             <h4>${book.title}</h4>
                             <p>${book.author}</p>
                         </div>
-                        <button class="button small-button" data-action="select-searched-bom-proposal-book" data-index="${index}">Select</button>
+                        <button type="button" class="button small-button" data-action="select-searched-bom-proposal-book" data-index="${index}">Select</button>
                     </li>
                 `).join('')}
             </ul>
@@ -881,35 +881,35 @@ function renderBomProposalModal() {
             <div class="modal-content">
                 <div class="modal-header">
                     <h2 id="bomProposalModalTitle">Propose Book for ${targetMonthDisplay}</h2>
-                    <button class="close-button" data-action="close-bom-proposal-modal" aria-label="Close proposal dialog">&times;</button>
+                    <button type="button" class="close-button" data-action="close-bom-proposal-modal" aria-label="Close proposal dialog">&times;</button>
                 </div>
 
                 <div class="book-search-section">
-    <label for="bomProposalBookSearchText">Search for a book to propose:</label>
-    <div class="search-input-group">
-    <<input 
-    type="text" 
-    id="bomProposalBookSearchText" 
-    placeholder="Enter title or author" 
-    value="${bomProposal_searchText}"
-    oninput="window.bomProposal_searchText = this.value" 
-    onkeydown="if(event.key==='Enter'){ event.preventDefault(); event.stopPropagation(); handlePerformBomProposalBookSearch(); }"
->
-    <button 
-        type="button" 
-        id="performBomProposalBookSearchButton" 
-        data-action="perform-bom-search" 
-        class="button"
-    >
-        ${bomProposal_isLoadingSearch ? 'Searching...' : 'Search'}
-    </button>
-</div>
+                    <label for="bomProposalBookSearchText">Search for a book to propose:</label>
+                    <div class="search-input-group">
+                        <input 
+                            type="text" 
+                            id="bomProposalBookSearchText" 
+                            placeholder="Enter title or author" 
+                            value="${bomProposal_searchText}"
+                            oninput="window.bomProposal_searchText = this.value" 
+                            onkeydown="if(event.key==='Enter'){ event.preventDefault(); event.stopPropagation(); window.handlePerformBomProposalBookSearch(); }"
+                        >
+                        <button 
+                            type="button" 
+                            id="performBomProposalBookSearchButton" 
+                            data-action="perform-bom-search" 
+                            class="button"
+                        >
+                            ${bomProposal_isLoadingSearch ? 'Searching...' : 'Search'}
+                        </button>
+                    </div>
                     ${searchResultsHtml}
                 </div>
                 
                 <hr class="modal-divider">
 
-                <form id="bomProposalForm" class="form">
+                <form id="bomProposalForm" class="form" onsubmit="event.preventDefault();">
                     <div>
                         <label for="bomProposalBookTitle">Book Title:</label>
                         <input type="text" id="bomProposalBookTitle" name="title" required value="${bomProposal_formTitle}" autocomplete="off" readonly>
@@ -927,7 +927,7 @@ function renderBomProposalModal() {
                         <label for="bomProposalReason">Why are you proposing this book?</label>
                         <textarea id="bomProposalReason" name="reason" required rows="3" placeholder="Share a few words about why this would be a great Book of the Month.">${bomProposal_formReason}</textarea>
                     </div>
-                    <button type="submit">Submit Proposal</button>
+                    <button type="submit" class="button full-width" data-action="submit-bom-proposal">Submit Proposal</button>
                 </form>
             </div>
         </div>
@@ -2853,14 +2853,14 @@ if (showBomProposalModal) {
     
     // FORMULARIO DE ENVÍO (Submit final)
     const bomForm = document.getElementById('bomProposalForm');
-    if (bomForm) {
-        bomForm.onsubmit = async (e) => {
-            e.preventDefault();
-            e.stopImmediatePropagation(); // Detiene cualquier otro comportamiento del navegador
-        console.log("DEBUG: Submit detectado correctamente");
-            await handleSubmitBomProposal(e);
-        };
-    }
+if (bomForm) {
+    bomForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("Submit detectado y bloqueado para proceso JS");
+        await handleSubmitBomProposal(e);
+    });
+}
 }
     
     if (!currentUser) {
