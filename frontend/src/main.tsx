@@ -376,7 +376,9 @@ function formatMonthYearForDisplay(monthYear: string): string  {
 async function initializeAndSetCurrentBOM() {
     // Obtenemos el mes actual (ej: "2025-07")
     // Para producción usar: const currentMonthStr = getCurrentMonthYearString();
-    const currentMonthStr = "2025-07"; 
+    //const currentMonthStr = "2025-07"; 
+    const currentMonthStr = getCurrentMonthYearString();
+    console.log("Revisando propuestas disponibles:", bomProposals.length); // <--- LOG 1
     
     try {
         // 1. Intentamos leer el libro "oficial" ya seleccionado de Firestore
@@ -387,6 +389,7 @@ async function initializeAndSetCurrentBOM() {
             const data = bomSnap.data() as BomEntry;
             // Si el libro guardado coincide con el mes actual, lo usamos
             if (data.monthYear === currentMonthStr) {
+                console.log("Ganador oficial encontrado en Firestore:", data.title); // <--- LOG 2
                 currentBomToDisplay = data;
                 activeBomId = data.id;
                 discussionStarters = data.discussionStarters || [];
@@ -396,6 +399,7 @@ async function initializeAndSetCurrentBOM() {
 
         // 2. Si no hay libro oficial para este mes, calculamos el ganador de las propuestas
         const candidates = bomProposals.filter(p => p.proposalMonthYear === currentMonthStr);
+        console.log("Candidatos para este mes:", candidates.length); // <--- LOG 3
 
         if (candidates.length > 0) {
             // Ordenamos por cantidad de votos (y por fecha como desempate)
@@ -425,8 +429,10 @@ async function initializeAndSetCurrentBOM() {
 
             currentBomToDisplay = newBom;
             activeBomId = newBom.id;
+            console.log("¡Nuevo ganador calculado!", newBom.title);
         } else {
             // 3. Si no hay propuestas, usamos el primero del historial hardcoded como backup
+            console.warn("No hay propuestas. Usando libro hardcoded de respaldo."); // <--- LOG 4
             currentBomToDisplay = hardcodedBomHistory.find(b => b.monthYear === currentMonthStr) || hardcodedBomHistory[0];
             activeBomId = currentBomToDisplay ? currentBomToDisplay.id : null;
         }
