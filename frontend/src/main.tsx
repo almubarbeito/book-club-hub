@@ -887,7 +887,7 @@ function renderBomProposalModal() {
                 <div class="book-search-section">
                     <label for="bomProposalBookSearchText">Search for a book to propose:</label>
                     <div class="search-input-group">
-                        <input type="text" id="bomProposalBookSearchText" placeholder="Enter title or author" value="${bomProposal_searchText}" onkeydown="if(event.key==='Enter'){ event.preventDefault(); event.stopPropagation(); document.getElementById('performBomProposalBookSearchButton').click(); }">
+                        <input type="text" id="bomProposalBookSearchText" placeholder="Enter title or author" value="${bomProposal_searchText}" oninput="bomProposal_searchText = this.value" onkeydown="if(event.key==='Enter'){ event.preventDefault(); event.stopPropagation(); document.getElementById('performBomProposalBookSearchButton').click(); }">
                         <button type="button" id="performBomProposalBookSearchButton" class="button" ${bomProposal_isLoadingSearch ? 'disabled' : ''}>
     ${bomProposal_isLoadingSearch ? 'Searching...' : 'Search'}
 </button>
@@ -2793,7 +2793,7 @@ if (showBomProposalModal) {
         performBomSearchBtn.onclick = async (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log("EVENTO: Click en Search de propuesta.");
+            console.log("DEBUG: Buscando esto ->", bomProposal_searchText);
             await handlePerformBomProposalBookSearch();
         };
     }
