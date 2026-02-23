@@ -2163,6 +2163,7 @@ function handleBomProposalBookSearchInputChange(event) {
 
 // This is the corrected version of the function
 async function handlePerformBomProposalBookSearch() {
+    console.log("DEBUG: La función de búsqueda ha sido llamada");
     if (!bomProposal_searchText.trim()) {
         bomProposal_searchError = "Please enter a search term.";
         bomProposal_searchResults = [];
@@ -3019,45 +3020,61 @@ if (detailModalContainer) {
 }
 
 if (showBomProposalModal) {
-    // 1. Botón de búsqueda (Search) - EL MÁS IMPORTANTE
-    const performSearchBtn = document.getElementById('performBomProposalBookSearchButton');
-    if (performSearchBtn) {
-       // Usamos onclick directamente para evitar duplicados y asegurar conexión
-        performSearchBtn.onclick = (e) => {
-            e.preventDefault();
-            console.log("Buscando libro...");
-            handlePerformBomProposalBookSearch();
+    // 1. INPUT DE TEXTO: Manejar el "Enter"
+    const bomInput = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
+    if (bomInput) {
+        bomInput.onkeypress = async (e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                console.log("DEBUG: Enter detectado en Propuestas");
+                await handlePerformBomProposalBookSearch();
+            }
         };
     }
 
-    // 2. Input de búsqueda (para detectar cambios o Enter)
-    const searchInput = document.getElementById('bomProposalBookSearchText');
-    if (searchInput) {
-        searchInput.removeEventListener('input', handleBomProposalBookSearchInputChange);
-        searchInput.addEventListener('input', handleBomProposalBookSearchInputChange);
+    // 2. BOTÓN SEARCH: El más importante
+    const performBomSearchBtn = document.getElementById('performBomProposalBookSearchButton');
+    if (performBomSearchBtn) {
+        // Usamos .onclick para asegurar que no haya duplicados
+        performBomSearchBtn.onclick = async (e) => {
+            e.preventDefault();
+            console.log("DEBUG: Click en Search de Propuestas");
+            await handlePerformBomProposalBookSearch();
+        };
     }
 
-    // 3. Botones de "Select" (los que aparecen tras buscar)
-    // He quitado el prefijo largo para que los encuentre siempre
-    document.querySelectorAll('button[data-action="select-searched-bom-proposal-book"]').forEach(button => {
-        button.removeEventListener('click', handleSelectSearchedBomProposalBook);
-        button.addEventListener('click', handleSelectSearchedBomProposalBook);
+    // 3. BOTÓN CERRAR (X)
+    const closeBtn = document.querySelector('[data-action="close-bom-proposal-modal"]');
+    if (closeBtn) {
+        (closeBtn as HTMLElement).onclick = () => {
+            showBomProposalModal = false;
+            // Limpiamos resultados al cerrar
+            bomProposal_searchResults = [];
+            bomProposal_searchText = '';
+            updateView();
+        };
+    }
+
+    // 4. SELECCIONAR LIBRO (Resultados de búsqueda)
+    document.querySelectorAll('[data-action="select-searched-bom-proposal-book"]').forEach(btn => {
+        (btn as HTMLElement).onclick = (e) => {
+            const index = parseInt((e.currentTarget as HTMLElement).dataset.index || '0');
+            const selectedBook = bomProposal_searchResults[index];
+            if (selectedBook) {
+                bomProposal_formTitle = selectedBook.title;
+                bomProposal_formAuthor = selectedBook.author;
+                bomProposal_formCoverUrl = selectedBook.cover || '';
+                updateView();
+            }
+        };
     });
 
-    // 4. Formulario y botón de cerrar (simplificados)
-    const bomProposalForm = document.getElementById('bomProposalForm');
-    if (bomProposalForm) {
-       bomProposalForm.onsubmit = (e) => {
+    // 5. ENVÍO DEL FORMULARIO FINAL
+    const bomForm = document.getElementById('bomProposalForm');
+    if (bomForm) {
+        bomForm.onsubmit = async (e) => {
             e.preventDefault();
-            handleSubmitBomProposal(e);
-        };
-    }
-
-    const closeButton = document.querySelector('button[data-action="close-bom-proposal-modal"]');
-    if (closeButton) {
-        (closeButton as HTMLElement).onclick = () => {
-            console.log("Cerrando modal...");
-            handleCloseBomProposalModal();
+            await handleSubmitBomProposal(e);
         };
     }
 }
