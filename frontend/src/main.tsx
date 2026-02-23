@@ -1437,7 +1437,7 @@ function renderAddBookModal() {
 
 // --- Event Handlers & Logic ---
 
-function handleAuthAction(event) {
+async function handleAuthAction(event: Event) {
     const action = (event.target as HTMLElement).dataset.authAction;
     authError = null; 
     if (action === 'show-login') currentAuthProcessView = 'login';
