@@ -1036,26 +1036,6 @@ function renderProposalDetailModal() {
     `;
 }
 
-// Chat View
-function ChatView() {
-    return `
-        <div class="page" id="chat-view">
-            <div class="chat-messages" id="chatMessagesContainer" aria-live="polite">
-                ${chatMessages.length === 0 ? "<p>No messages yet. Start the conversation!</p>" : chatMessages.sort((a,b) => a.timestamp - b.timestamp).map(msg => `
-                    <div class="chat-message ${msg.userId === currentUser?.id ? 'user' : 'other'}">
-                        <strong>${msg.userId === currentUser?.id ? 'You' : (msg.userPseudonym || msg.userName || 'Anonymous')}</strong>
-                        <p>${msg.text}</p>
-                        <span class="chat-timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</span>
-                    </div>
-                `).join('')}
-            </div>
-            <div class="chat-input-container">
-                <input type="text" id="chatMessageInput" placeholder="Type your message..." aria-label="Chat message input">
-                <button id="sendChatMessage" class="button"><span class="material-icons">send</span></button>
-            </div>
-        </div>
-    `;
-}
 
 // Profile View
 function ProfileView() {
@@ -2872,36 +2852,55 @@ function attachEventListeners () {
     }
 }
 
-    if (currentView === "bookofthemonth" || currentView === "proposals") {
-        const fetchButton = document.getElementById('fetchDiscussionStarters');
-        if (fetchButton) {
-            fetchButton.removeEventListener('click', handleFetchDiscussionStarters);
-            fetchButton.addEventListener('click', handleFetchDiscussionStarters);
-        }
-        
-        
-        const startReadingBomButton = document.querySelector('button[data-action="start-reading-bom"]');
-        if (startReadingBomButton) {
-            startReadingBomButton.removeEventListener('click', handleStartReadingBom);
-            startReadingBomButton.addEventListener('click', handleStartReadingBom);
-        }
+    ¡Tienes toda la razón! Separarlos no solo es más limpio, sino que te ayudará a diagnosticar exactamente qué falla. Al tenerlos juntos, si un elemento no existe en una de las vistas (por ejemplo, el botón de "Start Reading" no está en la pestaña Proposals), a veces el script puede detenerse o ignorar el resto.
 
-        const showProposalModalButton = document.querySelector('button[data-action="show-bom-proposal-modal"]');
-        if (showProposalModalButton) {
-            showProposalModalButton.removeEventListener('click', handleShowBomProposalModal);
-            showProposalModalButton.addEventListener('click', handleShowBomProposalModal);
-        }
-        document.querySelectorAll('button[data-action="toggle-bom-proposal-vote"]').forEach(button => {
-            button.removeEventListener('click', handleBomProposalVoteToggle);
-            button.addEventListener('click', handleBomProposalVoteToggle);
-        });
-        document.querySelectorAll('button[data-action="delete-bom-proposal"]').forEach(button => {
+Vamos a dividirlos por "responsabilidad". Así debería quedar tu attachEventListeners para que sea infalible:
+
+1. Separa las Vistas en attachEventListeners
+Sustituye ese bloque por estos dos bloques independientes:
+
+TypeScript
+// --- BLOQUE 1: EXCLUSIVO DE BOOK OF THE MONTH ---
+if (currentView === "bookofthemonth") {
+    const fetchButton = document.getElementById('fetchDiscussionStarters');
+    if (fetchButton) {
+        fetchButton.removeEventListener('click', handleFetchDiscussionStarters);
+        fetchButton.addEventListener('click', handleFetchDiscussionStarters);
+    }
+    
+    const startReadingBomButton = document.querySelector('button[data-action="start-reading-bom"]');
+    if (startReadingBomButton) {
+        startReadingBomButton.removeEventListener('click', handleStartReadingBom);
+        startReadingBomButton.addEventListener('click', handleStartReadingBom);
+    }
+}
+
+// --- BLOQUE 2: EXCLUSIVO DE PROPOSALS ---
+if (currentView === "proposals") {
+    console.log("Asignando eventos en la pestaña Proposals..."); // Debug para ver si entra aquí
+    
+    const showProposalModalButton = document.querySelector('button[data-action="show-bom-proposal-modal"]');
+    if (showProposalModalButton) {
+        showProposalModalButton.removeEventListener('click', handleShowBomProposalModal);
+        showProposalModalButton.addEventListener('click', handleShowBomProposalModal);
+    }
+
+    document.querySelectorAll('button[data-action="toggle-bom-proposal-vote"]').forEach(button => {
+        button.removeEventListener('click', handleBomProposalVoteToggle);
+        button.addEventListener('click', handleBomProposalVoteToggle);
+    });
+
+    document.querySelectorAll('button[data-action="delete-bom-proposal"]').forEach(button => {
         button.removeEventListener('click', handleDeleteBomProposal);
         button.addEventListener('click', handleDeleteBomProposal);
     });
-
-        
-    }
+    
+    // Si el modal de detalle de propuesta existe:
+    document.querySelectorAll('[data-action="show-proposal-detail"]').forEach(item => {
+        item.removeEventListener('click', handleShowProposalDetail);
+        item.addEventListener('click', handleShowProposalDetail);
+    });
+}
 
     if (showBomProposalModal) {
     // 1. Botón de búsqueda (Search) - EL MÁS IMPORTANTE
