@@ -3072,7 +3072,7 @@ if (showBomProposalModal) {
         };
     }
 }
-}
+
 
 
 
