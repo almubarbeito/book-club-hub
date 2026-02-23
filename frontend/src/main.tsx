@@ -2231,6 +2231,7 @@ async function handlePerformBomProposalBookSearch() {
     } finally {
         bomProposal_isLoadingSearch = false;
         updateView();
+        attachEventListeners();
     }
 }
 
@@ -2901,48 +2902,40 @@ function attachEventListeners () {
     }
 
     if (showBomProposalModal) {
-        const bomProposalForm = document.getElementById('bomProposalForm');
-        if (bomProposalForm) {
-            bomProposalForm.removeEventListener('submit', handleSubmitBomProposal);
-            bomProposalForm.addEventListener('submit', handleSubmitBomProposal);
-        }
-        const reasonTextArea = document.getElementById('bomProposalReason') as HTMLTextAreaElement;
-        if (reasonTextArea) {
-            reasonTextArea.removeEventListener('input', handleBomProposalFormInputChange);
-            reasonTextArea.addEventListener('input', handleBomProposalFormInputChange);
-        }
-        const closeButton = document.querySelector('#bomProposalModalContainer .close-button[data-action="close-bom-proposal-modal"]');
-        if(closeButton) {
-            closeButton.removeEventListener('click', handleCloseBomProposalModal);
-            closeButton.addEventListener('click', handleCloseBomProposalModal);
-        }
-        const modalContainer = document.getElementById('bomProposalModalContainer');
-        if (modalContainer) {
-            function closeModalOnClickOutside(e) { if (e.target === modalContainer) handleCloseBomProposalModal(); }
-            modalContainer.removeEventListener('click', closeModalOnClickOutside); 
-            modalContainer.addEventListener('click', closeModalOnClickOutside);
-        }
-        const searchInput = document.getElementById('bomProposalBookSearchText');
-        if (searchInput) {
-            searchInput.removeEventListener('input', handleBomProposalBookSearchInputChange);
-            searchInput.addEventListener('input', handleBomProposalBookSearchInputChange);
-            // Add the keypress listener here
-        const keypressHandler = (e: KeyboardEvent) => handleSearchInputKeypress(e, 'performBomProposalBookSearchButton');
-        searchInput.removeEventListener('keypress', keypressHandler);
-        searchInput.addEventListener('keypress', keypressHandler);
-        }
-        const performSearchBtn = document.getElementById('performBomProposalBookSearchButton');
-        if (performSearchBtn) {
-            performSearchBtn.removeEventListener('click', handlePerformBomProposalBookSearch);
-            performSearchBtn.addEventListener('click', handlePerformBomProposalBookSearch);
-        }
-        
-
-        document.querySelectorAll('#bomProposalModalContainer .book-search-result-item button[data-action="select-searched-bom-proposal-book"]').forEach(button => {
-            button.removeEventListener('click', handleSelectSearchedBomProposalBook);
-            button.addEventListener('click', handleSelectSearchedBomProposalBook);
-        });
+    // 1. Botón de búsqueda (Search) - EL MÁS IMPORTANTE
+    const performSearchBtn = document.getElementById('performBomProposalBookSearchButton');
+    if (performSearchBtn) {
+        performSearchBtn.removeEventListener('click', handlePerformBomProposalBookSearch);
+        performSearchBtn.addEventListener('click', handlePerformBomProposalBookSearch);
     }
+
+    // 2. Input de búsqueda (para detectar cambios o Enter)
+    const searchInput = document.getElementById('bomProposalBookSearchText');
+    if (searchInput) {
+        searchInput.removeEventListener('input', handleBomProposalBookSearchInputChange);
+        searchInput.addEventListener('input', handleBomProposalBookSearchInputChange);
+    }
+
+    // 3. Botones de "Select" (los que aparecen tras buscar)
+    // He quitado el prefijo largo para que los encuentre siempre
+    document.querySelectorAll('button[data-action="select-searched-bom-proposal-book"]').forEach(button => {
+        button.removeEventListener('click', handleSelectSearchedBomProposalBook);
+        button.addEventListener('click', handleSelectSearchedBomProposalBook);
+    });
+
+    // 4. Formulario y botón de cerrar (simplificados)
+    const bomProposalForm = document.getElementById('bomProposalForm');
+    if (bomProposalForm) {
+        bomProposalForm.removeEventListener('submit', handleSubmitBomProposal);
+        bomProposalForm.addEventListener('submit', handleSubmitBomProposal);
+    }
+
+    const closeButton = document.querySelector('button[data-action="close-bom-proposal-modal"]');
+    if (closeButton) {
+        closeButton.removeEventListener('click', handleCloseBomProposalModal);
+        closeButton.addEventListener('click', handleCloseBomProposalModal);
+    }
+}
 
     if (showReviewBookModal) {
         const reviewBookForm = document.getElementById('reviewBookForm');
