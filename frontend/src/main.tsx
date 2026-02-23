@@ -925,7 +925,7 @@ function renderBomProposalModal() {
                     </div>
                     <div>
                         <label for="bomProposalReason">Why are you proposing this book?</label>
-                        <textarea id="bomProposalReason" name="reason" required rows="3" placeholder="Share a few words about why this would be a great Book of the Month.">${bomProposal_formReason}</textarea>
+                        <textarea id="bomProposalReason" name="reason" required rows="3" placeholder="Share a few words about why this would be a great Book of the Month." oninput="window.bomProposal_formReason = this.value">${bomProposal_formReason}</textarea>
                     </div>
                     <button type="button" class="button full-width" data-action="submit-bom-proposal" onclick="handleSubmitBomProposal(event)">Submit Proposal</button>
                 </form>
@@ -2236,6 +2236,7 @@ async function handlePerformBomProposalBookSearch(event?: Event) {
 }
 (window as any).handlePerformBomProposalBookSearch = handlePerformBomProposalBookSearch;
 (window as any).bomProposal_searchText = bomProposal_searchText;
+(window as any).bomProposal_formReason = bomProposal_formReason;
 
 function handleSelectSearchedBomProposalBook(event) {
     const index = parseInt((event.target as HTMLElement).dataset.index!, 10);
