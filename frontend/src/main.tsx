@@ -925,9 +925,9 @@ function renderBomProposalModal() {
                     </div>
                     <div>
                         <label for="bomProposalReason">Why are you proposing this book?</label>
-                        <textarea id="bomProposalReason" name="reason" required rows="3" placeholder="Share a few words about why this would be a great Book of the Month." oninput="window.bomProposal_formReason = this.value">${bomProposal_formReason}</textarea>
+                        <textarea id="bomProposalReason" name="reason" required rows="3" placeholder="Share a few words about why this would be a great Book of the Month.">${bomProposal_formReason}</textarea>
                     </div>
-                    <button type="button" class="button full-width" data-action="submit-bom-proposal" onclick="handleSubmitBomProposal(event)">Submit Proposal</button>
+                    <button type="button" class="button full-width" onclick="window.handleSubmitBomProposal(event)">Submit Proposal</button>
                 </form>
             </div>
         </div>
@@ -2259,10 +2259,19 @@ function handleBomProposalFormInputChange(event) {
 }
 
 async function handleSubmitBomProposal(event) {
-    // 1. IMPORTANTE: El preventDefault solo funciona si el evento existe 
-    // (al ser type="button" a veces el evento se comporta distinto)
-    if (event && event.preventDefault) {
+    if (event) {
         event.preventDefault();
+        event.stopPropagation();
+    }
+
+    // --- EL CAMBIO CRÍTICO ---
+    // Buscamos el elemento físicamente en el DOM justo ahora
+    const textarea = document.getElementById('bomProposalReason') as HTMLTextAreaElement;
+    
+    if (textarea) {
+        // Guardamos lo que hay escrito en la caja en la variable global
+        bomProposal_formReason = textarea.value;
+        console.log("DEBUG: Motivo capturado del DOM:", bomProposal_formReason);
     }
 
     if (!currentUser) return;
@@ -2277,7 +2286,7 @@ async function handleSubmitBomProposal(event) {
         alert("Please select a book to propose.");
         return;
     }
-    if (!bomProposal_formReason.trim()) {
+    if (!bomProposal_formReason || !bomProposal_formReason.trim()) {
         alert("Please provide a reason for your proposal.");
         return;
     }
