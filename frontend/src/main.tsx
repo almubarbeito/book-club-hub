@@ -887,7 +887,7 @@ function renderBomProposalModal() {
                 <div class="book-search-section">
                     <label for="bomProposalBookSearchText">Search for a book to propose:</label>
                     <div class="search-input-group">
-                        <input type="text" id="bomProposalBookSearchText" placeholder="Enter title or author" value="${bomProposal_searchText}">
+                        <input type="text" id="bomProposalBookSearchText" placeholder="Enter title or author" value="${bomProposal_searchText}" onkeydown="if(event.key==='Enter'){ event.preventDefault(); event.stopPropagation(); document.getElementById('performBomProposalBookSearchButton').click(); }">
                         <button type="button" id="performBomProposalBookSearchButton" class="button" ${bomProposal_isLoadingSearch ? 'disabled' : ''}>
     ${bomProposal_isLoadingSearch ? 'Searching...' : 'Search'}
 </button>
@@ -2766,6 +2766,72 @@ document.onclick = (e) => {
     }
 };
 
+// --- BLOQUE ÚNICO Y FINAL PARA PROPUESTAS ---
+if (showBomProposalModal) {
+    console.log("DOM: Modal de propuestas detectado.");
+
+    const bomSearchInput = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
+    const performBomSearchBtn = document.getElementById('performBomProposalBookSearchButton');
+
+    if (bomSearchInput) {
+        // VITAL: Guardar lo que se escribe, si no la búsqueda va vacía
+        bomSearchInput.oninput = (e) => {
+            bomProposal_searchText = (e.target as HTMLInputElement).value;
+        };
+        // Controlar el Enter
+        bomSearchInput.onkeydown = async (e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("EVENTO: Enter en búsqueda de propuesta.");
+                await handlePerformBomProposalBookSearch();
+            }
+        };
+    }
+
+    if (performBomSearchBtn) {
+        performBomSearchBtn.onclick = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("EVENTO: Click en Search de propuesta.");
+            await handlePerformBomProposalBookSearch();
+        };
+    }
+
+    // BOTONES "SELECT" (Seleccionar libro buscado)
+    document.querySelectorAll('[data-action="select-searched-bom-proposal-book"]').forEach(btn => {
+        (btn as HTMLElement).onclick = (e) => {
+            const index = parseInt((e.currentTarget as HTMLElement).dataset.index || '0');
+            const selectedBook = bomProposal_searchResults[index];
+            if (selectedBook) {
+                bomProposal_formTitle = selectedBook.title;
+                bomProposal_formAuthor = selectedBook.author;
+                bomProposal_formCoverUrl = selectedBook.cover || '';
+                updateView(); // Esto cerrará la lista y llenará el form
+            }
+        };
+    });
+
+    // BOTÓN CERRAR (X)
+    const closeBtn = document.querySelector('[data-action="close-bom-proposal-modal"]');
+    if (closeBtn) {
+        (closeBtn as HTMLElement).onclick = () => {
+            showBomProposalModal = false;
+            bomProposal_searchText = ''; // Limpiamos para la próxima
+            bomProposal_searchResults = [];
+            updateView();
+        };
+    }
+    
+    // FORMULARIO DE ENVÍO (Submit final)
+    const bomForm = document.getElementById('bomProposalForm');
+    if (bomForm) {
+        bomForm.onsubmit = async (e) => {
+            e.preventDefault();
+            await handleSubmitBomProposal(e);
+        };
+    }
+}
     
     if (!currentUser) {
         document.querySelectorAll('[data-auth-action]').forEach(button => {
@@ -3001,72 +3067,7 @@ if (detailModalContainer) {
     });
 }
 
-// --- BLOQUE ÚNICO Y FINAL PARA PROPUESTAS ---
-if (showBomProposalModal) {
-    console.log("DOM: Modal de propuestas detectado.");
 
-    const bomSearchInput = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
-    const performBomSearchBtn = document.getElementById('performBomProposalBookSearchButton');
-
-    if (bomSearchInput) {
-        // VITAL: Guardar lo que se escribe, si no la búsqueda va vacía
-        bomSearchInput.oninput = (e) => {
-            bomProposal_searchText = (e.target as HTMLInputElement).value;
-        };
-        // Controlar el Enter
-        bomSearchInput.onkeydown = async (e: KeyboardEvent) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log("EVENTO: Enter en búsqueda de propuesta.");
-                await handlePerformBomProposalBookSearch();
-            }
-        };
-    }
-
-    if (performBomSearchBtn) {
-        performBomSearchBtn.onclick = async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log("EVENTO: Click en Search de propuesta.");
-            await handlePerformBomProposalBookSearch();
-        };
-    }
-
-    // BOTONES "SELECT" (Seleccionar libro buscado)
-    document.querySelectorAll('[data-action="select-searched-bom-proposal-book"]').forEach(btn => {
-        (btn as HTMLElement).onclick = (e) => {
-            const index = parseInt((e.currentTarget as HTMLElement).dataset.index || '0');
-            const selectedBook = bomProposal_searchResults[index];
-            if (selectedBook) {
-                bomProposal_formTitle = selectedBook.title;
-                bomProposal_formAuthor = selectedBook.author;
-                bomProposal_formCoverUrl = selectedBook.cover || '';
-                updateView(); // Esto cerrará la lista y llenará el form
-            }
-        };
-    });
-
-    // BOTÓN CERRAR (X)
-    const closeBtn = document.querySelector('[data-action="close-bom-proposal-modal"]');
-    if (closeBtn) {
-        (closeBtn as HTMLElement).onclick = () => {
-            showBomProposalModal = false;
-            bomProposal_searchText = ''; // Limpiamos para la próxima
-            bomProposal_searchResults = [];
-            updateView();
-        };
-    }
-    
-    // FORMULARIO DE ENVÍO (Submit final)
-    const bomForm = document.getElementById('bomProposalForm');
-    if (bomForm) {
-        bomForm.onsubmit = async (e) => {
-            e.preventDefault();
-            await handleSubmitBomProposal(e);
-        };
-    }
-}
 
 }
 
