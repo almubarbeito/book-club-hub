@@ -888,9 +888,9 @@ function renderBomProposalModal() {
                     <label for="bomProposalBookSearchText">Search for a book to propose:</label>
                     <div class="search-input-group">
                         <input type="text" id="bomProposalBookSearchText" placeholder="Enter title or author" value="${bomProposal_searchText}">
-                        <button id="performBomProposalBookSearchButton" class="button" ${bomProposal_isLoadingSearch ? 'disabled' : ''}>
-                            ${bomProposal_isLoadingSearch ? 'Searching...' : 'Search'}
-                        </button>
+                        <button type="button" id="performBomProposalBookSearchButton" class="button" ${bomProposal_isLoadingSearch ? 'disabled' : ''}>
+    ${bomProposal_isLoadingSearch ? 'Searching...' : 'Search'}
+</button>
                     </div>
                     ${searchResultsHtml}
                 </div>
@@ -3020,38 +3020,33 @@ if (detailModalContainer) {
 }
 
 if (showBomProposalModal) {
-    console.log("DOM: Modal de propuestas detectado. Conectando eventos...");
 
     // 1. EL BUSCADOR (INPUT) - Para detectar el Enter
     console.log("DOM: Modal de propuestas detectado.");
 
     const bomSearchInput = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
-    if (bomSearchInput) {
-        // A) Sincronizar el texto (para que no se borre al redibujar)
-        bomSearchInput.oninput = (e) => {
-            bomProposal_searchText = (e.target as HTMLInputElement).value;
-        };
+    const performBomSearchBtn = document.getElementById('performBomProposalBookSearchButton');
 
-        // B) Detectar el Enter
+    if (bomSearchInput) {
         bomSearchInput.onkeydown = async (e: KeyboardEvent) => {
             if (e.key === 'Enter') {
-                e.preventDefault();
+                e.preventDefault(); // EVITA EL REFRESCO
+                e.stopPropagation();
                 console.log("EVENTO: Enter detectado.");
                 await handlePerformBomProposalBookSearch();
             }
         };
     }
 
-    // 2. EL BOTÓN SEARCH
-    const performBomSearchBtn = document.getElementById('performBomProposalBookSearchButton');
     if (performBomSearchBtn) {
         performBomSearchBtn.onclick = async (e) => {
-            e.preventDefault();
-            //e.stopPropagation();
-            console.log("EVENTO: Click en botón Search.");
+            e.preventDefault(); // EVITA EL REFRESCO
+            e.stopPropagation();
+            console.log("EVENTO: Click en Search.");
             await handlePerformBomProposalBookSearch();
         };
     }
+}
 
     // 3. LOS BOTONES "SELECT" (Cuando ya hay resultados)
     document.querySelectorAll('[data-action="select-searched-bom-proposal-book"]').forEach(btn => {
