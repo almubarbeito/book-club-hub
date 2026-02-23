@@ -373,40 +373,67 @@ function formatMonthYearForDisplay(monthYear: string): string  {
 }
 
 
-function initializeAndSetCurrentBOM() {
-    //const currentMonthStr = getCurrentMonthYearString();
-    // --- TEMPORARY CHANGE FOR TESTING ---
-const currentMonthStr = "2025-07"; 
-// const currentMonthStr = getCurrentMonthYearString(); // Comment out the original line
-    let foundBomForCurrentMonth = bookOfTheMonthHistory.find(bom => bom.monthYear === currentMonthStr);
+async function initializeAndSetCurrentBOM() {
+    // Obtenemos el mes actual (ej: "2025-07")
+    // Para producción usar: const currentMonthStr = getCurrentMonthYearString();
+    const currentMonthStr = "2025-07"; 
+    
+    try {
+        // 1. Intentamos leer el libro "oficial" ya seleccionado de Firestore
+        const bomDocRef = doc(db, "config", "activeBOM");
+        const bomSnap = await getDoc(bomDocRef);
 
-    if (!foundBomForCurrentMonth) {
-        if (bookOfTheMonthHistory.length === 0) { 
-            const newBomId = `${currentMonthStr}_${DEFAULT_BOM_SEED.title.toLowerCase().replace(/\s+/g, '_')}`;
-            const initialBom: BomEntry = {
-                ...DEFAULT_BOM_SEED,
-                id: newBomId,
+        if (bomSnap.exists()) {
+            const data = bomSnap.data() as BomEntry;
+            // Si el libro guardado coincide con el mes actual, lo usamos
+            if (data.monthYear === currentMonthStr) {
+                currentBomToDisplay = data;
+                activeBomId = data.id;
+                discussionStarters = data.discussionStarters || [];
+                return; // Ya tenemos el libro, terminamos aquí
+            }
+        }
+
+        // 2. Si no hay libro oficial para este mes, calculamos el ganador de las propuestas
+        const candidates = bomProposals.filter(p => p.proposalMonthYear === currentMonthStr);
+
+        if (candidates.length > 0) {
+            // Ordenamos por cantidad de votos (y por fecha como desempate)
+            candidates.sort((a, b) => {
+                const voteDiff = (b.votes?.length || 0) - (a.votes?.length || 0);
+                if (voteDiff !== 0) return voteDiff;
+                return b.timestamp - a.timestamp;
+            });
+
+            const winner = candidates[0];
+            
+            // Creamos la entrada oficial del Libro del Mes
+            const newBom: BomEntry = {
+                id: `bom_${currentMonthStr}_${winner.id}`,
                 monthYear: currentMonthStr,
-                setBy: 'default',
+                title: winner.bookTitle,
+                author: winner.bookAuthor,
+                description: winner.reason,
+                promptHint: `Ganador por votación popular (${winner.votes.length} votos)`,
+                coverImageUrl: winner.bookCoverImageUrl,
+                setBy: 'community_vote',
                 discussionStarters: []
             };
-            bookOfTheMonthHistory.push(initialBom);
-            Storage.setItem("bookOfTheMonthHistory", bookOfTheMonthHistory);
-            foundBomForCurrentMonth = initialBom;
+
+            // Guardamos en Firestore para que sea el mismo para todos los usuarios
+            await setDoc(doc(db, "config", "activeBOM"), newBom);
+
+            currentBomToDisplay = newBom;
+            activeBomId = newBom.id;
         } else {
-            currentBomToDisplay = null; 
-            activeBomId = null;
-            discussionStarters = []; 
+            // 3. Si no hay propuestas, usamos el primero del historial hardcoded como backup
+            currentBomToDisplay = hardcodedBomHistory.find(b => b.monthYear === currentMonthStr) || hardcodedBomHistory[0];
+            activeBomId = currentBomToDisplay ? currentBomToDisplay.id : null;
         }
-    }
-    
-    currentBomToDisplay = foundBomForCurrentMonth || null; 
-    if (currentBomToDisplay) {
-        activeBomId = currentBomToDisplay.id;
-        discussionStarters = currentBomToDisplay.discussionStarters || [];
-    } else {
-        activeBomId = null;
-        discussionStarters = [];
+
+    } catch (error) {
+        console.error("Error seleccionando el libro del mes:", error);
+        currentBomToDisplay = hardcodedBomHistory[0]; // Fallback de seguridad
     }
 }
 
@@ -3106,7 +3133,7 @@ function startApplication() {
         // --- FINAL STEP FOR ALL SCENARIOS ---
         // After all state (currentUser, books, view, etc.) is definitively set,
         // we calculate the BoM and then perform ONE SINGLE RENDER.
-        initializeAndSetCurrentBOM();
+        await initializeAndSetCurrentBOM();
         updateView();
     });
 }
