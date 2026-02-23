@@ -887,22 +887,22 @@ function renderBomProposalModal() {
                 <div class="book-search-section">
     <label for="bomProposalBookSearchText">Search for a book to propose:</label>
     <div class="search-input-group">
-        <input 
-    type="text" 
-    id="bomProposalBookSearchText" 
-    placeholder="Enter title or author" 
-    value="${bomProposal_searchText}"
-    oninput="window.bomProposal_searchText = this.value"
->
-<button 
-    type="button" 
-    id="performBomProposalBookSearchButton" 
-    data-action="perform-bom-search" 
-    class="button"
->
-    Search
-</button>
-    </div>
+    <input 
+        type="text" 
+        id="bomProposalBookSearchText" 
+        placeholder="Enter title or author" 
+        value="${bomProposal_searchText}"
+        onkeydown="if(event.key==='Enter'){ event.preventDefault(); this.nextElementSibling.click(); }"
+    >
+    <button 
+        type="button" 
+        id="performBomProposalBookSearchButton" 
+        data-action="perform-bom-search" 
+        class="button"
+    >
+        ${bomProposal_isLoadingSearch ? 'Searching...' : 'Search'}
+    </button>
+</div>
                     ${searchResultsHtml}
                 </div>
                 
@@ -2174,23 +2174,23 @@ function handleBomProposalBookSearchInputChange(event) {
 
 // This is the corrected version of the function
 async function handlePerformBomProposalBookSearch(event?: Event) {
-    // BLOQUEO DE SEGURIDAD: Evita que el formulario refresque la página
-    if (event && event.preventDefault) {
+   if (event) {
         event.preventDefault();
+        event.stopPropagation();
     }
 
-    // FUERZA BRUTA: Leemos el texto directamente del elemento del DOM
-    const input = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
+    // --- CAMBIO CLAVE: Buscamos el input dentro del modal activo ---
+    const modal = document.getElementById('bomProposalModalContainer');
+    const input = modal?.querySelector('input[type="text"]') as HTMLInputElement;
+    
     if (input) {
         bomProposal_searchText = input.value;
     }
 
-    console.log("DEBUG: Valor real en el input:", bomProposal_searchText);
+    console.log("DEBUG: Valor capturado físicamente:", bomProposal_searchText);
 
     if (!bomProposal_searchText || !bomProposal_searchText.trim()) {
-        console.log("DEBUG: Abortando porque el texto está vacío");
         bomProposal_searchError = "Please enter a search term.";
-        bomProposal_searchResults = [];
         updateView();
         return;
     }
@@ -2789,11 +2789,15 @@ document.onclick = (e) => {
             // Pasamos el evento para que la función extraiga el index
             handleSelectSearchedBomProposalBook(e);
             break;
-            case "perform-bom-search":
-    e.preventDefault();
-    handlePerformBomProposalBookSearch();
-    break;
-    }
+        case "perform-bom-search":
+            // Buscamos el input que está justo antes del botón que se ha pulsado
+            const inputSibling = actionElement.previousElementSibling as HTMLInputElement;
+                if (inputSibling) {
+                     bomProposal_searchText = inputSibling.value;
+                }
+                handlePerformBomProposalBookSearch(e);
+            break;
+     }
 };
 
 // --- BLOQUE ÚNICO Y FINAL PARA PROPUESTAS ---
