@@ -5,7 +5,7 @@ import './index.css';
 
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, collection, onSnapshot, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, runTransaction, FieldValue } from "firebase/firestore";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";
 
 // --- Your Firebase project's configuration ---
 // Get this from your Firebase project settings in the console
@@ -485,6 +485,23 @@ function renderMainAverageRating(overallValue: number, ratersCount: number) {
             <span class="main-rating-text">${overallValue.toFixed(1)} average rating • ${ratersCount} review(s)</span>
         </div>
     `;
+}
+async function handleForgotPassword() {
+    const email = prompt("Por favor, introduce tu correo electrónico para restablecer tu contraseña:");
+    
+    if (!email) return; // Si el usuario cancela o deja vacío
+
+    try {
+        await sendPasswordResetEmail(auth, email);
+        alert("¡Correo enviado! Revisa tu bandeja de entrada para cambiar tu contraseña.");
+    } catch (error: any) {
+        console.error("Error al enviar correo de recuperación:", error);
+        if (error.code === 'auth/user-not-found') {
+            alert("No hay ningún usuario registrado con ese correo.");
+        } else {
+            alert("Hubo un error al procesar la solicitud. Inténtalo de nuevo.");
+        }
+    }
 }
 
 function updateView () {
@@ -1117,6 +1134,10 @@ const LoginView = () => `
                 </div>
                 <button type="submit">Login</button>
             </form>
+            </form>
+            <p style="margin-top: 15px;">
+                <button class="link-button" data-auth-action="forgot-password">¿Olvidaste tu contraseña?</button>
+            </p>
             <p>Don't have an account? <button class="link-button" data-auth-action="show-register">Register here</button></p>
         </div>
     </div>
@@ -1422,6 +1443,31 @@ function handleAuthAction(event) {
     if (action === 'show-login') currentAuthProcessView = 'login';
     else if (action === 'show-register') currentAuthProcessView = 'register';
     else if (action === 'show-auth-options') currentAuthProcessView = 'auth_options';
+    // --- NUEVA LÓGICA DE RECUPERACIÓN ---
+    else if (action === 'forgot-password') {
+        // Intentamos pillar el email si ya lo escribió en el campo de login
+        const emailInput = document.getElementById('loginEmail') as HTMLInputElement;
+        let email = emailInput?.value;
+
+        // Si el campo está vacío, se lo preguntamos con un prompt
+        if (!email) {
+            email = prompt("Por favor, introduce tu email para enviarte el enlace de recuperación:") || "";
+        }
+
+        if (email && email.includes('@')) {
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert(`¡Enlace enviado! Revisa la bandeja de entrada de: ${email}`);
+            } catch (error: any) {
+                console.error("Error en reset:", error);
+                alert("No pudimos enviar el correo. Verifica que la dirección sea correcta.");
+            }
+        } else if (email) {
+            alert("Por favor, introduce un correo electrónico válido.");
+        }
+        // En este caso no cambiamos de vista, así que no hace falta hacer nada más
+        return; 
+    }
     updateView();
 }
 
