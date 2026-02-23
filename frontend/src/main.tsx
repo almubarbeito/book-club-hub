@@ -3023,14 +3023,20 @@ if (showBomProposalModal) {
     console.log("DOM: Modal de propuestas detectado. Conectando eventos...");
 
     // 1. EL BUSCADOR (INPUT) - Para detectar el Enter
+    console.log("DOM: Modal de propuestas detectado.");
+
     const bomSearchInput = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
     if (bomSearchInput) {
-        // Usamos .onkeypress para asegurar que sobreescribimos cualquier basura previa
-        bomSearchInput.onkeypress = async (e: KeyboardEvent) => {
+        // A) Sincronizar el texto (para que no se borre al redibujar)
+        bomSearchInput.oninput = (e) => {
+            bomProposal_searchText = (e.target as HTMLInputElement).value;
+        };
+
+        // B) Detectar el Enter
+        bomSearchInput.onkeydown = async (e: KeyboardEvent) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                e.stopPropagation();
-                console.log("EVENTO: Enter detectado en el input.");
+                console.log("EVENTO: Enter detectado.");
                 await handlePerformBomProposalBookSearch();
             }
         };
@@ -3041,7 +3047,7 @@ if (showBomProposalModal) {
     if (performBomSearchBtn) {
         performBomSearchBtn.onclick = async (e) => {
             e.preventDefault();
-            e.stopPropagation();
+            //e.stopPropagation();
             console.log("EVENTO: Click en botón Search.");
             await handlePerformBomProposalBookSearch();
         };
