@@ -2754,20 +2754,7 @@ function handleChatInputKeypress(e: KeyboardEvent) {
 
 function attachEventListeners () {
 
-    const showProposalModalButton = document.querySelector('button[data-action="show-bom-proposal-modal"]');
-        if (showProposalModalButton) {
-            showProposalModalButton.removeEventListener('click', handleShowBomProposalModal);
-            showProposalModalButton.addEventListener('click', handleShowBomProposalModal);
-        }
-        document.querySelectorAll('button[data-action="toggle-bom-proposal-vote"]').forEach(button => {
-            button.removeEventListener('click', handleBomProposalVoteToggle);
-            button.addEventListener('click', handleBomProposalVoteToggle);
-        });
-        document.querySelectorAll('button[data-action="delete-bom-proposal"]').forEach(button => {
-        button.removeEventListener('click', handleDeleteBomProposal);
-        button.addEventListener('click', handleDeleteBomProposal);
-    });
-
+    
     if (!currentUser) {
         document.querySelectorAll('[data-auth-action]').forEach(button => {
             button.removeEventListener('click', handleAuthAction);
@@ -2898,6 +2885,21 @@ function attachEventListeners () {
             startReadingBomButton.removeEventListener('click', handleStartReadingBom);
             startReadingBomButton.addEventListener('click', handleStartReadingBom);
         }
+
+        const showProposalModalButton = document.querySelector('button[data-action="show-bom-proposal-modal"]');
+        if (showProposalModalButton) {
+            showProposalModalButton.removeEventListener('click', handleShowBomProposalModal);
+            showProposalModalButton.addEventListener('click', handleShowBomProposalModal);
+        }
+        document.querySelectorAll('button[data-action="toggle-bom-proposal-vote"]').forEach(button => {
+            button.removeEventListener('click', handleBomProposalVoteToggle);
+            button.addEventListener('click', handleBomProposalVoteToggle);
+        });
+        document.querySelectorAll('button[data-action="delete-bom-proposal"]').forEach(button => {
+        button.removeEventListener('click', handleDeleteBomProposal);
+        button.addEventListener('click', handleDeleteBomProposal);
+    });
+
         
     }
 
@@ -2980,23 +2982,6 @@ function attachEventListeners () {
         }
     }
 
-
-    if (currentView === "chat") {
-        const sendButton = document.getElementById('sendChatMessage');
-        if (sendButton) {
-            sendButton.removeEventListener('click', handleSendChatMessage);
-            sendButton.addEventListener('click', handleSendChatMessage);
-        }
-        const messageInput = document.getElementById('chatMessageInput');
-        if (messageInput) {
-            messageInput.removeEventListener('keypress', handleChatInputKeypress as EventListener);
-            messageInput.addEventListener('keypress', handleChatInputKeypress as EventListener);
-        }
-        const chatContainer = document.getElementById('chatMessagesContainer');
-        if (chatContainer) {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-    }
 
     if (currentView === "profile") {
         const profileForm = document.getElementById('profileForm');
