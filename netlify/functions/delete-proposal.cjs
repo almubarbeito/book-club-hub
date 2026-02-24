@@ -27,7 +27,7 @@ exports.handler = async function (event) {
     const proposalData = doc.data();
 
     // --- The Crucial Security Check ---
-    if (proposalData.proposedByUserId !== userId) {
+    if (proposalData.proposedByUserId && proposalData.proposedByUserId !== userId) {
       console.warn(`SECURITY: User ${userId} tried to delete proposal ${proposalId} owned by ${proposalData.proposedByUserId}.`);
       return { statusCode: 403, body: 'Permission Denied: You can only delete your own proposals.' };
     }

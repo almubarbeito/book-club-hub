@@ -1507,6 +1507,7 @@ async function handleDeleteBomProposal(event: Event) {
     if (!currentUser) return;
     const target = event.currentTarget as HTMLElement;
     const proposalId = target.dataset.proposalId;
+    console.log("DELETE proposalId:", proposalId);
 
     if (!proposalId) return;
 
@@ -1828,7 +1829,7 @@ async function handleShowProposalDetail(event: Event) {
     const target = (event.target as HTMLElement).closest('.bom-proposal-item');
     if (!target) return;
 
-    const proposalId = (target as HTMLElement).dataset.proposalId;
+    const proposalId = (event.currentTarget as HTMLElement).dataset.proposalId;
     if (!proposalId) return;
 
     const proposalToShow = bomProposals.find(p => p.id === proposalId);
