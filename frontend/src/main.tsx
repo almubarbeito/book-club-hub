@@ -2784,11 +2784,11 @@ document.onclick = (e) => {
             handleShowBomProposalModal();
             break;
         case "toggle-bom-proposal-vote":
-            if (proposalId) handleBomProposalVoteToggle(proposalId);
-            break;
+            handleBomProposalVoteToggle(e);
+         break;
         case "delete-bom-proposal":
-            if (proposalId) handleDeleteBomProposal(proposalId);
-            break;
+            handleDeleteBomProposal(e);
+        break;
         case "select-searched-bom-proposal-book":
             // Pasamos el evento para que la función extraiga el index
             handleSelectSearchedBomProposalBook(e);
@@ -2862,15 +2862,16 @@ if (showBomProposalModal) {
     }
     
     // FORMULARIO DE ENVÍO (Submit final)
+    // FORMULARIO DE ENVÍO (Submit final)
     const bomForm = document.getElementById('bomProposalForm');
     if (bomForm) {
-  bomForm.removeEventListener('submit', handleSubmitBomProposal as any);
-  bomForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    handleSubmitBomProposal(e.target as HTMLFormElement);
-  });
-    }
+        bomForm.onsubmit = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("🧪 SUBMIT INTERCEPTADO");
+            handleSubmitBomProposal(e.target as HTMLFormElement);
+  };
+}
     
 }
     
