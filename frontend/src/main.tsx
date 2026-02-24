@@ -398,6 +398,7 @@ async function initializeAndSetCurrentBOM() {
         }
 
         // 2. Si no hay libro oficial para este mes, calculamos el ganador de las propuestas
+        console.log("Proposals que se van a pintar:", proposalsToRender.length);
         const candidates = bomProposals.filter(p => p.proposalMonthYear === currentMonthStr);
         console.log("Candidatos para este mes:", candidates.length); // <--- LOG 3
 
@@ -2989,6 +2990,7 @@ if (currentView === "bookofthemonth") {
 
 // --- BLOQUE 2: EXCLUSIVO DE PROPOSALS ---
 if (currentView === "proposals") {
+    console.log("TOTAL bomProposals:", bomProposals.length);
     console.log("Asignando eventos en la pestaña Proposals..."); // Debug para ver si entra aquí
     
     const showProposalModalButton = document.querySelector('button[data-action="show-bom-proposal-modal"]');
