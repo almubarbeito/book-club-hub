@@ -2299,6 +2299,14 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
     }
 }
 
+async function handleBomProposalFormSubmit(e: Event) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    console.log("Submit detectado y bloqueado para proceso JS");
+
+    await handleSubmitBomProposal(e.target as HTMLFormElement);
+}
 
 function resetProposalForm() {
     bomProposal_formTitle = '';
