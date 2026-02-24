@@ -2255,7 +2255,7 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
 
     const reason = bomProposal_formReason.trim();
 
-    console.log("Reason desde DOM:", reason);
+    console.log("Reason desde estado:", reason);
 
     if (!bomProposal_formTitle.trim()) {
         alert("Please select a book from the search results first.");
@@ -2797,6 +2797,15 @@ document.onclick = (e) => {
 
 // --- BLOQUE ÚNICO Y FINAL PARA PROPUESTAS ---
 if (showBomProposalModal) {
+    // ✅ CAPTURAR TEXTO DEL REASON (CRÍTICO)
+const reasonTextarea = document.getElementById('bomProposalReason') as HTMLTextAreaElement;
+
+if (reasonTextarea) {
+    reasonTextarea.oninput = (e) => {
+        bomProposal_formReason = (e.target as HTMLTextAreaElement).value;
+        console.log("Reason actualizado:", bomProposal_formReason);
+    };
+}
     console.log("DOM: Modal de propuestas detectado.");
 
     const bomSearchInput = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
@@ -2869,15 +2878,6 @@ if (showBomProposalModal) {
         return false;
          };
     }
-// ✅ SINCRONIZAR textarea reason con estado
-const reasonTextarea = document.getElementById('bomProposalReason') as HTMLTextAreaElement;
-
-if (reasonTextarea) {
-    reasonTextarea.oninput = (e) => {
-        bomProposal_formReason = (e.target as HTMLTextAreaElement).value;
-        console.log("✍️ Reason actualizado:", bomProposal_formReason);
-    };
-}
     
 }
     
