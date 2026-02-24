@@ -929,7 +929,7 @@ function renderBomProposalModal() {
                         <label for="bomProposalReason">Why are you proposing this book?</label>
                         <textarea id="bomProposalReason" name="reason" required rows="3" oninput="bomProposal_formReason = this.value">${bomProposal_formReason}</textarea>
                     </div>
-                    <button type="submit" class="button full-width">
+                    <button type="button" id="submitBomProposalBtn" class="button full-width">
                         Submit Proposal
                     </button>
                 </form>
@@ -2861,6 +2861,22 @@ if (showBomProposalModal) {
         await handleSubmitBomProposal(bomForm as HTMLFormElement);
         return false;
          };
+    }
+
+    // BOTÓN SUBMIT (click directo — robusto)
+    const submitBtn = document.getElementById('submitBomProposalBtn');
+
+    if (submitBtn) {
+        submitBtn.onclick = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("🚀 CLICK SUBMIT BOTÓN");
+
+            const bomForm = document.getElementById('bomProposalForm') as HTMLFormElement;
+            if (bomForm) {
+                await handleSubmitBomProposal(bomForm);
+            }
+        };
     }
     
 }
