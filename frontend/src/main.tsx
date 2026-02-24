@@ -893,10 +893,12 @@ function renderBomProposalModal() {
         id="bomProposalBookSearchText" 
         placeholder="Enter title or author" 
         value="${bomProposal_searchText}"
+        oninput="window.bomProposal_searchText = this.value" 
         onkeydown="if(event.key==='Enter'){ event.preventDefault();event.stopPropagation(); window.handlePerformBomProposalBookSearch(); return false;}"
     >
     <button 
         type="button" 
+        id="performBomProposalBookSearchButton" 
         class="button"
         onclick="event.preventDefault(); event.stopPropagation(); window.handlePerformBomProposalBookSearch(); return false;"
     >
@@ -2201,9 +2203,9 @@ function handleBomProposalFormInputChange(event) {
 // ========================================================
 
 async function handlePerformBomProposalBookSearch() {
-    // 1. Forzamos la lectura del input ignorando cualquier estado previo
+    // 1. Intentamos leer del DOM, pero si falla, usamos la variable global como respaldo
     const inputElement = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
-    const termValue = inputElement ? inputElement.value.trim() : "";
+    const termValue = inputElement ? inputElement.value.trim() : bomProposal_searchText.trim();
 
     console.log("DEBUG - Buscando término:", termValue);
 
@@ -2213,17 +2215,20 @@ async function handlePerformBomProposalBookSearch() {
         return;
     }
 
-    // Actualizamos las variables globales con el valor real capturado
+    // Actualizamos el estado global
     bomProposal_searchText = termValue;
     bomProposal_isLoadingSearch = true;
     bomProposal_searchError = null;
     bomProposal_searchResults = [];
     
-    updateView(); // Esto pintará el indicador de carga
+    updateView(); 
 
     try {
+        // IMPORTANTE: Asegúrate de que la API Key se lea así para que coincida con el vite.config.ts
+        const apiKey = (import.meta as any).env.VITE_GOOGLE_BOOKS_API_KEY;
+        
         const query = encodeURIComponent(termValue);
-        const res = await fetch(`${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=5&key=${BOOKS_API_KEY}`);
+        const res = await fetch(`${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=5&key=${apiKey}`);
         const data = await res.json();
 
         if (data.items) {
@@ -2232,8 +2237,11 @@ async function handlePerformBomProposalBookSearch() {
                 author: item.volumeInfo.authors?.join(', ') || "Unknown Author",
                 cover: item.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || null,
             }));
+        } else {
+            bomProposal_searchResults = [];
         }
     } catch (error) {
+        console.error("Error fetching books:", error);
         bomProposal_searchError = "Error fetching books.";
     } finally {
         bomProposal_isLoadingSearch = false;
