@@ -893,12 +893,12 @@ function renderBomProposalModal() {
         id="bomProposalBookSearchText" 
         placeholder="Enter title or author" 
         value="${bomProposal_searchText}"
-        onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.handlePerformBomProposalBookSearch(); }"
+        onkeydown="if(event.key==='Enter'){ event.preventDefault();event.stopPropagation(); window.handlePerformBomProposalBookSearch(); }"
     >
     <button 
         type="button" 
         class="button"
-        onclick="window.handlePerformBomProposalBookSearch()"
+        onclick="event.preventDefault(); event.stopPropagation(); window.handlePerformBomProposalBookSearch();"
     >
         ${bomProposal_isLoadingSearch ? 'Searching...' : 'Search'}
     </button>
