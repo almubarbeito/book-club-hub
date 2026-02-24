@@ -2301,6 +2301,14 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
     }
 }
 
+async function handleBomProposalSubmit(e: Event) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("🚀 SUBMIT CAPTURADO");
+
+    await handleSubmitBomProposal(e.target as HTMLFormElement);
+}
+
 async function handleBomProposalFormSubmit(e: Event) {
     e.preventDefault();
     e.stopPropagation();
@@ -2855,15 +2863,9 @@ if (showBomProposalModal) {
     // FORMULARIO DE ENVÍO (Submit final)
     const bomForm = document.getElementById('bomProposalForm');
     if (bomForm) {
-        bomForm.removeEventListener('submit', handleSubmitBomProposal as any);
-        bomForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log("Submit detectado correctamente");
-
-        handleSubmitBomProposal(bomForm as HTMLFormElement);
-    });
-}
+        bomForm.removeEventListener('submit', handleBomProposalSubmit);
+        bomForm.addEventListener('submit', handleBomProposalSubmit);
+    }
     
 }
     
