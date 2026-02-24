@@ -911,7 +911,7 @@ function renderBomProposalModal() {
                 
                 <hr class="modal-divider">
 
-                <form id="bomProposalForm" class="form">
+                <form id="bomProposalForm" class="form" onsubmit="event.preventDefault(); return false;">
                     <div>
                         <label for="bomProposalBookTitle">Book Title:</label>
                         <input type="text" id="bomProposalBookTitle" name="title" required value="${bomProposal_formTitle}" readonly>
