@@ -3203,3 +3203,4 @@ document.addEventListener('DOMContentLoaded', startApplication);
 (window as any).handlePerformBomProposalBookSearch = handlePerformBomProposalBookSearch;
 (window as any).handleSubmitBomProposal = handleSubmitBomProposal;
 (window as any).bomProposal_searchText = bomProposal_searchText;
+}
