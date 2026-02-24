@@ -2250,17 +2250,19 @@ async function handlePerformBomProposalBookSearch() {
 
 async function handleSubmitBomProposal(formElement: HTMLFormElement) {
     console.log("🔥 HANDLE SUBMIT BOM PROPOSAL EJECUTADO");
+
     if (!currentUser) return;
+
+    // ✅ LEER DIRECTO DEL DOM (LA CLAVE)
+    const reasonInput = document.getElementById('bomProposalReason') as HTMLTextAreaElement | null;
+    const reason = reasonInput?.value?.trim() || "";
+
+    console.log("Reason desde DOM:", reason);
 
     if (!bomProposal_formTitle.trim()) {
         alert("Please select a book from the search results first.");
         return;
     }
-
-    // ✅ USAR ESTADO GLOBAL (NO DOM)
-    const reason = (bomProposal_formReason || "").trim();
-
-    console.log("Reason desde estado:", reason);
 
     if (!reason) {
         alert("Please provide a reason for your proposal.");
@@ -2289,16 +2291,8 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
 
         await fetchBomProposals();
         showBomProposalModal = false;
-
-        // reset
-        bomProposal_formTitle = '';
-        bomProposal_formAuthor = '';
-        bomProposal_formCoverUrl = '';
-        bomProposal_formReason = '';
-        bomProposal_searchText = '';
-        bomProposal_searchResults = [];
-
         updateView();
+
     } catch (error) {
         console.error("Error submitting proposal:", error);
         alert("Failed to save proposal. Please try again.");
