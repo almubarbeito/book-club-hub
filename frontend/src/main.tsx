@@ -2259,11 +2259,12 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
         alert("Please select a book from the search results first.");
         return;
     }
-    // ✅ NUEVO
+    // ✅ USAR ESTADO, NO DOM
     const reason = bomProposal_formReason.trim();
 
    // ✅ CAMBIADO
-    if (!reason) {
+   console.log("DEBUG reason:", bomProposal_formReason); 
+   if (!reason) {
         alert("Please provide a reason for your proposal.");
         return;
     }
