@@ -3091,6 +3091,7 @@ if (detailModalContainer) {
 
 
 }
+}
 
 
 
@@ -3189,7 +3190,7 @@ function startApplication() {
             await fetchBomProposals();
         }
 
-        // --- FINAL STEP FOR ALL SCENARIOS ---
+        // --- FINAL STEP FOR ALL SCENARIOS ---∏
         // After all state (currentUser, books, view, etc.) is definitively set,
         // we calculate the BoM and then perform ONE SINGLE RENDER.
         await initializeAndSetCurrentBOM();
@@ -3204,4 +3205,3 @@ document.addEventListener('DOMContentLoaded', startApplication);
 (window as any).handlePerformBomProposalBookSearch = handlePerformBomProposalBookSearch;
 (window as any).handleSubmitBomProposal = handleSubmitBomProposal;
 (window as any).bomProposal_searchText = bomProposal_searchText;
-}
