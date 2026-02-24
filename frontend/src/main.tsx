@@ -2845,15 +2845,17 @@ if (showBomProposalModal) {
     // FORMULARIO DE ENVÍO (Submit final)
     const bomForm = document.getElementById('bomProposalForm');
     if (bomForm) {
-    bomForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log("Submit detectado y bloqueado para proceso JS");
+        bomForm.removeEventListener('submit', handleSubmitBomProposal as any);
+        bomForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("Submit detectado correctamente");
 
-        await handleSubmitBomProposal(e.target as HTMLFormElement); // ✅ FIX
+        handleSubmitBomProposal(bomForm as HTMLFormElement);
     });
-    }
-    }
+}
+    
+}
     
     if (!currentUser) {
         document.querySelectorAll('[data-auth-action]').forEach(button => {
