@@ -2248,23 +2248,21 @@ async function handlePerformBomProposalBookSearch() {
     }
 }
 
-
 async function handleSubmitBomProposal(formElement: HTMLFormElement) {
     console.log("🔥 HANDLE SUBMIT BOM PROPOSAL EJECUTADO");
     if (!currentUser) return;
-
-    // Lectura directa del motivo para evitar el "reason empty"
 
     if (!bomProposal_formTitle.trim()) {
         alert("Please select a book from the search results first.");
         return;
     }
-    // ✅ USAR ESTADO, NO DOM
-    const reason = bomProposal_formReason.trim();
 
-   // ✅ CAMBIADO
-   console.log("DEBUG reason:", bomProposal_formReason); 
-   if (!reason) {
+    // ✅ USAR ESTADO GLOBAL (NO DOM)
+    const reason = (bomProposal_formReason || "").trim();
+
+    console.log("Reason desde estado:", reason);
+
+    if (!reason) {
         alert("Please provide a reason for your proposal.");
         return;
     }
@@ -2273,7 +2271,7 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
         bookTitle: bomProposal_formTitle.trim(),
         bookAuthor: bomProposal_formAuthor.trim(),
         bookCoverImageUrl: bomProposal_formCoverUrl.trim() || '',
-        reason: reason, // ✅ CAMBIADO
+        reason: reason,
         proposedByUserId: currentUser.id,
         proposedByUserName: currentUser.literaryPseudonym || currentUser.name,
         proposalMonthYear: bomProposal_targetMonthYear,
@@ -2291,18 +2289,22 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
 
         await fetchBomProposals();
         showBomProposalModal = false;
-        
-        // Reset manual de variables
-        bomProposal_formTitle = ''; bomProposal_formAuthor = ''; 
-        bomProposal_formCoverUrl = ''; bomProposal_formReason = '';
-        bomProposal_searchText = ''; bomProposal_searchResults = [];
-        
+
+        // reset
+        bomProposal_formTitle = '';
+        bomProposal_formAuthor = '';
+        bomProposal_formCoverUrl = '';
+        bomProposal_formReason = '';
+        bomProposal_searchText = '';
+        bomProposal_searchResults = [];
+
         updateView();
     } catch (error) {
         console.error("Error submitting proposal:", error);
         alert("Failed to save proposal. Please try again.");
     }
 }
+
 
 function resetProposalForm() {
     bomProposal_formTitle = '';
