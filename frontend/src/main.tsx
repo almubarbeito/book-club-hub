@@ -929,7 +929,7 @@ function renderBomProposalModal() {
                         <label for="bomProposalReason">Why are you proposing this book?</label>
                         <textarea id="bomProposalReason" name="reason" required rows="3" oninput="bomProposal_formReason = this.value">${bomProposal_formReason}</textarea>
                     </div>
-                    <button type="button" id="submitBomProposalBtn" class="button full-width">
+                    <button type="button" id="submitBomProposalBtn" data-action="submit-bom-proposal" class="button full-width">
                         Submit Proposal
                     </button>
                 </form>
@@ -2773,6 +2773,18 @@ document.onclick = (e) => {
         case "delete-bom-proposal":
             handleDeleteBomProposal(e);
         break;
+        case "submit-bom-proposal":
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("🚀 CLICK SUBMIT (delegado)");
+
+        const form = document.getElementById('bomProposalForm') as HTMLFormElement;
+        if (form) {
+            handleSubmitBomProposal(form);
+        } else {
+            console.error("❌ Formulario no encontrado");
+        }
+        break;
         case "select-searched-bom-proposal-book":
             // Pasamos el evento para que la función extraiga el index
             handleSelectSearchedBomProposalBook(e);
@@ -2863,21 +2875,6 @@ if (showBomProposalModal) {
          };
     }
 
-    // BOTÓN SUBMIT (click directo — robusto)
-    const submitBtn = document.getElementById('submitBomProposalBtn');
-
-    if (submitBtn) {
-        submitBtn.onclick = async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log("🚀 CLICK SUBMIT BOTÓN");
-
-            const bomForm = document.getElementById('bomProposalForm') as HTMLFormElement;
-            if (bomForm) {
-                await handleSubmitBomProposal(bomForm);
-            }
-        };
-    }
     
 }
     
