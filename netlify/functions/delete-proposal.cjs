@@ -21,7 +21,7 @@ exports.handler = async function (event) {
     const doc = await proposalRef.get();
 
     if (!doc.exists) {
-      return { statusCode: 404, body: 'Proposal not found.' };
+      return { statusCode: 404, body: JSON.stringify({ error: "Proposal not found." }) };
     }
 
     const proposalData = doc.data();
