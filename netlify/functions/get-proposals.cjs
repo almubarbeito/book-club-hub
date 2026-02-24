@@ -19,8 +19,8 @@ exports.handler = async function () {
       data.id = doc.id; // Manually add the id
       
       // Handle timestamp
-      if (data.timestamp) {
-          data.timestamp = data.timestamp.toDate().toISOString();
+      if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+        data.timestamp = data.timestamp.toDate().toISOString();
       }
       return data;
       // --------------------
