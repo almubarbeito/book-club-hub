@@ -2200,6 +2200,14 @@ function handleBomProposalFormInputChange(event) {
     }
 }
 
+function handleBomProposalFormSubmit(e: Event) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("🚀 SUBMIT CAPTURADO");
+
+    handleSubmitBomProposal(e.target as HTMLFormElement);
+}
+
 // ========================================================
 // BLOQUE ÚNICO DE PROPUESTAS (REEMPLAZO TOTAL)
 // ========================================================
@@ -2863,15 +2871,21 @@ if (showBomProposalModal) {
     
     // FORMULARIO DE ENVÍO (Submit final)
     // FORMULARIO DE ENVÍO (Submit final)
+    // FORMULARIO DE ENVÍO (Submit final)
     const bomForm = document.getElementById('bomProposalForm');
+
     if (bomForm) {
-        bomForm.onsubmit = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log("🧪 SUBMIT INTERCEPTADO");
-            handleSubmitBomProposal(e.target as HTMLFormElement);
-  };
-}
+        console.log("Formulario de propuesta encontrado");
+
+         bomForm.onsubmit = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("SUBMIT INTERCEPTADO");
+
+        await handleSubmitBomProposal(bomForm as HTMLFormElement);
+        return false;
+         };
+    }
     
 }
     
