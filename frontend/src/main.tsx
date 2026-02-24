@@ -1462,98 +1462,7 @@ function renderAddBookModal() {
     `;
 }
 
-// --- FUNCIONES DE PROPUESTAS (BLOQUE ÚNICO) ---
 
-async function handlePerformBomProposalBookSearch() {
-    // 1. Leemos el valor directamente del input para que nunca salga vacío
-    const searchInput = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
-    const term = searchInput ? searchInput.value.trim() : "";
-
-    if (!term) {
-        bomProposal_searchError = "Please enter a search term.";
-        updateView();
-        return;
-    }
-
-    // Actualizamos variable global y estado de carga
-    bomProposal_searchText = term;
-    bomProposal_isLoadingSearch = true;
-    bomProposal_searchError = null;
-    bomProposal_searchResults = [];
-    updateView(); 
-
-    try {
-        const query = encodeURIComponent(term);
-        const res = await fetch(`${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=5&key=${BOOKS_API_KEY}`);
-        const data = await res.json();
-
-        if (data.items) {
-            bomProposal_searchResults = data.items.map((item: any) => ({
-                title: item.volumeInfo.title || "No Title",
-                author: item.volumeInfo.authors?.join(', ') || "Unknown Author",
-                cover: item.volumeInfo.imageLinks?.thumbnail || null,
-            }));
-        }
-    } catch (error) {
-        bomProposal_searchError = "Error fetching books.";
-    } finally {
-        bomProposal_isLoadingSearch = false;
-        updateView();
-    }
-}
-
-async function handleSubmitBomProposal(formElement: HTMLFormElement) {
-    if (!currentUser) return;
-
-    // Capturamos el motivo directamente del textarea antes de validar
-    const reasonTextarea = document.getElementById('bomProposalReason') as HTMLTextAreaElement;
-    if (reasonTextarea) {
-        bomProposal_formReason = reasonTextarea.value;
-    }
-
-    if (!bomProposal_formTitle.trim()) {
-        alert("Please select a book to propose.");
-        return;
-    }
-    if (!bomProposal_formReason || !bomProposal_formReason.trim()) {
-        alert("Please provide a reason for your proposal.");
-        return;
-    }
-
-    const proposalDataToSend = {
-        bookTitle: bomProposal_formTitle.trim(),
-        bookAuthor: bomProposal_formAuthor.trim(),
-        bookCoverImageUrl: bomProposal_formCoverUrl.trim() || '',
-        reason: bomProposal_formReason.trim(),
-        proposedByUserId: currentUser.id,
-        proposedByUserName: currentUser.literaryPseudonym || currentUser.name,
-        proposalMonthYear: bomProposal_targetMonthYear,
-        votes: [],
-    };
-
-    try {
-        const res = await fetch('/.netlify/functions/add-proposal', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(proposalDataToSend)
-        });
-
-        if (!res.ok) throw new Error('Server error');
-
-        await fetchBomProposals();
-        showBomProposalModal = false;
-        
-        // Reset de variables
-        bomProposal_formTitle = ''; bomProposal_formAuthor = ''; 
-        bomProposal_formCoverUrl = ''; bomProposal_formReason = '';
-        bomProposal_searchText = ''; bomProposal_searchResults = [];
-        
-        updateView();
-    } catch (error) {
-        console.error("Error:", error);
-        alert("Failed to save proposal.");
-    }
-}
 
 // --- Event Handlers & Logic ---
 
@@ -2284,6 +2193,103 @@ function handleBomProposalFormInputChange(event) {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement;
     if (target.name === 'reason') {
         bomProposal_formReason = target.value;
+    }
+}
+
+// ========================================================
+// BLOQUE ÚNICO DE PROPUESTAS (REEMPLAZO TOTAL)
+// ========================================================
+
+async function handlePerformBomProposalBookSearch() {
+    // Lectura directa del input para evitar el "search term empty"
+    const input = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
+    const term = input ? input.value.trim() : "";
+
+    if (!term) {
+        bomProposal_searchError = "Please enter a search term.";
+        updateView();
+        return;
+    }
+
+    bomProposal_searchText = term;
+    bomProposal_isLoadingSearch = true;
+    bomProposal_searchError = null;
+    bomProposal_searchResults = [];
+    updateView(); 
+
+    try {
+        const query = encodeURIComponent(term);
+        const res = await fetch(`${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=5&key=${BOOKS_API_KEY}`);
+        const data = await res.json();
+
+        if (data.items) {
+            bomProposal_searchResults = data.items.map((item: any) => ({
+                title: item.volumeInfo.title || "No Title",
+                author: item.volumeInfo.authors?.join(', ') || "Unknown Author",
+                cover: item.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || null,
+            }));
+        } else {
+            bomProposal_searchResults = [];
+        }
+    } catch (error) {
+        console.error("Error searching books:", error);
+        bomProposal_searchError = "Error fetching books.";
+    } finally {
+        bomProposal_isLoadingSearch = false;
+        updateView();
+    }
+}
+
+async function handleSubmitBomProposal(formElement: HTMLFormElement) {
+    if (!currentUser) return;
+
+    // Lectura directa del motivo para evitar el "reason empty"
+    const reasonTextarea = document.getElementById('bomProposalReason') as HTMLTextAreaElement;
+    if (reasonTextarea) {
+        bomProposal_formReason = reasonTextarea.value.trim();
+    }
+
+    if (!bomProposal_formTitle.trim()) {
+        alert("Please select a book from the search results first.");
+        return;
+    }
+    if (!bomProposal_formReason) {
+        alert("Please provide a reason for your proposal.");
+        return;
+    }
+
+    const proposalDataToSend = {
+        bookTitle: bomProposal_formTitle.trim(),
+        bookAuthor: bomProposal_formAuthor.trim(),
+        bookCoverImageUrl: bomProposal_formCoverUrl.trim() || '',
+        reason: bomProposal_formReason,
+        proposedByUserId: currentUser.id,
+        proposedByUserName: currentUser.literaryPseudonym || currentUser.name,
+        proposalMonthYear: bomProposal_targetMonthYear,
+        votes: [],
+    };
+
+    try {
+        const res = await fetch('/.netlify/functions/add-proposal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(proposalDataToSend)
+        });
+
+        if (!res.ok) throw new Error('Server error');
+
+        await fetchBomProposals();
+        showBomProposalModal = false;
+        
+        // Reset manual de variables
+        bomProposal_formTitle = ''; bomProposal_formAuthor = ''; 
+        bomProposal_formCoverUrl = ''; bomProposal_formReason = '';
+        bomProposal_searchText = ''; bomProposal_searchResults = [];
+        
+        updateView();
+    } catch (error) {
+        console.error("Error submitting proposal:", error);
+        alert("Failed to save proposal. Please try again.");
     }
 }
 
