@@ -2853,6 +2853,7 @@ if (showBomProposalModal) {
         await handleSubmitBomProposal(e.target as HTMLFormElement); // ✅ FIX
     });
     }
+    }
     
     if (!currentUser) {
         document.querySelectorAll('[data-auth-action]').forEach(button => {
@@ -3090,7 +3091,7 @@ if (detailModalContainer) {
 
 
 
-}
+
 }
 
 
