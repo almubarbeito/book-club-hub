@@ -926,9 +926,9 @@ function renderBomProposalModal() {
                     </div>
                     <div>
                         <label for="bomProposalReason">Why are you proposing this book?</label>
-                        <textarea id="bomProposalReason" name="reason" required rows="3" oninput="window.bomProposal_formReason = this.value">${bomProposal_formReason}</textarea>
+                        <textarea id="bomProposalReason" name="reason" required rows="3" oninput="bomProposal_formReason = this.value">${bomProposal_formReason}</textarea>
                     </div>
-                    <button type="button" class="button full-width" onclick="event.preventDefault(); window.handleSubmitBomProposal(this.form); return false;">
+                    <button type="submit" class="button full-width">
                         Submit Proposal
                     </button>
                 </form>
@@ -2250,10 +2250,6 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
     if (!currentUser) return;
 
     // Lectura directa del motivo para evitar el "reason empty"
-    const reasonTextarea = document.getElementById('bomProposalReason') as HTMLTextAreaElement;
-    if (reasonTextarea) {
-        bomProposal_formReason = reasonTextarea.value.trim();
-    }
 
     if (!bomProposal_formTitle.trim()) {
         alert("Please select a book from the search results first.");
