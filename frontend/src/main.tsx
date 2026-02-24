@@ -2207,6 +2207,9 @@ async function handlePerformBomProposalBookSearch() {
     const inputElement = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
     const termValue = inputElement ? inputElement.value.trim() : bomProposal_searchText.trim();
 
+    // 2. Sincronizamos la variable global para que el re-render mantenga el texto escrito
+    bomProposal_searchText = termValue;
+
     console.log("DEBUG - Buscando término:", termValue);
 
     if (!termValue) {
