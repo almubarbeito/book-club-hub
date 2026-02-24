@@ -927,7 +927,7 @@ function renderBomProposalModal() {
                     </div>
                     <div>
                         <label for="bomProposalReason">Why are you proposing this book?</label>
-                        <textarea id="bomProposalReason" name="reason" required rows="3" oninput="bomProposal_formReason = this.value">${bomProposal_formReason}</textarea>
+                        <textarea id="bomProposalReason" name="reason" required rows="3">${bomProposal_formReason}</textarea>
                     </div>
                     <button type="button" id="submitBomProposalBtn" data-action="submit-bom-proposal" class="button full-width">
                         Submit Proposal
@@ -2253,9 +2253,7 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
 
     if (!currentUser) return;
 
-    // ✅ LEER DIRECTO DEL DOM (LA CLAVE)
-    const reasonInput = document.getElementById('bomProposalReason') as HTMLTextAreaElement | null;
-    const reason = reasonInput?.value?.trim() || "";
+    const reason = bomProposal_formReason.trim();
 
     console.log("Reason desde DOM:", reason);
 
@@ -2871,7 +2869,15 @@ if (showBomProposalModal) {
         return false;
          };
     }
+// ✅ SINCRONIZAR textarea reason con estado
+const reasonTextarea = document.getElementById('bomProposalReason') as HTMLTextAreaElement;
 
+if (reasonTextarea) {
+    reasonTextarea.oninput = (e) => {
+        bomProposal_formReason = (e.target as HTMLTextAreaElement).value;
+        console.log("✍️ Reason actualizado:", bomProposal_formReason);
+    };
+}
     
 }
     
