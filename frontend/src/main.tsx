@@ -398,7 +398,7 @@ async function initializeAndSetCurrentBOM() {
         }
 
         // 2. Si no hay libro oficial para este mes, calculamos el ganador de las propuestas
-        console.log("Proposals que se van a pintar:", proposalsToRender.length);
+        console.log("Proposals totales:", bomProposals.length);
         const candidates = bomProposals.filter(p => p.proposalMonthYear === currentMonthStr);
         console.log("Candidatos para este mes:", candidates.length); // <--- LOG 3
 
@@ -894,7 +894,7 @@ function renderBomProposalModal() {
         id="bomProposalBookSearchText" 
         placeholder="Enter title or author" 
         value="${bomProposal_searchText}"
-        oninput="bomProposal_searchText = this.value" 
+        oninput="window.bomProposal_searchText = this.value"
         onkeydown="if(event.key==='Enter'){ event.preventDefault();event.stopPropagation(); window.handlePerformBomProposalBookSearch(); return false;}"
     >
     <button 
@@ -2200,13 +2200,6 @@ function handleBomProposalFormInputChange(event) {
     }
 }
 
-async function handleBomProposalFormSubmit(e: Event) {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("🚀 SUBMIT CAPTURADO");
-
-    await handleSubmitBomProposal(e.target as HTMLFormElement);
-}
 
 // ========================================================
 // BLOQUE ÚNICO DE PROPUESTAS (REEMPLAZO TOTAL)
@@ -2308,14 +2301,6 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
         console.error("Error submitting proposal:", error);
         alert("Failed to save proposal. Please try again.");
     }
-}
-
-async function handleBomProposalSubmit(e: Event) {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("🚀 SUBMIT CAPTURADO");
-
-    await handleSubmitBomProposal(e.target as HTMLFormElement);
 }
 
 function resetProposalForm() {
@@ -2868,7 +2853,7 @@ if (showBomProposalModal) {
     if (bomForm) {
         console.log("Formulario de propuesta encontrado");
 
-         bomForm.onsubmit = async (e) => {
+        bomForm.onsubmit = async (e) => {
         e.preventDefault();
         e.stopPropagation();
         console.log("SUBMIT INTERCEPTADO");
