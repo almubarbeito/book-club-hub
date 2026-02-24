@@ -2253,9 +2253,11 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
 
     if (!currentUser) return;
 
-    const reason = bomProposal_formReason.trim();
+    // 🔥 leer desde el form REAL (ultra robusto)
+const formData = new FormData(formElement);
+const reason = (formData.get('reason') as string || '').trim();
 
-    console.log("Reason desde estado:", reason);
+console.log("Reason desde FormData:", reason);
 
     if (!bomProposal_formTitle.trim()) {
         alert("Please select a book from the search results first.");
