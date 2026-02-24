@@ -2200,7 +2200,7 @@ function handleBomProposalFormInputChange(event) {
     }
 }
 
-function handleBomProposalFormSubmit(e: Event) {
+async function handleBomProposalFormSubmit(e: Event) {
     e.preventDefault();
     e.stopPropagation();
     console.log("🚀 SUBMIT CAPTURADO");
