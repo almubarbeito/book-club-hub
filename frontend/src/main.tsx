@@ -893,12 +893,12 @@ function renderBomProposalModal() {
         id="bomProposalBookSearchText" 
         placeholder="Enter title or author" 
         value="${bomProposal_searchText}"
-        onkeydown="if(event.key==='Enter'){ event.preventDefault();event.stopPropagation(); window.handlePerformBomProposalBookSearch(); }"
+        onkeydown="if(event.key==='Enter'){ event.preventDefault();event.stopPropagation(); window.handlePerformBomProposalBookSearch(); return false;}"
     >
     <button 
         type="button" 
         class="button"
-        onclick="event.preventDefault(); event.stopPropagation(); window.handlePerformBomProposalBookSearch();"
+        onclick="event.preventDefault(); event.stopPropagation(); window.handlePerformBomProposalBookSearch(); return false;"
     >
         ${bomProposal_isLoadingSearch ? 'Searching...' : 'Search'}
     </button>
@@ -926,7 +926,7 @@ function renderBomProposalModal() {
                         <label for="bomProposalReason">Why are you proposing this book?</label>
                         <textarea id="bomProposalReason" name="reason" required rows="3" oninput="window.bomProposal_formReason = this.value">${bomProposal_formReason}</textarea>
                     </div>
-                    <button type="button" class="button full-width" onclick="window.handleSubmitBomProposal(this.form)">
+                    <button type="button" class="button full-width" onclick="event.preventDefault(); window.handleSubmitBomProposal(this.form); return false;">
                         Submit Proposal
                     </button>
                 </form>
@@ -2201,24 +2201,28 @@ function handleBomProposalFormInputChange(event) {
 // ========================================================
 
 async function handlePerformBomProposalBookSearch() {
-    // Lectura directa del input para evitar el "search term empty"
-    const input = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
-    const term = input ? input.value.trim() : "";
+    // 1. Forzamos la lectura del input ignorando cualquier estado previo
+    const inputElement = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
+    const termValue = inputElement ? inputElement.value.trim() : "";
 
-    if (!term) {
+    console.log("DEBUG - Buscando término:", termValue);
+
+    if (!termValue) {
         bomProposal_searchError = "Please enter a search term.";
         updateView();
         return;
     }
 
-    bomProposal_searchText = term;
+    // Actualizamos las variables globales con el valor real capturado
+    bomProposal_searchText = termValue;
     bomProposal_isLoadingSearch = true;
     bomProposal_searchError = null;
     bomProposal_searchResults = [];
-    updateView(); 
+    
+    updateView(); // Esto pintará el indicador de carga
 
     try {
-        const query = encodeURIComponent(term);
+        const query = encodeURIComponent(termValue);
         const res = await fetch(`${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=5&key=${BOOKS_API_KEY}`);
         const data = await res.json();
 
@@ -2228,11 +2232,8 @@ async function handlePerformBomProposalBookSearch() {
                 author: item.volumeInfo.authors?.join(', ') || "Unknown Author",
                 cover: item.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || null,
             }));
-        } else {
-            bomProposal_searchResults = [];
         }
     } catch (error) {
-        console.error("Error searching books:", error);
         bomProposal_searchError = "Error fetching books.";
     } finally {
         bomProposal_isLoadingSearch = false;
