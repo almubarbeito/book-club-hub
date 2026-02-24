@@ -893,7 +893,7 @@ function renderBomProposalModal() {
         id="bomProposalBookSearchText" 
         placeholder="Enter title or author" 
         value="${bomProposal_searchText}"
-        oninput="window.bomProposal_searchText = this.value" 
+        oninput="bomProposal_searchText = this.value" 
         onkeydown="if(event.key==='Enter'){ event.preventDefault();event.stopPropagation(); window.handlePerformBomProposalBookSearch(); return false;}"
     >
     <button 
@@ -2203,12 +2203,8 @@ function handleBomProposalFormInputChange(event) {
 // ========================================================
 
 async function handlePerformBomProposalBookSearch() {
-    // 1. Intentamos leer del DOM, pero si falla, usamos la variable global como respaldo
-    const inputElement = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
-    const termValue = inputElement ? inputElement.value.trim() : bomProposal_searchText.trim();
 
-    // 2. Sincronizamos la variable global para que el re-render mantenga el texto escrito
-    bomProposal_searchText = termValue;
+    const termValue = (window as any).bomProposal_searchText?.trim() || "";
 
     console.log("DEBUG - Buscando término:", termValue);
 
@@ -2218,18 +2214,15 @@ async function handlePerformBomProposalBookSearch() {
         return;
     }
 
-    // Actualizamos el estado global
     bomProposal_searchText = termValue;
     bomProposal_isLoadingSearch = true;
     bomProposal_searchError = null;
     bomProposal_searchResults = [];
     
-    updateView(); 
+    updateView();
 
     try {
-        // IMPORTANTE: Asegúrate de que la API Key se lea así para que coincida con el vite.config.ts
         const apiKey = (import.meta as any).env.VITE_GOOGLE_BOOKS_API_KEY;
-        
         const query = encodeURIComponent(termValue);
         const res = await fetch(`${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=5&key=${apiKey}`);
         const data = await res.json();
@@ -2251,6 +2244,7 @@ async function handlePerformBomProposalBookSearch() {
         updateView();
     }
 }
+
 
 async function handleSubmitBomProposal(formElement: HTMLFormElement) {
     if (!currentUser) return;
