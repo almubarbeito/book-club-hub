@@ -2255,7 +2255,11 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
         alert("Please select a book from the search results first.");
         return;
     }
-    if (!bomProposal_formReason) {
+    // ✅ NUEVO
+    const reason = bomProposal_formReason.trim();
+
+   // ✅ CAMBIADO
+    if (!reason) {
         alert("Please provide a reason for your proposal.");
         return;
     }
@@ -2264,7 +2268,7 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
         bookTitle: bomProposal_formTitle.trim(),
         bookAuthor: bomProposal_formAuthor.trim(),
         bookCoverImageUrl: bomProposal_formCoverUrl.trim() || '',
-        reason: bomProposal_formReason,
+        reason: reason, // ✅ CAMBIADO
         proposedByUserId: currentUser.id,
         proposedByUserName: currentUser.literaryPseudonym || currentUser.name,
         proposalMonthYear: bomProposal_targetMonthYear,
@@ -2840,15 +2844,15 @@ if (showBomProposalModal) {
     
     // FORMULARIO DE ENVÍO (Submit final)
     const bomForm = document.getElementById('bomProposalForm');
-if (bomForm) {
+    if (bomForm) {
     bomForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         e.stopPropagation();
         console.log("Submit detectado y bloqueado para proceso JS");
-        await handleSubmitBomProposal(e);
+
+        await handleSubmitBomProposal(e.target as HTMLFormElement); // ✅ FIX
     });
-}
-}
+    }
     
     if (!currentUser) {
         document.querySelectorAll('[data-auth-action]').forEach(button => {
@@ -3199,4 +3203,3 @@ document.addEventListener('DOMContentLoaded', startApplication);
 (window as any).handlePerformBomProposalBookSearch = handlePerformBomProposalBookSearch;
 (window as any).handleSubmitBomProposal = handleSubmitBomProposal;
 (window as any).bomProposal_searchText = bomProposal_searchText;
-(window as any).bomProposal_formReason = bomProposal_formReason;
