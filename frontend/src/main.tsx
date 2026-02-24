@@ -2249,6 +2249,7 @@ async function handlePerformBomProposalBookSearch() {
 
 
 async function handleSubmitBomProposal(formElement: HTMLFormElement) {
+    console.log("🔥 HANDLE SUBMIT BOM PROPOSAL EJECUTADO");
     if (!currentUser) return;
 
     // Lectura directa del motivo para evitar el "reason empty"
@@ -2863,8 +2864,12 @@ if (showBomProposalModal) {
     // FORMULARIO DE ENVÍO (Submit final)
     const bomForm = document.getElementById('bomProposalForm');
     if (bomForm) {
-        bomForm.removeEventListener('submit', handleBomProposalSubmit);
-        bomForm.addEventListener('submit', handleBomProposalSubmit);
+  bomForm.removeEventListener('submit', handleSubmitBomProposal as any);
+  bomForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleSubmitBomProposal(e.target as HTMLFormElement);
+  });
     }
     
 }
