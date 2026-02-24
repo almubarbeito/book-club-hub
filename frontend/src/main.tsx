@@ -1,5 +1,5 @@
 
-
+console.log("MAIN.TSX LOADED");
 // Add this ENTIRE block to the very top of src/main.tsx
 import './index.css';
 
@@ -3137,6 +3137,7 @@ async function fetchBomProposals() {
 // ==========================================================
 
 function startApplication() {
+    console.log("START APP RUNNING");
     // 1. Initialize Firebase first. This is the only synchronous step.
     initializeFirebase();
 
