@@ -2205,7 +2205,7 @@ function handleBomProposalFormSubmit(e: Event) {
     e.stopPropagation();
     console.log("🚀 SUBMIT CAPTURADO");
 
-    handleSubmitBomProposal(e.target as HTMLFormElement);
+    await handleSubmitBomProposal(e.target as HTMLFormElement);
 }
 
 // ========================================================
@@ -2314,15 +2314,6 @@ async function handleBomProposalSubmit(e: Event) {
     e.preventDefault();
     e.stopPropagation();
     console.log("🚀 SUBMIT CAPTURADO");
-
-    await handleSubmitBomProposal(e.target as HTMLFormElement);
-}
-
-async function handleBomProposalFormSubmit(e: Event) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    console.log("Submit detectado y bloqueado para proceso JS");
 
     await handleSubmitBomProposal(e.target as HTMLFormElement);
 }
