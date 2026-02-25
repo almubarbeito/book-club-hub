@@ -1293,7 +1293,7 @@ function renderCurrentView() {
             case 'auth_options':
             default: return AuthOptionsView();
         }
-    } else if (!currentUser.onboardingComplete) { 
+    } /*else if (!currentUser.onboardingComplete) { 
          switch (currentAuthProcessView) {
             case 'onboarding_questions': return OnboardingQuestionsView();
             case 'onboarding_processing': return OnboardingProcessingView();
@@ -1302,7 +1302,7 @@ function renderCurrentView() {
                 currentAuthProcessView = 'onboarding_questions';
                 return OnboardingQuestionsView();
         }
-    }
+    }*/
 
     switch (currentView) {
         case "mybooks": return MyBooksView();
@@ -1587,7 +1587,7 @@ async function handleRegister(event: Event) {
             id: firebaseUser.uid,
             email: firebaseUser.email!,
             hashedPassword: '', // This field can be removed entirely if you want
-            onboardingComplete: false,
+            onboardingComplete: true,
             name: email.split('@')[0],
             literaryPseudonym: '',
             profileImageUrl: '',
@@ -2931,7 +2931,7 @@ if (showBomProposalModal) {
         return; 
     }
 
-    if (currentUser && !currentUser.onboardingComplete) {
+    /*if (currentUser && !currentUser.onboardingComplete) {
         const onboardingQuestionsForm = document.getElementById('onboardingQuestionsForm');
         if (onboardingQuestionsForm) {
             onboardingQuestionsForm.removeEventListener('submit', handleOnboardingQuestionsSubmit);
@@ -2943,7 +2943,7 @@ if (showBomProposalModal) {
             onboardingProfileForm.addEventListener('submit', handleOnboardingProfileSetupSubmit);
         }
         return; 
-    }
+    }*/
 
     const profileButton = document.querySelector('.profile-icon-button');
     if (profileButton) {
