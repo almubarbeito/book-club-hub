@@ -2677,10 +2677,10 @@ function listenToUserData() {
 
   // You already have working proposal sync, but this is how it would look with a listener
   const proposalsRef = collection(db, 'proposals');
-  unsubscribeProposals = onSnapshot(proposalsRef, (snapshot) => {
+  //unsubscribeProposals = onSnapshot(proposalsRef, (snapshot) => {
       // ... logic to update your bomProposals array ...
-      updateView();
-  });
+      //updateView();
+ // });
 }
 
 // --- Profile Handlers ---
