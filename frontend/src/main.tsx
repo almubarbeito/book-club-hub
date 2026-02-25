@@ -264,7 +264,7 @@ let bomProposal_searchError: string | null = null;
 let bomProposal_formTitle = '';
 let bomProposal_formAuthor = '';
 let bomProposal_formCoverUrl = '';
-//let bomProposal_formReason = '';
+let bomProposal_formReason = '';
 let bomProposal_targetMonthYear = ''; // e.g., "2024-08"
 
 
@@ -931,7 +931,7 @@ function renderBomProposalModal() {
                     </div>
                     <div>
                         <label for="bomProposalReason">Why are you proposing this book?</label>
-                        <textarea id="bomProposalReason" name="reason" required rows="3"></textarea>
+                        <textarea id="bomProposalReason" name="reason" required rows="3" oninput="window.__updateProposalReason(this.value)">${bomProposal_formReason}</textarea>
                     </div>
                     <button type="button" id="submitBomProposalBtn" data-action="submit-bom-proposal" class="button full-width">
                         Submit Proposal
@@ -2164,7 +2164,7 @@ function resetBomProposalModalState() {
     bomProposal_formTitle = '';
     bomProposal_formAuthor = '';
     bomProposal_formCoverUrl = '';
-    //bomProposal_formReason = '';
+    bomProposal_formReason = '';
 }
 
 function handleShowBomProposalModal() {
@@ -2253,10 +2253,9 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
     if (!currentUser) return;
 
     // 🔥 leer desde el form REAL (ultra robusto)
-const formData = new FormData(formElement);
-const reason = (formData.get('reason') as string || '').trim();
+    const reason = bomProposal_formReason.trim();
 
-console.log("Reason desde FormData:", reason);
+    console.log("Reason desde estado:", reason);
 
     if (!bomProposal_formTitle.trim()) {
         alert("Please select a book from the search results first.");
@@ -2798,15 +2797,7 @@ document.onclick = (e) => {
 
 // --- BLOQUE ÚNICO Y FINAL PARA PROPUESTAS ---
 if (showBomProposalModal) {
-    // ✅ CAPTURAR TEXTO DEL REASON (CRÍTICO)
-const reasonTextarea = document.getElementById('bomProposalReason') as HTMLTextAreaElement;
-
-if (reasonTextarea) {
-    reasonTextarea.oninput = (e) => {
-        bomProposal_formReason = (e.target as HTMLTextAreaElement).value;
-        console.log("Reason actualizado:", bomProposal_formReason);
-    };
-}
+    
     console.log("DOM: Modal de propuestas detectado.");
 
     const bomSearchInput = document.getElementById('bomProposalBookSearchText') as HTMLInputElement;
@@ -3234,4 +3225,7 @@ document.addEventListener('DOMContentLoaded', startApplication);
 (window as any).handlePerformBomProposalBookSearch = handlePerformBomProposalBookSearch;
 (window as any).handleSubmitBomProposal = handleSubmitBomProposal;
 (window as any).bomProposal_searchText = bomProposal_searchText;
+(window as any).__updateProposalReason = (value: string) => {
+    bomProposal_formReason = value;
+};
 
