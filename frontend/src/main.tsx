@@ -852,6 +852,10 @@ function renderBomProposalSection() {
 function renderBomProposalModal() {
     if (!showBomProposalModal || !currentUser) return '';
 
+    // 🔥 ANTI-DUPLICADO HARD GUARD
+    const existing = document.getElementById('bomProposalModalContainer');
+    if (existing) existing.remove();
+
     const targetMonthDisplay = formatMonthYearForDisplay(bomProposal_targetMonthYear);
     let searchResultsHtml = '';
     
@@ -927,7 +931,7 @@ function renderBomProposalModal() {
                     </div>
                     <div>
                         <label for="bomProposalReason">Why are you proposing this book?</label>
-                        <textarea id="bomProposalReason" name="reason" required rows="3">${bomProposal_formReason}</textarea>
+                        <textarea id="bomProposalReason" name="reason" required rows="3" oninput="window.__updateProposalReason(this.value)">${bomProposal_formReason}</textarea>
                     </div>
                     <button type="button" id="submitBomProposalBtn" data-action="submit-bom-proposal" class="button full-width">
                         Submit Proposal
@@ -3235,3 +3239,6 @@ document.addEventListener('DOMContentLoaded', startApplication);
 (window as any).handlePerformBomProposalBookSearch = handlePerformBomProposalBookSearch;
 (window as any).handleSubmitBomProposal = handleSubmitBomProposal;
 (window as any).bomProposal_searchText = bomProposal_searchText;
+(window as any).__updateProposalReason = (value: string) => {
+    bomProposal_formReason = value;
+};
