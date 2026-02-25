@@ -264,7 +264,7 @@ let bomProposal_searchError: string | null = null;
 let bomProposal_formTitle = '';
 let bomProposal_formAuthor = '';
 let bomProposal_formCoverUrl = '';
-let bomProposal_formReason = '';
+//let bomProposal_formReason = '';
 let bomProposal_targetMonthYear = ''; // e.g., "2024-08"
 
 
@@ -931,7 +931,7 @@ function renderBomProposalModal() {
                     </div>
                     <div>
                         <label for="bomProposalReason">Why are you proposing this book?</label>
-                        <textarea id="bomProposalReason" name="reason" required rows="3" oninput="window.__updateProposalReason(this.value)">${bomProposal_formReason}</textarea>
+                        <textarea id="bomProposalReason" name="reason" required rows="3"></textarea>
                     </div>
                     <button type="button" id="submitBomProposalBtn" data-action="submit-bom-proposal" class="button full-width">
                         Submit Proposal
@@ -2164,7 +2164,7 @@ function resetBomProposalModalState() {
     bomProposal_formTitle = '';
     bomProposal_formAuthor = '';
     bomProposal_formCoverUrl = '';
-    bomProposal_formReason = '';
+    //bomProposal_formReason = '';
 }
 
 function handleShowBomProposalModal() {
@@ -2197,12 +2197,7 @@ function handleSelectSearchedBomProposalBook(event) {
     }
 }
 
-function handleBomProposalFormInputChange(event) {
-    const target = event.target as HTMLInputElement | HTMLTextAreaElement;
-    if (target.name === 'reason') {
-        bomProposal_formReason = target.value;
-    }
-}
+
 
 
 // ========================================================
@@ -2308,7 +2303,7 @@ function resetProposalForm() {
     bomProposal_formTitle = '';
     bomProposal_formAuthor = '';
     bomProposal_formCoverUrl = '';
-    bomProposal_formReason = '';
+    //bomProposal_formReason = '';
     bomProposal_searchText = '';
     bomProposal_searchResults = [];
 }
@@ -3239,6 +3234,4 @@ document.addEventListener('DOMContentLoaded', startApplication);
 (window as any).handlePerformBomProposalBookSearch = handlePerformBomProposalBookSearch;
 (window as any).handleSubmitBomProposal = handleSubmitBomProposal;
 (window as any).bomProposal_searchText = bomProposal_searchText;
-(window as any).__updateProposalReason = (value: string) => {
-    bomProposal_formReason = value;
-};
+
