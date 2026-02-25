@@ -2343,12 +2343,45 @@ async function handleBomProposalVoteToggle(event: Event) { // <-- Make it async
     const userId = currentUser.id;
     const userHadVotedForThis = bomProposals[targetProposalIndex].votes.includes(userId);
 
+    // 🔒 bloquear voto a tu propio libro
+const proposal = bomProposals[targetProposalIndex];
+if (proposal.proposedByUserId === userId) {
+    alert("You cannot vote for your own proposal.");
+    return;
+}
+
+// 🔢 contar votos del usuario en este mes
+const userVotesThisMonth = bomProposals.filter(p =>
+    p.proposalMonthYear === proposalMonth &&
+    p.votes.includes(userId)
+);
+
+// --- Optimistic UI Update ---
+const originalProposalsState = JSON.parse(JSON.stringify(bomProposals));
+
+// ===============================
+// TOGGLE CON LÍMITE DE 2
+// ===============================
+
+if (userHadVotedForThis) {
+    // quitar voto
+    proposal.votes = proposal.votes.filter(v => v !== userId);
+} else {
+
+    if (userVotesThisMonth.length >= 2) {
+        alert("You can only vote for 2 books per month.");
+        return;
+    }
+
+    proposal.votes.push(userId);
+}
+
     // --- Optimistic UI Update ---
     // Update the local state immediately so the UI feels instant.
     // We will revert this change if the server call fails.
     
     // 1. First, remove the user's vote from ANY proposal for that month
-    const originalProposalsState = JSON.parse(JSON.stringify(bomProposals)); // Deep copy for potential rollback
+    /*const originalProposalsState = JSON.parse(JSON.stringify(bomProposals)); // Deep copy for potential rollback
     bomProposals.forEach(p => {
         if (p.proposalMonthYear === proposalMonth) {
             const voteIndex = p.votes.indexOf(userId);
@@ -2361,7 +2394,7 @@ async function handleBomProposalVoteToggle(event: Event) { // <-- Make it async
     // 2. If the user had NOT voted for this proposal, add their vote now
     if (!userHadVotedForThis) {
         bomProposals[targetProposalIndex].votes.push(userId);
-    }
+    }*/
     
     // 3. Immediately re-render to show the new vote state
     updateView();
