@@ -2212,7 +2212,7 @@ async function handlePerformBomProposalBookSearch() {
 
     if (!termValue) {
         bomProposal_searchError = "Please enter a search term.";
-        //if (!showBomProposalModal) updateView();
+        if (!showBomProposalModal) updateView();
         return;
     }
 
@@ -2243,16 +2243,12 @@ async function handlePerformBomProposalBookSearch() {
         bomProposal_searchError = "Error fetching books.";
     } finally {
         bomProposal_isLoadingSearch = false;
-        if (showBomProposalModal) {
-        // 🔥 re-render SOLO del modal (mínimo)
-        const modal = document.getElementById('bomProposalModalContainer');
-        if (modal) {
-            modal.outerHTML = renderBomProposalModal();
-            attachEventListeners();
+        // 🚑 SOLO renderizar si el modal NO está abierto
+        if (!showBomProposalModal) {
+            updateView();
+        } else {
+            console.log("⛔ Evitando re-render durante modal abierto");
         }
-    } else {
-        updateView();
-    }
     }
 }
 
