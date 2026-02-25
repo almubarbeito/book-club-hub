@@ -1785,7 +1785,7 @@ async function handleOnboardingProfileSetupSubmit(event: Event) { // <-- Made it
     // 2. Prepare the separate profile object (this might be redundant, but follows your original pattern)
     const newUserProfile: UserProfile = {
         name: name,
-        bio: "", 
+        bio: "Nuevo en el club!", 
         literaryPseudonym: generatedPseudonym, 
         profileImageUrl: imageUrlToSave,
         literaryPreferences: onboardingAnswers,
