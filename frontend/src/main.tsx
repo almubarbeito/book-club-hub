@@ -1090,10 +1090,7 @@ function ProfileView() {
                         <label for="profileName">Name:</label>
                         <input type="text" id="profileName" name="name" value="${name || ''}" required>
                     </div>
-                    <div>
-                        <label for="profileBio">Bio:</label>
-                        <textarea id="profileBio" name="bio">${bio || ''}</textarea>
-                    </div>
+                    
                     <button type="submit">Save Profile</button>
                 </form>
             </div>
@@ -1788,7 +1785,7 @@ async function handleOnboardingProfileSetupSubmit(event: Event) { // <-- Made it
     // 2. Prepare the separate profile object (this might be redundant, but follows your original pattern)
     const newUserProfile: UserProfile = {
         name: name,
-        bio: "Just joined the Book Club Hub!", 
+        bio: "", 
         literaryPseudonym: generatedPseudonym, 
         profileImageUrl: imageUrlToSave,
         literaryPreferences: onboardingAnswers,
@@ -2745,7 +2742,7 @@ async function handleProfileSave(event: Event) { // <-- 1. Added async and Event
 
     try {
         // 3. Save both data structures to Firebase in parallel and WAIT
-        await saveUserToFirebase(updatedUserObject);
+        await saveUserToFirebase(updatedUser);
 
         // 4. Update the main 'users' array in local memory
         const userIndex = users.findIndex(u => u.id === currentUser!.id); 
