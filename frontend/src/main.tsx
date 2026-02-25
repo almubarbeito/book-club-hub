@@ -1537,8 +1537,14 @@ async function handleDeleteBomProposal(event: Event) {
         }
 
         // Success! Re-fetch the list to update the UI.
-        await fetchBomProposals();
+        // 🔥 eliminar inmediatamente del estado local
+        bomProposals = bomProposals.filter(p => p.id !== proposalId);
+
+        // 🔥 re-render instantáneo
         updateView();
+
+        // 🔥 sync con backend (ya lo hiciste arriba)
+        await fetchBomProposals(); // opcional pero recomendable
 
     } catch (error) {
         console.error("Error deleting proposal:", error);
