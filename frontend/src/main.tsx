@@ -2212,7 +2212,7 @@ async function handlePerformBomProposalBookSearch() {
 
     if (!termValue) {
         bomProposal_searchError = "Please enter a search term.";
-        if (!showBomProposalModal) updateView();
+        updateView();
         return;
     }
 
@@ -2220,8 +2220,8 @@ async function handlePerformBomProposalBookSearch() {
     bomProposal_isLoadingSearch = true;
     bomProposal_searchError = null;
     bomProposal_searchResults = [];
-    
-    //if (!showBomProposalModal) updateView();
+
+    updateView(); // 👈 IMPORTANTE para mostrar loading
 
     try {
         const apiKey = (import.meta as any).env.VITE_GOOGLE_BOOKS_API_KEY;
@@ -2243,12 +2243,7 @@ async function handlePerformBomProposalBookSearch() {
         bomProposal_searchError = "Error fetching books.";
     } finally {
         bomProposal_isLoadingSearch = false;
-        // 🚑 SOLO renderizar si el modal NO está abierto
-        if (!showBomProposalModal) {
-            updateView();
-        } else {
-            console.log("⛔ Evitando re-render durante modal abierto");
-        }
+        updateView(); // 👈 ESTE ES EL QUE PINTA RESULTADOS
     }
 }
 
