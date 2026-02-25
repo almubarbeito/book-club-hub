@@ -1538,6 +1538,7 @@ async function handleDeleteBomProposal(event: Event) {
 
         // Success! Re-fetch the list to update the UI.
         await fetchBomProposals();
+        updateView();
 
     } catch (error) {
         console.error("Error deleting proposal:", error);
