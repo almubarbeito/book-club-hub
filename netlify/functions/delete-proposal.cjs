@@ -21,8 +21,12 @@ exports.handler = async function (event) {
     const doc = await proposalRef.get();
 
     if (!doc.exists) {
-      return { statusCode: 404, body: JSON.stringify({ error: "Proposal not found." }) };
-    }
+  console.log(`Proposal ${proposalId} already deleted.`);
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ message: 'Proposal already deleted.' }),
+  };
+}
 
     const proposalData = doc.data();
 
