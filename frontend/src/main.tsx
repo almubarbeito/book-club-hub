@@ -2212,7 +2212,7 @@ async function handlePerformBomProposalBookSearch() {
 
     if (!termValue) {
         bomProposal_searchError = "Please enter a search term.";
-        if (!showBomProposalModal) updateView();
+        //if (!showBomProposalModal) updateView();
         return;
     }
 
@@ -2221,7 +2221,7 @@ async function handlePerformBomProposalBookSearch() {
     bomProposal_searchError = null;
     bomProposal_searchResults = [];
     
-    if (!showBomProposalModal) updateView();
+    //if (!showBomProposalModal) updateView();
 
     try {
         const apiKey = (import.meta as any).env.VITE_GOOGLE_BOOKS_API_KEY;
@@ -2243,7 +2243,16 @@ async function handlePerformBomProposalBookSearch() {
         bomProposal_searchError = "Error fetching books.";
     } finally {
         bomProposal_isLoadingSearch = false;
-        if (!showBomProposalModal) updateView();
+        if (showBomProposalModal) {
+        // 🔥 re-render SOLO del modal (mínimo)
+        const modal = document.getElementById('bomProposalModalContainer');
+        if (modal) {
+            modal.outerHTML = renderBomProposalModal();
+            attachEventListeners();
+        }
+    } else {
+        updateView();
+    }
     }
 }
 
