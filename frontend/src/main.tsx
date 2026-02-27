@@ -73,6 +73,10 @@ interface Book {
     author?: string;
     status: 'Pending' | 'Reading' | 'Read';
     coverImageUrl?: string;
+
+    // 🆕 NUEVO
+    finishedAt?: number;          // timestamp
+    userAverageRating?: number; // media del usuario
 }
 
 interface BomRatings {
@@ -596,6 +600,12 @@ function MyBooksView() {
                         <h3>${book.title}</h3>
                         <p><em>by ${book.author || 'Unknown Author'}</em></p>
                         <p>Status: <span class="status-tag status-${book.status.toLowerCase()}">${book.status}</span></p>
+                        <p class="book-finished-date">
+        Finished: ${new Date(book.finishedAt).toLocaleDateString()}
+    </p>
+    <p class="book-my-rating">
+        My rating: ⭐ ${book.myRatingAverage.toFixed(1)}
+    </p>
                     </div>
                 </div>
                 <div class="book-item-actions">
@@ -930,8 +940,8 @@ function renderBomProposalModal() {
                         ${bomProposal_formCoverUrl ? `<img src="${bomProposal_formCoverUrl}" alt="Preview" class="modal-cover-preview">` : ''}
                     </div>
                     <div>
-                        <label for="bomProposalReason">Why are you proposing this book?</label>
-                        <textarea id="bomProposalReason" name="reason" required rows="3" oninput="window.__updateProposalReason(this.value)">${bomProposal_formReason}</textarea>
+                        <label for="bomProposalReason">Why are you proposing this book? (optional)</label>
+                        <textarea id="bomProposalReason" name="reason" rows="3" oninput="window.__updateProposalReason(this.value)">${bomProposal_formReason}</textarea>
                     </div>
                     <button type="button" id="submitBomProposalBtn" data-action="submit-bom-proposal" class="button full-width">
                         Submit Proposal
@@ -2266,16 +2276,11 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
         return;
     }
 
-    if (!reason) {
-        alert("Please provide a reason for your proposal.");
-        return;
-    }
-
     const proposalDataToSend = {
         bookTitle: bomProposal_formTitle.trim(),
         bookAuthor: bomProposal_formAuthor.trim(),
         bookCoverImageUrl: bomProposal_formCoverUrl.trim() || '',
-        reason: reason,
+        reason: reason || '',
         proposedByUserId: currentUser.id,
         proposedByUserName: currentUser.literaryPseudonym || currentUser.name,
         proposalMonthYear: bomProposal_targetMonthYear,
@@ -2494,6 +2499,15 @@ async function processAndSaveReview(submitReview: boolean) {
 
     // 2. Update the local state first for immediate UI feedback
     books[bookIndex].status = 'Read';
+
+    books[bookIndex].finishedAt = Date.now();
+
+    // calcular average del usuario
+    const scores = Object.values(reviewBook_formRatings).filter(v => v > 0);
+    books[bookIndex].userAverageRating =
+    scores.length > 0
+        ? scores.reduce((a, b) => a + b, 0) / scores.length
+        : 0;
 
     // 3. Prepare an array of promises for all the server updates
     const promisesToAwait = [];
