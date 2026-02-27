@@ -2343,20 +2343,29 @@ async function handleBomProposalVoteToggle(event: Event) { // <-- Make it async
 
     const proposalMonth = bomProposals[targetProposalIndex].proposalMonthYear;
     const userId = currentUser.id;
-    const userHadVotedForThis = bomProposals[targetProposalIndex].votes.includes(userId);
+    
+        // 🔒 bloquear voto a tu propio libro
+const proposal = bomProposals[targetProposalIndex];
+// 🛡️ HARDENING — MUY IMPORTANTE
+if (!proposal.votes) proposal.votes = [];
+    const userHadVotedForThis = proposal.votes.includes(userId);
 
     // 🔒 bloquear voto a tu propio libro
 const proposal = bomProposals[targetProposalIndex];
+// 🛡️ HARDENING — MUY IMPORTANTE
+if (!proposal.votes) proposal.votes = [];
+
 if (proposal.proposedByUserId === userId) {
     alert("You cannot vote for your own proposal.");
     return;
 }
 
 // 🔢 contar votos del usuario en este mes
-const userVotesThisMonth = bomProposals.filter(p =>
-    p.proposalMonthYear === proposalMonth &&
-    p.votes.includes(userId)
-);
+const userVotesThisMonth = bomProposals.reduce((count, p) => {
+    if (!p.votes) return count;
+    if (p.proposalMonthYear !== proposalMonth) return count;
+    return count + (p.votes.includes(userId) ? 1 : 0);
+}, 0);
 
 // --- Optimistic UI Update ---
 const originalProposalsState = JSON.parse(JSON.stringify(bomProposals));
@@ -2370,7 +2379,7 @@ if (userHadVotedForThis) {
     proposal.votes = proposal.votes.filter(v => v !== userId);
 } else {
 
-    if (userVotesThisMonth.length >= 2) {
+    if (userVotesThisMonth >= 2) {
         alert("You can only vote for 2 books per month.");
         return;
     }
