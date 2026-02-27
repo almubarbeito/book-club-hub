@@ -2350,10 +2350,7 @@ const proposal = bomProposals[targetProposalIndex];
 if (!proposal.votes) proposal.votes = [];
     const userHadVotedForThis = proposal.votes.includes(userId);
 
-    // 🔒 bloquear voto a tu propio libro
-const proposal = bomProposals[targetProposalIndex];
-// 🛡️ HARDENING — MUY IMPORTANTE
-if (!proposal.votes) proposal.votes = [];
+
 
 if (proposal.proposedByUserId === userId) {
     alert("You cannot vote for your own proposal.");
