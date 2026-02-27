@@ -499,7 +499,7 @@ function renderAverageStars(categoryValue: number) {
     for (let i = 1; i <= 5; i++) {
         starsHtml += `<span class="material-icons static-star ${i <= roundedRating ? 'filled' : ''}" aria-label="${i} star">${i <= roundedRating ? 'star' : 'star_border'}</span>`;
     }
-    return `${starsHtml} (${categoryValue.toFixed(1)} average)`;
+    return `${starsHtml} (${categoryValue ? categoryValue.toFixed(1) : '—'} average)`;
 }
 
 function renderMainAverageRating(overallValue: number, ratersCount: number) {
@@ -604,7 +604,7 @@ function MyBooksView() {
         Finished: ${new Date(book.finishedAt).toLocaleDateString()}
     </p>
     <p class="book-my-rating">
-        My rating: ⭐ ${book.myRatingAverage.toFixed(1)}
+        My rating: ⭐ ${book.userAverageRating ? book.userAverageRating.toFixed(1) : '—'}</p>
     </p>
                     </div>
                 </div>
