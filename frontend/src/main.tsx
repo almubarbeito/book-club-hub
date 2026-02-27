@@ -777,6 +777,21 @@ if (allRatingsForThisBom) {
 
 }
 
+async function fetchBomSocialData() {
+    try {
+        const res = await fetch('/.netlify/functions/get-bom-social');
+        if (!res.ok) throw new Error('Failed to fetch social data');
+
+        const data = await res.json();
+
+        globalBomRatings = data.ratings || {};
+        globalBomComments = data.comments || {};
+
+        console.log("🔥 Social data synced");
+    } catch (err) {
+        console.error("❌ Failed to fetch BOM social data", err);
+    }
+}
 
 // This is the new, correct version of the function.
 // Replace your old one with this.
@@ -1552,6 +1567,7 @@ async function handleDeleteBomProposal(event: Event) {
 
         // 🔥 sync con backend (ya lo hiciste arriba)
         await fetchBomProposals(); // opcional pero recomendable
+        
 
     } catch (error) {
         console.error("Error deleting proposal:", error);
@@ -2490,6 +2506,7 @@ function handleReviewBookCommentInputChange(event) {
 
 async function processAndSaveReview(submitReview: boolean) {
     if (!currentUser || !currentUser.id || !bookToReview) {
+        await fetchBomSocialData();
         handleCloseReviewBookModal();
         return;
     }
@@ -3236,6 +3253,7 @@ function startApplication() {
                 
                 // Also fetch public data.
                 await fetchBomProposals();
+                await fetchBomSocialData();
                 
                 // Now, check if they finished onboarding.
                 if (currentUser.onboardingComplete) {
