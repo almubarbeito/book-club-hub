@@ -2719,6 +2719,31 @@ function handleSendChatMessage() {
     }
 }
 
+
+async function loadBomCommunityData(bomId: string) {
+    try {
+        const res = await fetch('/.netlify/functions/get-bom-community', {
+            method: 'POST',
+            body: JSON.stringify({ bomId })
+        });
+
+        if (!res.ok) throw new Error("Failed to load community data");
+
+        const data = await res.json();
+
+        globalBomRatings[bomId] = data.ratings || {};
+        globalBomComments[bomId] = data.comments || {};
+
+        console.log("✅ Community data loaded", {
+            ratings: Object.keys(globalBomRatings[bomId]).length,
+            comments: Object.keys(globalBomComments[bomId]).length
+        });
+
+    } catch (err) {
+        console.error("❌ Error loading community data:", err);
+    }
+}
+
 // In src/main.tsx
 
 let unsubscribeBooks = () => {}; // A function to stop listening when the user logs out
@@ -3284,6 +3309,11 @@ function startApplication() {
         // After all state (currentUser, books, view, etc.) is definitively set,
         // we calculate the BoM and then perform ONE SINGLE RENDER.
         await initializeAndSetCurrentBOM();
+        
+        if (activeBomId) {
+            await loadBomCommunityData(activeBomId);
+        }
+        
         updateView();
     });
 }
