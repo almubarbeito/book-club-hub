@@ -2503,37 +2503,32 @@ async function processAndSaveReview(submitReview: boolean) {
 
     // Only add rating/comment promises if the user is submitting a review
     if (submitReview) {
-        const reviewedBookTitleLower = bookToReview.title.toLowerCase();
-        const matchingBomEntry = bookOfTheMonthHistory.find(bom => 
-            bom.title.toLowerCase() === reviewedBookTitleLower
-        );
+    // 🔥 USAR EL BOM ACTIVO (NO el history)
+    if (currentBomToDisplay) {
+        const bomId = currentBomToDisplay.id;
 
-        if (matchingBomEntry) {
-            const bomId = matchingBomEntry.id;
+        // Update local state
+        if (!globalBomRatings[bomId]) globalBomRatings[bomId] = {};
+        globalBomRatings[bomId][currentUser.id] = { ...reviewBook_formRatings };
 
-            // Update local state for ratings/comments immediately
-            if (!globalBomRatings[bomId]) globalBomRatings[bomId] = {};
-            globalBomRatings[bomId][currentUser.id] = { ...reviewBook_formRatings };
+        promisesToAwait.push(saveRatingsToFirebase(bomId, reviewBook_formRatings));
 
-            // Add the save operation to our list of promises
-            promisesToAwait.push(saveRatingsToFirebase(bomId, reviewBook_formRatings));
+        if (reviewBook_formComment.trim()) {
+            const newComment = {
+                id: generateId(),
+                userId: currentUser.id,
+                userNameDisplay: currentUser.literaryPseudonym || currentUser.name,
+                text: reviewBook_formComment.trim(),
+                timestamp: Date.now()
+            };
 
-            if (reviewBook_formComment.trim()) {
-                const newComment = {
-                    id: generateId(),
-                    userId: currentUser.id,
-                    userNameDisplay: currentUser.literaryPseudonym || currentUser.name,
-                    text: reviewBook_formComment.trim(),
-                    timestamp: Date.now()
-                };
-                if (!globalBomComments[bomId]) globalBomComments[bomId] = {};
-                globalBomComments[bomId][currentUser.id] = newComment;
-                
-                // Add the save operation to our list of promises
-                promisesToAwait.push(saveCommentToFirebase(bomId, newComment));
-            }
+            if (!globalBomComments[bomId]) globalBomComments[bomId] = {};
+            globalBomComments[bomId][currentUser.id] = newComment;
+
+            promisesToAwait.push(saveCommentToFirebase(bomId, newComment));
         }
     }
+}
 
     try {
         // 4. Execute all save operations in parallel and wait for them all to finish
