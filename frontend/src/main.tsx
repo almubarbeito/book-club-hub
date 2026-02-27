@@ -3309,6 +3309,7 @@ function startApplication() {
         // After all state (currentUser, books, view, etc.) is definitively set,
         // we calculate the BoM and then perform ONE SINGLE RENDER.
         await initializeAndSetCurrentBOM();
+        console.log("🔍 activeBomId after init:", activeBomId);
         
         if (activeBomId) {
             await loadBomCommunityData(activeBomId);
