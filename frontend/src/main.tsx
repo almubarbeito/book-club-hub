@@ -803,18 +803,16 @@ function renderBomProposalSection() {
     const userProposalsForNextMonth = bomProposals.filter(p => p.proposedByUserId === currentUser!.id && p.proposalMonthYear === nextMonthTarget);
     const canProposeMore = userProposalsForNextMonth.length < 3;
 
-    const currentProposalsForNextMonth = bomProposals.filter(p => p.proposalMonthYear === nextMonthTarget)
-        .sort((a, b) => {
-        // Sort by number of votes in descending order (most votes first)
-        const voteDifference = b.votes.length - a.votes.length;
+    const currentProposalsForNextMonth = bomProposals
+  .sort((a, b) => {
+    const voteDifference = (b.votes?.length || 0) - (a.votes?.length || 0);
 
-        // If two books have the same number of votes, sort the newer one first
-        if (voteDifference === 0) {
-            return b.timestamp - a.timestamp;
-        }
+    if (voteDifference === 0) {
+      return (b.timestamp || 0) - (a.timestamp || 0);
+    }
 
-        return voteDifference;
-    });
+    return voteDifference;
+  });
 
     return `
         <div class="book-item" id="bom-proposal-section">
@@ -2731,8 +2729,9 @@ async function loadBomCommunityData(bomId: string) {
 
         const data = await res.json();
 
-        globalBomRatings[bomId] = data.ratings || {};
-        globalBomComments[bomId] = data.comments || {};
+        // ✅ RESET DURO (IMPORTANTE)
+        globalBomRatings[bomId] = { ...(data.ratings || {}) };
+        globalBomComments[bomId] = { ...(data.comments || {}) };
 
         console.log("✅ Community data loaded", {
             ratings: Object.keys(globalBomRatings[bomId]).length,
@@ -3278,7 +3277,7 @@ function startApplication() {
                 
                 // Also fetch public data.
                 await fetchBomProposals();
-                await fetchBomSocialData();
+                //await fetchBomSocialData();
                 
                 // Now, check if they finished onboarding.
                 if (currentUser.onboardingComplete) {
