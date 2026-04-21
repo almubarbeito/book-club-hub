@@ -831,7 +831,7 @@ function renderBomProposalSection() {
     const currentProposalsForNextMonth = bomProposals
   .filter(p =>
     p.proposalMonthYear === nextMonthTarget &&
-    p.status !== 'selected' // ⭐ CLAVE
+    p.status !== 'selected'
   )
   .sort((a, b) => {
     const voteDifference = (b.votes?.length || 0) - (a.votes?.length || 0);
