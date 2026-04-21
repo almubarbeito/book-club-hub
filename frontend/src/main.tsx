@@ -828,14 +828,10 @@ function renderBomProposalSection() {
     const userProposalsForNextMonth = bomProposals.filter(p => p.proposedByUserId === currentUser!.id && p.proposalMonthYear === nextMonthTarget);
     const canProposeMore = userProposalsForNextMonth.length < 3;
 
-    const currentProposalsForNextMonth = bomProposals
-  .filter(p =>
-    p.proposalMonthYear === nextMonthTarget &&
-    p.status !== 'selected'
-  )
+    const currentProposalsForNextMonth = [...bomProposals]
+  .filter(p => p.status !== 'selected')
   .sort((a, b) => {
     const voteDifference = (b.votes?.length || 0) - (a.votes?.length || 0);
-
     if (voteDifference !== 0) return voteDifference;
     return (b.timestamp || 0) - (a.timestamp || 0);
   });
