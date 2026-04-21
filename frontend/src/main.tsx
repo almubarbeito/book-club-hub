@@ -840,13 +840,6 @@ function renderBomProposalSection() {
     return (b.timestamp || 0) - (a.timestamp || 0);
   });
 
-    if (voteDifference === 0) {
-      return (b.timestamp || 0) - (a.timestamp || 0);
-    }
-
-    return voteDifference;
-  });
-
     return `
         <div class="book-item" id="bom-proposal-section">
             <h3>Propose & Vote for Book of ${formatMonthYearForDisplay(nextMonthTarget)}</h3>
