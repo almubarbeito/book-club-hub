@@ -711,9 +711,57 @@ function BookOfTheMonthView() {
     // Calculate Average Ratings
     // --- NEW, COMBINED Calculate Average Ratings ---
 
-    const { finalOverallAverage, totalRaters } = activeBomId
-  ? computeBomStats(activeBomId)
-  : { finalOverallAverage: 0, totalRaters: 0 };
+    const allRatingsForThisBom = activeBomId ? globalBomRatings[activeBomId] : null;
+
+let detailedAverageRatings: BomRatings = {
+    plot: 0,
+    characters: 0,
+    writingStyle: 0,
+    overallEnjoyment: 0
+};
+
+let ratingCounts = {
+    plot: 0,
+    characters: 0,
+    writingStyle: 0,
+    overallEnjoyment: 0
+};
+
+let finalOverallAverage = 0;
+let totalRaters = 0;
+
+if (allRatingsForThisBom) {
+    const userRatingsArray: BomRatings[] = Object.values(allRatingsForThisBom);
+    totalRaters = userRatingsArray.length;
+
+    if (totalRaters > 0) {
+        const individualUserAverages: number[] = [];
+
+        userRatingsArray.forEach(userRating => {
+            if (userRating.plot > 0) { detailedAverageRatings.plot += userRating.plot; ratingCounts.plot++; }
+            if (userRating.characters > 0) { detailedAverageRatings.characters += userRating.characters; ratingCounts.characters++; }
+            if (userRating.writingStyle > 0) { detailedAverageRatings.writingStyle += userRating.writingStyle; ratingCounts.writingStyle++; }
+            if (userRating.overallEnjoyment > 0) { detailedAverageRatings.overallEnjoyment += userRating.overallEnjoyment; ratingCounts.overallEnjoyment++; }
+
+            const scores = [userRating.plot, userRating.characters, userRating.writingStyle, userRating.overallEnjoyment];
+            const validScores = scores.filter(score => score > 0);
+            if (validScores.length > 0) {
+                const sumOfScores = validScores.reduce((acc, score) => acc + score, 0);
+                individualUserAverages.push(sumOfScores / validScores.length);
+            }
+        });
+
+        if (ratingCounts.plot > 0) detailedAverageRatings.plot /= ratingCounts.plot;
+        if (ratingCounts.characters > 0) detailedAverageRatings.characters /= ratingCounts.characters;
+        if (ratingCounts.writingStyle > 0) detailedAverageRatings.writingStyle /= ratingCounts.writingStyle;
+        if (ratingCounts.overallEnjoyment > 0) detailedAverageRatings.overallEnjoyment /= ratingCounts.overallEnjoyment;
+
+        if (individualUserAverages.length > 0) {
+            finalOverallAverage =
+                individualUserAverages.reduce((acc, avg) => acc + avg, 0) / individualUserAverages.length;
+        }
+    }
+}
 
 
 
