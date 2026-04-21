@@ -379,36 +379,36 @@ function formatMonthYearForDisplay(monthYear: string): string  {
 
 
 async function initializeAndSetCurrentBOM() {
-    // Obtenemos el mes actual (ej: "2025-07")
-    // Para producción usar: const currentMonthStr = getCurrentMonthYearString();
-    //const currentMonthStr = "2025-07"; 
     const currentMonthStr = getCurrentMonthYearString();
-    console.log("Revisando propuestas disponibles:", bomProposals.length); // <--- LOG 1
-    
+    console.log("Revisando propuestas disponibles:", bomProposals.length);
+
     try {
-        // 1. Intentamos leer el libro "oficial" ya seleccionado de Firestore
         const bomDocRef = doc(db, "config", "activeBOM");
         const bomSnap = await getDoc(bomDocRef);
 
+        // ✅ 1. Si ya hay BOM para este mes → usarlo
         if (bomSnap.exists()) {
             const data = bomSnap.data() as BomEntry;
-            // Si el libro guardado coincide con el mes actual, lo usamos
+
             if (data.monthYear === currentMonthStr) {
-                console.log("Ganador oficial encontrado en Firestore:", data.title); // <--- LOG 2
+                console.log("Ganador oficial encontrado en Firestore:", data.title);
+
                 currentBomToDisplay = data;
                 activeBomId = data.id;
                 discussionStarters = data.discussionStarters || [];
-                return; // Ya tenemos el libro, terminamos aquí
+
+                return;
             }
         }
 
-        // 2. Si no hay libro oficial para este mes, calculamos el ganador de las propuestas
-        console.log("Proposals totales:", bomProposals.length);
-        const candidates = bomProposals.filter(p => p.proposalMonthYear === currentMonthStr);
-        console.log("Candidatos para este mes:", candidates.length); // <--- LOG 3
+        // ✅ 2. Calcular ganador de propuestas
+        const candidates = bomProposals.filter(
+            p => p.proposalMonthYear === currentMonthStr
+        );
+
+        console.log("Candidatos para este mes:", candidates.length);
 
         if (candidates.length > 0) {
-            // Ordenamos por cantidad de votos (y por fecha como desempate)
             candidates.sort((a, b) => {
                 const voteDiff = (b.votes?.length || 0) - (a.votes?.length || 0);
                 if (voteDiff !== 0) return voteDiff;
@@ -416,8 +416,8 @@ async function initializeAndSetCurrentBOM() {
             });
 
             const winner = candidates[0];
-            
-            // Creamos la entrada oficial del Libro del Mes
+
+            // ⭐ NUEVO BOM
             const newBom: BomEntry = {
                 id: `bom_${currentMonthStr}_${winner.id}`,
                 monthYear: currentMonthStr,
@@ -428,29 +428,39 @@ async function initializeAndSetCurrentBOM() {
                 coverImageUrl: winner.bookCoverImageUrl,
                 setBy: 'community_vote',
                 discussionStarters: [],
-                sourceProposalId: winner.id
+                sourceProposalId: winner.id // ⭐ CLAVE
             };
 
-            // Guardamos en Firestore para que sea el mismo para todos los usuarios
+            // ✅ Guardar BOM oficial
             await setDoc(doc(db, "config", "activeBOM"), newBom);
+
+            // 🔥 ELIMINAR LA PROPUESTA GANADORA
             await deleteDoc(doc(db, "proposals", winner.id));
 
+            // 🔥 Actualizar estado local inmediatamente
             bomProposals = bomProposals.filter(p => p.id !== winner.id);
             Storage.setItem("bomProposals", bomProposals);
 
+            // ✅ Actualizar estado actual
             currentBomToDisplay = newBom;
             activeBomId = newBom.id;
-            console.log("¡Nuevo ganador calculado!", newBom.title);
+
+            console.log("¡Nuevo ganador calculado y proposal eliminada!", newBom.title);
+
         } else {
-            // 3. Si no hay propuestas, usamos el primero del historial hardcoded como backup
-            console.warn("No hay propuestas. Usando libro hardcoded de respaldo."); // <--- LOG 4
-            currentBomToDisplay = hardcodedBomHistory.find(b => b.monthYear === currentMonthStr) || hardcodedBomHistory[0];
+            // ✅ 3. Fallback si no hay propuestas
+            console.warn("No hay propuestas. Usando libro hardcoded.");
+
+            currentBomToDisplay =
+                hardcodedBomHistory.find(b => b.monthYear === currentMonthStr) ||
+                hardcodedBomHistory[0];
+
             activeBomId = currentBomToDisplay ? currentBomToDisplay.id : null;
         }
 
     } catch (error) {
         console.error("Error seleccionando el libro del mes:", error);
-        currentBomToDisplay = hardcodedBomHistory[0]; // Fallback de seguridad
+        currentBomToDisplay = hardcodedBomHistory[0];
     }
 }
 
