@@ -120,6 +120,8 @@ interface BomProposal {
     timestamp: number;
     status?: 'active' | 'selected';
     selectedAsBOMMonth?: string;
+    finalRating?: number;
+    reviewCount?: number;
 }
 // --- localStorage Utilities ---
 const Storage = {
@@ -437,9 +439,13 @@ async function initializeAndSetCurrentBOM() {
             await setDoc(doc(db, "config", "activeBOM"), newBom);
 
             // 🔥 ELIMINAR LA PROPUESTA GANADORA
+            const { finalOverallAverage, totalRaters } = computeBomStats(winner.id);
+
             await updateDoc(doc(db, "proposals", winner.id), {
             status: "selected",
-            selectedAsBOMMonth: currentMonthStr
+            selectedAsBOMMonth: currentMonthStr,
+            finalRating: finalOverallAverage,
+            reviewCount: totalRaters
             });
 
             // 🔥 Actualizar estado local inmediatamente
@@ -654,6 +660,30 @@ function MyBooksView() {
     `;
 }
 
+function computeBomStats(bomId: string) {
+    const allRatingsForThisBom = globalBomRatings[bomId] || {};
+    const ratingsArray = Object.values(allRatingsForThisBom);
+
+    let finalOverallAverage = 0;
+    let totalRaters = 0;
+
+    if (ratingsArray.length > 0) {
+        totalRaters = ratingsArray.length;
+
+        const individualUserAverages: number[] = ratingsArray.map(userRating => {
+            const scores = [userRating.plot, userRating.characters, userRating.writingStyle, userRating.overallEnjoyment].filter(v => v > 0);
+            if (!scores.length) return 0;
+            return scores.reduce((a, b) => a + b, 0) / scores.length;
+        }).filter(v => v > 0);
+
+        if (individualUserAverages.length > 0) {
+            finalOverallAverage =
+                individualUserAverages.reduce((a, b) => a + b, 0) / individualUserAverages.length;
+        }
+    }
+
+    return { finalOverallAverage, totalRaters };
+}
 
 function BookOfTheMonthView() {
     // This is a good debug log to keep for now.
@@ -681,53 +711,9 @@ function BookOfTheMonthView() {
     // Calculate Average Ratings
     // --- NEW, COMBINED Calculate Average Ratings ---
 
-const allRatingsForThisBom = activeBomId ? globalBomRatings[activeBomId] : null;
-
-// Variables for the DETAILED breakdown (like you had before)
-let detailedAverageRatings: BomRatings = { plot: 0, characters: 0, writingStyle: 0, overallEnjoyment: 0 };
-let ratingCounts = { plot: 0, characters: 0, writingStyle: 0, overallEnjoyment: 0 };
-
-// Variables for the NEW single overall average
-let finalOverallAverage = 0;
-let totalRaters = 0;
-
-if (allRatingsForThisBom) {
-    const userRatingsArray: BomRatings[] = Object.values(allRatingsForThisBom);
-    totalRaters = userRatingsArray.length;
-
-    if (totalRaters > 0) {
-        const individualUserAverages: number[] = [];
-
-        userRatingsArray.forEach(userRating => {
-            // --- Part 1: Accumulate for the detailed breakdown ---
-            if (userRating.plot > 0) { detailedAverageRatings.plot += userRating.plot; ratingCounts.plot++; }
-            if (userRating.characters > 0) { detailedAverageRatings.characters += userRating.characters; ratingCounts.characters++; }
-            if (userRating.writingStyle > 0) { detailedAverageRatings.writingStyle += userRating.writingStyle; ratingCounts.writingStyle++; }
-            if (userRating.overallEnjoyment > 0) { detailedAverageRatings.overallEnjoyment += userRating.overallEnjoyment; ratingCounts.overallEnjoyment++; }
-
-            // --- Part 2: Calculate this user's personal average for the new overall score ---
-            const scores = [userRating.plot, userRating.characters, userRating.writingStyle, userRating.overallEnjoyment];
-            const validScores = scores.filter(score => score > 0);
-            if (validScores.length > 0) {
-                const sumOfScores = validScores.reduce((acc, score) => acc + score, 0);
-                const userAverage = sumOfScores / validScores.length;
-                individualUserAverages.push(userAverage);
-            }
-        });
-
-        // --- Finalize Part 1: The detailed breakdown averages ---
-        if (ratingCounts.plot > 0) detailedAverageRatings.plot /= ratingCounts.plot;
-        if (ratingCounts.characters > 0) detailedAverageRatings.characters /= ratingCounts.characters;
-        if (ratingCounts.writingStyle > 0) detailedAverageRatings.writingStyle /= ratingCounts.writingStyle;
-        if (ratingCounts.overallEnjoyment > 0) detailedAverageRatings.overallEnjoyment /= ratingCounts.overallEnjoyment;
-        
-        // --- Finalize Part 2: The new single overall average ---
-        if (individualUserAverages.length > 0) {
-            const sumOfAllUserAverages = individualUserAverages.reduce((acc, avg) => acc + avg, 0);
-            finalOverallAverage = sumOfAllUserAverages / individualUserAverages.length;
-        }
-    }
-}
+    const { finalOverallAverage, totalRaters } = activeBomId
+  ? computeBomStats(activeBomId)
+  : { finalOverallAverage: 0, totalRaters: 0 };
 
 
 
