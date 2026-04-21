@@ -470,6 +470,7 @@ async function initializeAndSetCurrentBOM() {
     } catch (error) {
         console.error("Error seleccionando el libro del mes:", error);
         currentBomToDisplay = hardcodedBomHistory[0];
+        activeBomId = currentBomToDisplay?.id || null;
     }
 }
 
