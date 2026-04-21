@@ -1176,3 +1176,39 @@ ul.discussion-starters li {
     padding-bottom: 5px;
     border-bottom: 1px solid var(--border-color);
 }
+
+/* HISTORICAL BLOCK */
+.historical-item {
+  opacity: 0.85;
+  background: #f7f7f7;
+  border-left: 4px solid #6c63ff;
+  cursor: default;
+}
+
+.historical-badge {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #6c63ff;
+  margin-bottom: 6px;
+}
+
+.proposal-rating {
+  font-weight: 600;
+  color: #f5b50a;
+  margin: 6px 0;
+}
+
+.historical-comments {
+  margin-top: 8px;
+}
+
+.historical-comment {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+.historical-item:hover {
+  transform: none;
+  box-shadow: none;
+}

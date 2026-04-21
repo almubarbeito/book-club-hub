@@ -909,22 +909,50 @@ function renderBomProposalSection() {
             ` : `
                 <div class="bom-proposals-list historical">
                     ${historicalProposals.map(proposal => {
-                        const selectedMonth = proposal.selectedAsBOMMonth || proposal.proposalMonthYear;
+    const selectedMonth = proposal.selectedAsBOMMonth || proposal.proposalMonthYear;
 
-                        return `
-                            <div class="bom-proposal-item historical-item" data-action="show-proposal-detail" data-proposal-id="${proposal.id}" role="button" tabindex="0">
-                                ${proposal.bookCoverImageUrl ? `<img src="${proposal.bookCoverImageUrl}" alt="Cover of ${proposal.bookTitle}" class="book-cover-thumbnail">` : '<div class="book-cover-placeholder-small">No Cover</div>'}
-                                <div class="bom-proposal-details">
-                                    <h4>${proposal.bookTitle}</h4>
-                                    <p><em>by ${proposal.bookAuthor || 'Unknown Author'}</em></p>
-                                    <p class="proposal-month">Selected as BoM: ${formatMonthYearForDisplay(selectedMonth)}</p>
-                                    <p class="proposal-reason"><strong>Reason:</strong> ${proposal.reason}</p>
-                                    <p class="proposed-by">Proposed by: ${proposal.proposedByUserName || 'Unknown'}</p>
-                                    <span class="status-tag status-selected">Selected</span>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
+    const commentsForThis = globalBomComments[proposal.id]
+        ? Object.values(globalBomComments[proposal.id]).slice(0, 2)
+        : [];
+
+    return `
+    <div class="bom-proposal-item historical-item">
+        <div class="historical-badge">📖 Book of the Month</div>
+
+        ${proposal.bookCoverImageUrl 
+            ? `<img src="${proposal.bookCoverImageUrl}" class="book-cover-thumbnail">`
+            : '<div class="book-cover-placeholder-small">No Cover</div>'}
+
+        <div class="bom-proposal-details">
+            <h4>${proposal.bookTitle}</h4>
+            <p><em>by ${proposal.bookAuthor || 'Unknown Author'}</em></p>
+
+            <p class="proposal-month">
+                ${formatMonthYearForDisplay(selectedMonth)}
+            </p>
+
+            <p class="proposal-rating">
+                ⭐ ${proposal.finalRating ? proposal.finalRating.toFixed(1) : '—'}
+                ${proposal.reviewCount ? `• ${proposal.reviewCount} reviews` : ''}
+            </p>
+
+            ${commentsForThis.length > 0 ? `
+                <div class="historical-comments">
+                    ${commentsForThis.map(c => `
+                        <p class="historical-comment">
+                            “${c.text.substring(0, 120)}...”
+                        </p>
+                    `).join('')}
+                </div>
+            ` : ''}
+
+            <p class="proposed-by">
+                Proposed by: ${proposal.proposedByUserName || 'Unknown'}
+            </p>
+        </div>
+    </div>
+    `;
+}).join('')}
                 </div>
             `}
         </div>
