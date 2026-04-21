@@ -829,7 +829,9 @@ function renderBomProposalSection() {
     const canProposeMore = userProposalsForNextMonth.length < 3;
 
     const currentProposalsForNextMonth = [...bomProposals]
-  .filter(p => p.status !== 'selected')
+  .filter(p => p.status !== 'selected' &&
+    p.id !== currentBomToDisplay?.sourceProposalId
+  )
   .sort((a, b) => {
     const voteDifference = (b.votes?.length || 0) - (a.votes?.length || 0);
     if (voteDifference !== 0) return voteDifference;
