@@ -427,7 +427,7 @@ async function initializeAndSetCurrentBOM() {
                 promptHint: `Ganador por votación popular (${winner.votes.length} votos)`,
                 coverImageUrl: winner.bookCoverImageUrl,
                 setBy: 'community_vote',
-                discussionStarters: []
+                discussionStarters: [],
                 sourceProposalId: winner.id
             };
 
