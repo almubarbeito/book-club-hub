@@ -826,40 +826,64 @@ function renderBomProposalSection() {
     if (!currentUser) return '';
 
     const nextMonthTarget = getNextMonthYearString();
-    const userProposalsForNextMonth = bomProposals.filter(p => p.proposedByUserId === currentUser!.id && p.proposalMonthYear === nextMonthTarget);
+
+    const userProposalsForNextMonth = bomProposals.filter(p =>
+        p.proposedByUserId === currentUser.id &&
+        p.proposalMonthYear === nextMonthTarget &&
+        p.status !== 'selected'
+    );
+
     const canProposeMore = userProposalsForNextMonth.length < 3;
 
-    const currentProposalsForNextMonth = [...bomProposals]
-  .filter(p => p.status !== 'selected' &&
-    p.id !== currentBomToDisplay?.sourceProposalId
-  )
-  .sort((a, b) => {
-    const voteDifference = (b.votes?.length || 0) - (a.votes?.length || 0);
-    if (voteDifference !== 0) return voteDifference;
-    return (b.timestamp || 0) - (a.timestamp || 0);
-  });
+    const isCurrentBomWinner = (proposal: BomProposal) => {
+        const matchesCurrentBom =
+            currentBomToDisplay &&
+            proposal.bookTitle === currentBomToDisplay.title &&
+            proposal.bookAuthor === currentBomToDisplay.author;
+
+        const isSourceProposal = proposal.id === currentBomToDisplay?.sourceProposalId;
+
+        return proposal.status === 'selected' || matchesCurrentBom || isSourceProposal;
+    };
+
+    const activeProposals = [...bomProposals]
+        .filter(p => !isCurrentBomWinner(p))
+        .sort((a, b) => {
+            const voteDifference = (b.votes?.length || 0) - (a.votes?.length || 0);
+            if (voteDifference !== 0) return voteDifference;
+            return (b.timestamp || 0) - (a.timestamp || 0);
+        });
+
+    const historicalProposals = [...bomProposals]
+        .filter(p => isCurrentBomWinner(p))
+        .sort((a, b) => {
+            const monthA = a.selectedAsBOMMonth || a.proposalMonthYear || '';
+            const monthB = b.selectedAsBOMMonth || b.proposalMonthYear || '';
+            if (monthA !== monthB) return monthB.localeCompare(monthA);
+            return (b.timestamp || 0) - (a.timestamp || 0);
+        });
 
     return `
         <div class="book-item" id="bom-proposal-section">
-            <h3>Propose & Vote for Book of ${formatMonthYearForDisplay(nextMonthTarget)}</h3>
+            <h3>Community Proposals</h3>
             <p class="voting-deadline-note">Proposal and voting deadline: 25th of the current month.</p>
+
             ${canProposeMore ? `
                 <p>You can propose ${3 - userProposalsForNextMonth.length} more book(s) for next month.</p>
                 <button class="button" data-action="show-bom-proposal-modal">Propose a Book</button>
             ` : `
                 <p>You have submitted the maximum of 3 proposals for next month. You can still vote!</p>
             `}
-            
-            <h4>Current Proposals for ${formatMonthYearForDisplay(nextMonthTarget)}:</h4>
-            ${currentProposalsForNextMonth.length === 0 ? `
-                <p>No books proposed yet for ${formatMonthYearForDisplay(nextMonthTarget)}. Be the first!</p>
+
+            <h4>Active Proposals</h4>
+            ${activeProposals.length === 0 ? `
+                <p>No active proposals right now. Be the first!</p>
             ` : `
                 <div class="bom-proposals-list">
-                    ${currentProposalsForNextMonth.map(proposal => {
-                        const userVotedForThis = proposal.votes.includes(currentUser!.id);
-                        
-                        // Logic for the vote button
-                        const voteButtonHtml = userVotedForThis 
+                    ${activeProposals.map(proposal => {
+                        const userVotedForThis = proposal.votes.includes(currentUser.id);
+
+                        const voteButtonHtml = userVotedForThis
                             ? `<button class="button small-button voted" data-action="toggle-bom-proposal-vote" data-proposal-id="${proposal.id}">
                                  <span class="material-icons">how_to_vote</span> Voted (${proposal.votes.length})
                                </button>`
@@ -867,28 +891,52 @@ function renderBomProposalSection() {
                                  <span class="material-icons">how_to_vote</span> Vote (${proposal.votes.length})
                                </button>`;
 
-                        // Logic for the delete button
-                        const deleteButtonHtml = (currentUser && proposal.proposedByUserId === currentUser.id)
+                        const deleteButtonHtml = proposal.proposedByUserId === currentUser.id
                             ? `<button class="button small-button danger" data-action="delete-bom-proposal" data-proposal-id="${proposal.id}">
                                  <span class="material-icons">delete</span>
                                </button>`
                             : '';
-                        
-                        // This is the HTML structure for a single proposal item
+
                         return `
-                        <div class="bom-proposal-item ${userVotedForThis ? 'user-voted-highlight' : ''}" data-action="show-proposal-detail" data-proposal-id="${proposal.id}" role="button" tabindex="0">
-                            ${proposal.bookCoverImageUrl ? `<img src="${proposal.bookCoverImageUrl}" alt="Cover of ${proposal.bookTitle}" class="book-cover-thumbnail">` : '<div class="book-cover-placeholder-small">No Cover</div>'}
-                            <div class="bom-proposal-details">
-                                <h4>${proposal.bookTitle}</h4>
-                                <p><em>by ${proposal.bookAuthor || 'Unknown Author'}</em></p>
-                                <p class="proposal-reason"><strong>Reason:</strong> ${proposal.reason}</p>
-                                <p class="proposed-by">Proposed by: ${proposal.proposedByUserName}</p>
-                                <div class="proposal-actions">
-                                   ${voteButtonHtml}
-                                   ${deleteButtonHtml}
+                            <div class="bom-proposal-item ${userVotedForThis ? 'user-voted-highlight' : ''}" data-action="show-proposal-detail" data-proposal-id="${proposal.id}" role="button" tabindex="0">
+                                ${proposal.bookCoverImageUrl ? `<img src="${proposal.bookCoverImageUrl}" alt="Cover of ${proposal.bookTitle}" class="book-cover-thumbnail">` : '<div class="book-cover-placeholder-small">No Cover</div>'}
+                                <div class="bom-proposal-details">
+                                    <h4>${proposal.bookTitle}</h4>
+                                    <p><em>by ${proposal.bookAuthor || 'Unknown Author'}</em></p>
+                                    <p class="proposal-month">Proposed for: ${formatMonthYearForDisplay(proposal.proposalMonthYear)}</p>
+                                    <p class="proposal-reason"><strong>Reason:</strong> ${proposal.reason}</p>
+                                    <p class="proposed-by">Proposed by: ${proposal.proposedByUserName || 'Unknown'}</p>
+                                    <div class="proposal-actions">
+                                        ${voteButtonHtml}
+                                        ${deleteButtonHtml}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        `;
+                    }).join('')}
+                </div>
+            `}
+
+            <h4 style="margin-top: 24px;">Historical Proposals</h4>
+            ${historicalProposals.length === 0 ? `
+                <p>No historical proposals yet.</p>
+            ` : `
+                <div class="bom-proposals-list historical">
+                    ${historicalProposals.map(proposal => {
+                        const selectedMonth = proposal.selectedAsBOMMonth || proposal.proposalMonthYear;
+
+                        return `
+                            <div class="bom-proposal-item historical-item" data-action="show-proposal-detail" data-proposal-id="${proposal.id}" role="button" tabindex="0">
+                                ${proposal.bookCoverImageUrl ? `<img src="${proposal.bookCoverImageUrl}" alt="Cover of ${proposal.bookTitle}" class="book-cover-thumbnail">` : '<div class="book-cover-placeholder-small">No Cover</div>'}
+                                <div class="bom-proposal-details">
+                                    <h4>${proposal.bookTitle}</h4>
+                                    <p><em>by ${proposal.bookAuthor || 'Unknown Author'}</em></p>
+                                    <p class="proposal-month">Selected as BoM: ${formatMonthYearForDisplay(selectedMonth)}</p>
+                                    <p class="proposal-reason"><strong>Reason:</strong> ${proposal.reason}</p>
+                                    <p class="proposed-by">Proposed by: ${proposal.proposedByUserName || 'Unknown'}</p>
+                                    <span class="status-tag status-selected">Selected</span>
+                                </div>
+                            </div>
                         `;
                     }).join('')}
                 </div>
