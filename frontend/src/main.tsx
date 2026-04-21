@@ -118,6 +118,8 @@ interface BomProposal {
     proposalMonthYear: string; // For which month this is proposed (e.g., "2024-08")
     votes: string[]; // Array of user IDs who voted for this
     timestamp: number;
+    status?: 'active' | 'selected';
+    selectedAsBOMMonth?: string;
 }
 // --- localStorage Utilities ---
 const Storage = {
@@ -435,10 +437,17 @@ async function initializeAndSetCurrentBOM() {
             await setDoc(doc(db, "config", "activeBOM"), newBom);
 
             // 🔥 ELIMINAR LA PROPUESTA GANADORA
-            await deleteDoc(doc(db, "proposals", winner.id));
+            await updateDoc(doc(db, "proposals", winner.id), {
+            status: "selected",
+            selectedAsBOMMonth: currentMonthStr
+            });
 
             // 🔥 Actualizar estado local inmediatamente
-            bomProposals = bomProposals.filter(p => p.id !== winner.id);
+            bomProposals = bomProposals.map(p =>
+    p.id === winner.id
+        ? { ...p, status: 'selected', selectedAsBOMMonth: currentMonthStr }
+        : p
+);
             Storage.setItem("bomProposals", bomProposals);
 
             // ✅ Actualizar estado actual
@@ -820,8 +829,16 @@ function renderBomProposalSection() {
     const canProposeMore = userProposalsForNextMonth.length < 3;
 
     const currentProposalsForNextMonth = bomProposals
+  .filter(p =>
+    p.proposalMonthYear === nextMonthTarget &&
+    p.status !== 'selected' // ⭐ CLAVE
+  )
   .sort((a, b) => {
     const voteDifference = (b.votes?.length || 0) - (a.votes?.length || 0);
+
+    if (voteDifference !== 0) return voteDifference;
+    return (b.timestamp || 0) - (a.timestamp || 0);
+  });
 
     if (voteDifference === 0) {
       return (b.timestamp || 0) - (a.timestamp || 0);
