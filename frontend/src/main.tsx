@@ -104,6 +104,7 @@ interface BomEntry {
     promptHint: string;
     setBy: 'default' | 'vote' | 'admin'; // How this BOM was chosen
     discussionStarters?: string[];
+    sourceProposalId?: string;
 }
 
 interface BomProposal {
@@ -427,10 +428,15 @@ async function initializeAndSetCurrentBOM() {
                 coverImageUrl: winner.bookCoverImageUrl,
                 setBy: 'community_vote',
                 discussionStarters: []
+                sourceProposalId: winner.id
             };
 
             // Guardamos en Firestore para que sea el mismo para todos los usuarios
             await setDoc(doc(db, "config", "activeBOM"), newBom);
+            await deleteDoc(doc(db, "proposals", winner.id));
+
+            bomProposals = bomProposals.filter(p => p.id !== winner.id);
+            Storage.setItem("bomProposals", bomProposals);
 
             currentBomToDisplay = newBom;
             activeBomId = newBom.id;
