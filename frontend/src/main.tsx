@@ -1111,28 +1111,26 @@ function renderBomProposalModal() {
                 <hr class="modal-divider">
 
                 <form id="bomProposalForm" class="form" onsubmit="return false;">
-                    <div>
-                        <label for="bomProposalBookTitle">Book Title:</label>
-                        <input type="text" id="bomProposalBookTitle" name="title" required value="${bomProposal_formTitle}" readonly>
-                    </div>
-                    <div>
-                        <label for="bomProposalBookAuthor">Author:</label>
-                        <input type="text" id="bomProposalBookAuthor" name="author" value="${bomProposal_formAuthor}" readonly>
-                    </div>
-                    <div>
-                        <label for="bomProposalBookCoverUrl">Cover Image URL (optional):</label>
-                        <input type="url" id="bomProposalBookCoverUrl" name="coverImageUrl" value="${bomProposal_formCoverUrl}" readonly>
-                        ${bomProposal_formCoverUrl ? `<img src="${bomProposal_formCoverUrl}" alt="Preview" class="modal-cover-preview">` : ''}
-                        ${bomProposal_formPageCount ? `
-        <p class="book-meta">
-            📖 ${bomProposal_formPageCount} pages
-            ${Math.round(bomProposal_formPageCount / 50)
-                ? ` • ⏱️ ~${Math.round(bomProposal_formPageCount / 50)}h read`
-                : ''
-            }
-        </p>
-    ` : ''}
-                    </div>
+                    ${bomProposal_formTitle ? `
+    <div class="selected-book-preview">
+        ${bomProposal_formCoverUrl 
+            ? `<img src="${bomProposal_formCoverUrl}" class="selected-book-cover">`
+            : ''
+        }
+
+        <div class="selected-book-info">
+            <h4>${bomProposal_formTitle}</h4>
+            <p>${bomProposal_formAuthor}</p>
+
+            ${bomProposal_formPageCount ? `
+                <p class="book-meta">
+                    📖 ${bomProposal_formPageCount} pages
+                    • ⏱️ ~${Math.round(bomProposal_formPageCount / 50)}h read
+                </p>
+            ` : ''}
+        </div>
+    </div>
+` : ''}
                     <div>
                         <label for="bomProposalReason">Why are you proposing this book? (optional)</label>
                         <textarea id="bomProposalReason" name="reason" rows="3" oninput="window.__updateProposalReason(this.value)">${bomProposal_formReason}</textarea>

@@ -1212,3 +1212,27 @@ ul.discussion-starters li {
   transform: none;
   box-shadow: none;
 }
+
+.selected-book-preview {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: #f7f7f7;
+  border-radius: 8px;
+}
+
+.selected-book-cover {
+  width: 50px;
+  border-radius: 4px;
+}
+
+.selected-book-info h4 {
+  margin: 0;
+}
+
+.selected-book-info p {
+  margin: 2px 0;
+}
+
