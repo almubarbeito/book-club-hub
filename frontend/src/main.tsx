@@ -939,6 +939,15 @@ function renderBomProposalSection() {
                                 <div class="bom-proposal-details">
                                     <h4>${proposal.bookTitle}</h4>
                                     <p><em>by ${proposal.bookAuthor || 'Unknown Author'}</em></p>
+                                    ${proposal.pageCount ? `
+    <p class="book-meta">
+        📖 ${proposal.pageCount} pages
+        ${Math.round(proposal.pageCount / 50)
+            ? ` • ⏱️ ~${Math.round(proposal.pageCount / 50)}h read`
+            : ''
+        }
+    </p>
+` : ''}
                                     ${proposal.pageCount ? `<p class="book-pages">${proposal.pageCount} pages</p>` : ''}
                                     <p class="proposal-month">Proposed for: ${formatMonthYearForDisplay(proposal.proposalMonthYear)}</p>
                                     <p class="proposal-reason"><strong>Reason:</strong> ${proposal.reason}</p>
