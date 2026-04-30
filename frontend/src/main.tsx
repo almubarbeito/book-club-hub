@@ -948,7 +948,7 @@ function renderBomProposalSection() {
         }
     </p>
 ` : ''}
-                                    ${proposal.pageCount ? `<p class="book-pages">${proposal.pageCount} pages</p>` : ''}
+                                    
                                     <p class="proposal-month">Proposed for: ${formatMonthYearForDisplay(proposal.proposalMonthYear)}</p>
                                     <p class="proposal-reason"><strong>Reason:</strong> ${proposal.reason}</p>
                                     <p class="proposed-by">Proposed by: ${proposal.proposedByUserName || 'Unknown'}</p>
