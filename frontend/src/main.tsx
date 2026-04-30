@@ -122,6 +122,7 @@ interface BomProposal {
     selectedAsBOMMonth?: string;
     finalRating?: number;
     reviewCount?: number;
+    pageCount?: number | null; // ⭐ AÑADE ESTA LÍNEA
 }
 // --- localStorage Utilities ---
 const Storage = {
@@ -273,6 +274,7 @@ let bomProposal_searchError: string | null = null;
 let bomProposal_formTitle = '';
 let bomProposal_formAuthor = '';
 let bomProposal_formCoverUrl = '';
+let bomProposal_formPageCount: number | null = null;
 let bomProposal_formReason = '';
 let bomProposal_targetMonthYear = ''; // e.g., "2024-08"
 
@@ -937,6 +939,7 @@ function renderBomProposalSection() {
                                 <div class="bom-proposal-details">
                                     <h4>${proposal.bookTitle}</h4>
                                     <p><em>by ${proposal.bookAuthor || 'Unknown Author'}</em></p>
+                                    ${proposal.pageCount ? `<p class="book-pages">${proposal.pageCount} pages</p>` : ''}
                                     <p class="proposal-month">Proposed for: ${formatMonthYearForDisplay(proposal.proposalMonthYear)}</p>
                                     <p class="proposal-reason"><strong>Reason:</strong> ${proposal.reason}</p>
                                     <p class="proposed-by">Proposed by: ${proposal.proposedByUserName || 'Unknown'}</p>
@@ -2397,6 +2400,7 @@ async function handlePerformBomProposalBookSearch() {
                 title: item.volumeInfo.title || "No Title",
                 author: item.volumeInfo.authors?.join(', ') || "Unknown Author",
                 cover: item.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || null,
+                pageCount: item.volumeInfo.pageCount || null // ⭐ NUEVO
             }));
         } else {
             bomProposal_searchResults = [];
@@ -2429,6 +2433,7 @@ async function handleSubmitBomProposal(formElement: HTMLFormElement) {
         bookTitle: bomProposal_formTitle.trim(),
         bookAuthor: bomProposal_formAuthor.trim(),
         bookCoverImageUrl: bomProposal_formCoverUrl.trim() || '',
+        pageCount: bomProposal_formPageCount || null,
         reason: reason || '',
         proposedByUserId: currentUser.id,
         proposedByUserName: currentUser.literaryPseudonym || currentUser.name,
@@ -3065,6 +3070,7 @@ if (showBomProposalModal) {
                 bomProposal_formTitle = selectedBook.title;
                 bomProposal_formAuthor = selectedBook.author;
                 bomProposal_formCoverUrl = selectedBook.cover || '';
+                bomProposal_formPageCount = selectedBook.pageCount || null;
                 updateView(); // Esto cerrará la lista y llenará el form
             }
         };
