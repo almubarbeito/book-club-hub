@@ -1010,6 +1010,11 @@ function renderBomProposalSection() {
     `;
 }
 
+function estimateReadingTime(pageCount: number | null) {
+    if (!pageCount) return null;
+    return Math.round(pageCount / 50); // 50 páginas ≈ 1h
+}
+
 function renderBomProposalModal() {
     if (!showBomProposalModal || !currentUser) return '';
 
@@ -1027,17 +1032,37 @@ function renderBomProposalModal() {
     } else if (bomProposal_searchResults.length > 0) {
         searchResultsHtml = `
             <ul class="book-search-results">
-                ${bomProposal_searchResults.map((book, index) => `
-                    <li class="book-search-result-item">
-                        <img src="${book.cover || './book-placeholder.png'}" alt="Cover" class="book-search-result-cover">
-                        <div class="book-search-result-details">
-                            <h4>${book.title}</h4>
-                            <p>${book.author}</p>
-                        </div>
-                        <button type="button" class="button small-button" data-action="select-searched-bom-proposal-book" data-index="${index}">Select</button>
-                    </li>
-                `).join('')}
-            </ul>
+    ${bomProposal_searchResults.map((book, index) => {
+        const readingTime = book.pageCount
+            ? Math.round(book.pageCount / 50)
+            : null;
+
+        return `
+        <li class="book-search-result-item">
+            <img src="${book.cover || './book-placeholder.png'}" alt="Cover" class="book-search-result-cover">
+
+            <div class="book-search-result-details">
+                <h4>${book.title}</h4>
+                <p>${book.author}</p>
+
+                ${book.pageCount ? `
+                    <p class="book-meta">
+                        📖 ${book.pageCount} pages
+                        ${readingTime ? ` • ⏱️ ~${readingTime}h read` : ''}
+                    </p>
+                ` : ''}
+            </div>
+
+            <button type="button"
+                class="button small-button"
+                data-action="select-searched-bom-proposal-book"
+                data-index="${index}">
+                Select
+            </button>
+        </li>
+        `;
+    }).join('')}
+</ul>
         `;
     } else if (bomProposal_searchText && !bomProposal_isLoadingSearch && bomProposal_searchResults.length === 0) {
          searchResultsHtml = `<p>No books found for "${bomProposal_searchText}".</p>`;
@@ -1089,6 +1114,15 @@ function renderBomProposalModal() {
                         <label for="bomProposalBookCoverUrl">Cover Image URL (optional):</label>
                         <input type="url" id="bomProposalBookCoverUrl" name="coverImageUrl" value="${bomProposal_formCoverUrl}" readonly>
                         ${bomProposal_formCoverUrl ? `<img src="${bomProposal_formCoverUrl}" alt="Preview" class="modal-cover-preview">` : ''}
+                        ${bomProposal_formPageCount ? `
+        <p class="book-meta">
+            📖 ${bomProposal_formPageCount} pages
+            ${Math.round(bomProposal_formPageCount / 50)
+                ? ` • ⏱️ ~${Math.round(bomProposal_formPageCount / 50)}h read`
+                : ''
+            }
+        </p>
+    ` : ''}
                     </div>
                     <div>
                         <label for="bomProposalReason">Why are you proposing this book? (optional)</label>
