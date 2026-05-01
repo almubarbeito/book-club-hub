@@ -872,18 +872,22 @@ function renderBomProposalSection() {
     const canProposeMore = userProposalsForNextMonth.length < 3;
 
     const isCurrentBomWinner = (proposal: BomProposal) => {
-        const matchesCurrentBom =
-            currentBomToDisplay &&
+    if (!currentBomToDisplay) return false;
+
+    return (
+        proposal.id === currentBomToDisplay.sourceProposalId ||
+        (
             proposal.bookTitle === currentBomToDisplay.title &&
-            proposal.bookAuthor === currentBomToDisplay.author;
-
-        const isSourceProposal = proposal.id === currentBomToDisplay?.sourceProposalId;
-
-        return proposal.status === 'selected' || matchesCurrentBom || isSourceProposal;
-    };
+            proposal.bookAuthor === currentBomToDisplay.author
+        )
+    );
+};
 
     const activeProposals = [...bomProposals]
-        .filter(p => !isCurrentBomWinner(p))
+        .filter(p =>
+    !isCurrentBomWinner(p) &&     // ❌ no es el BOM actual
+    p.status !== 'selected'       // ❌ no es histórico
+  )
         .sort((a, b) => {
             const voteDifference = (b.votes?.length || 0) - (a.votes?.length || 0);
             if (voteDifference !== 0) return voteDifference;
@@ -891,13 +895,15 @@ function renderBomProposalSection() {
         });
 
     const historicalProposals = [...bomProposals]
-        .filter(p => isCurrentBomWinner(p))
-        .sort((a, b) => {
-            const monthA = a.selectedAsBOMMonth || a.proposalMonthYear || '';
-            const monthB = b.selectedAsBOMMonth || b.proposalMonthYear || '';
-            if (monthA !== monthB) return monthB.localeCompare(monthA);
-            return (b.timestamp || 0) - (a.timestamp || 0);
-        });
+  .filter(p =>
+    p.status === 'selected' ||
+    isCurrentBomWinner(p)
+  )
+  .sort((a, b) => {
+    const monthA = a.selectedAsBOMMonth || a.proposalMonthYear || '';
+    const monthB = b.selectedAsBOMMonth || b.proposalMonthYear || '';
+    return monthB.localeCompare(monthA);
+  });
 
     return `
         <div class="book-item" id="bom-proposal-section">
