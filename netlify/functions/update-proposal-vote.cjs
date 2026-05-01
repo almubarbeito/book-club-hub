@@ -36,18 +36,30 @@ exports.handler = async function(event) {
 
     // 👉 2. contar votos del usuario en este mes
     const monthSnapshot = await db
-      .collection('proposals')
-      .where('proposalMonthYear', '==', proposalMonth)
-      .get();
+  .collection('proposals')
+  .where('proposalMonthYear', '==', proposalMonth)
+  .get();
 
-    let userVoteCount = 0;
+let userVoteCount = 0;
 
-    monthSnapshot.forEach(doc => {
-      const votes = doc.data().votes || [];
-      if (votes.includes(userId)) {
-        userVoteCount++;
-      }
-    });
+monthSnapshot.forEach(doc => {
+  const data = doc.data();
+
+  if (data.status === 'selected') return;
+
+  const votes = data.votes || [];
+
+  // 👇 excluir el proposal actual si ya votó
+  if (doc.id === proposalId) {
+    if (votes.includes(userId)) {
+      userVoteCount--; // 🔥 CLAVE
+    }
+  }
+
+  if (votes.includes(userId)) {
+    userVoteCount++;
+  }
+});
 
     console.log("User votes this month:", userVoteCount);
 
