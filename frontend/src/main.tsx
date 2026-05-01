@@ -394,18 +394,35 @@ async function initializeAndSetCurrentBOM() {
 
         // ✅ 1. Si ya hay BOM para este mes → usarlo
         if (bomSnap.exists()) {
-            const data = bomSnap.data() as BomEntry;
+    const data = bomSnap.data() as BomEntry;
 
-            if (data.monthYear === currentMonthStr) {
-                console.log("Ganador oficial encontrado en Firestore:", data.title);
+    if (data.monthYear === currentMonthStr) {
+        console.log("Ganador oficial encontrado en Firestore:", data.title);
 
-                currentBomToDisplay = data;
-                activeBomId = data.id;
-                discussionStarters = data.discussionStarters || [];
+        currentBomToDisplay = data;
+        activeBomId = data.id;
+        discussionStarters = data.discussionStarters || [];
 
-                return;
-            }
+        // 🔥 AÑADE ESTO
+        if (data.sourceProposalId) {
+            await updateDoc(doc(db, "proposals", data.sourceProposalId), {
+                status: "selected",
+                selectedAsBOMMonth: data.monthYear
+            });
+
+            // 🔥 también en estado local
+            bomProposals = bomProposals.map(p =>
+                p.id === data.sourceProposalId
+                    ? { ...p, status: 'selected', selectedAsBOMMonth: data.monthYear }
+                    : p
+            );
+
+            Storage.setItem("bomProposals", bomProposals);
         }
+
+        return;
+    }
+}
 
         // ✅ 2. Calcular ganador de propuestas
         const candidates = bomProposals.filter(
