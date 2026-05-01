@@ -37,18 +37,21 @@ exports.handler = async function(event) {
 
     let userVoteCount = 0;
 
-    allProposalsSnapshot.forEach(doc => {
-      const data = doc.data();
+allProposalsSnapshot.forEach(doc => {
+  const data = doc.data();
 
-      // ignorar históricos
-      if (data.status === 'selected') return;
+  // ❌ ignorar históricos
+  if (data.status === 'selected') return;
 
-      const votes = data.votes || [];
+  const votes = data.votes || [];
 
-      if (votes.includes(userId)) {
-        userVoteCount++;
-      }
-    });
+  // 👇 IMPORTANTE: no contar el proposal actual
+  if (doc.id === proposalId) return;
+
+  if (votes.includes(userId)) {
+    userVoteCount++;
+  }
+});
 
     console.log("User active votes:", userVoteCount);
 
