@@ -2665,6 +2665,7 @@ if (userHadVotedForThis) {
     updateView();
 
     alert(err.error || "Something went wrong");
+    console.error("Vote rejected:", err.error);
     return;
 }
 
