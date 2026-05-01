@@ -2592,7 +2592,13 @@ if (proposal.proposedByUserId === userId) {
 // 🔢 contar votos del usuario en este mes
 const userVotesThisMonth = bomProposals.reduce((count, p) => {
     if (!p.votes) return count;
+
+    // ❌ ignorar propuestas ya seleccionadas (histórico)
+    if (p.status === 'selected') return count;
+
+    // ❌ ignorar propuestas de otros meses
     if (p.proposalMonthYear !== proposalMonth) return count;
+
     return count + (p.votes.includes(userId) ? 1 : 0);
 }, 0);
 
