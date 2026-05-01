@@ -12,8 +12,6 @@ exports.handler = async function(event) {
   try {
     const { proposalId, userId } = JSON.parse(event.body);
 
-    console.log("DATA:", proposalId, userId, proposalMonth);
-
     if (!proposalId || !userId) {
       return {
         statusCode: 400,
@@ -23,7 +21,7 @@ exports.handler = async function(event) {
 
     const db = admin.firestore();
 
-    // 👉 1. obtener proposal
+    // 👉 obtener proposal
     const proposalRef = db.collection('proposals').doc(proposalId);
     const proposalSnap = await proposalRef.get();
 
@@ -32,31 +30,29 @@ exports.handler = async function(event) {
     }
 
     const proposal = proposalSnap.data();
-    const userHadVoted = proposal.votes?.includes(userId);
+    const userHadVoted = (proposal.votes || []).includes(userId);
 
-    // 👉 2. contar votos del usuario en este mes
-    const allProposalsSnapshot = await db
-  .collection('proposals')
-  .get();
+    // 👉 contar votos activos
+    const allProposalsSnapshot = await db.collection('proposals').get();
 
-let userVoteCount = 0;
+    let userVoteCount = 0;
 
-allProposalsSnapshot.forEach(doc => {
-  const data = doc.data();
+    allProposalsSnapshot.forEach(doc => {
+      const data = doc.data();
 
-  // ❌ ignorar libros ya seleccionados como BOM
-  if (data.status === 'selected') return;
+      // ignorar históricos
+      if (data.status === 'selected') return;
 
-  const votes = data.votes || [];
+      const votes = data.votes || [];
 
-  if (votes.includes(userId)) {
-    userVoteCount++;
-  }
-});
+      if (votes.includes(userId)) {
+        userVoteCount++;
+      }
+    });
 
     console.log("User active votes:", userVoteCount);
 
-    // 👉 3. lógica de voto
+    // 👉 lógica
     if (!userHadVoted && userVoteCount >= 2) {
       return {
         statusCode: 400,
@@ -64,7 +60,7 @@ allProposalsSnapshot.forEach(doc => {
       };
     }
 
-    // 👉 4. update
+    // 👉 update
     await proposalRef.update({
       votes: userHadVoted
         ? FieldValue.arrayRemove(userId)
