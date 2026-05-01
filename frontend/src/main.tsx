@@ -2657,14 +2657,16 @@ if (userHadVotedForThis) {
         });
 
         if (!response.ok) {
-            // If the server fails, throw an error to trigger the catch block
-            const err = await response.json();
+    const err = await response.json();
 
-        // 👇 mostrar mensaje real del backend
-            alert(err.error || "Something went wrong");
+    // 🔥 REVERTIR UI
+    bomProposals = originalProposalsState;
 
-        return; // 👈 MUY IMPORTANTE: cortar ejecución
-        }
+    updateView();
+
+    alert(err.error || "Something went wrong");
+    return;
+}
 
         console.log("Vote successfully synced with Firebase.");
 
