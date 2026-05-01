@@ -13,6 +13,7 @@ exports.handler = async function(event) {
     const { proposalId, userId, proposalMonth } = JSON.parse(event.body);
 
     console.log("DATA:", proposalId, userId, proposalMonth);
+    console.log("proposalMonth recibido:", proposalMonth);
 
     if (!proposalId || !userId || !proposalMonth) {
       return {
@@ -43,6 +44,7 @@ exports.handler = async function(event) {
 let userVoteCount = 0;
 
 monthSnapshot.forEach(doc => {
+  console.log("doc month:", doc.data().proposalMonthYear);
   const data = doc.data();
 
   if (data.status === 'selected') return;
