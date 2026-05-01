@@ -27,19 +27,35 @@ exports.handler = async function(event) {
 
       let userVoteCountThisMonth = 0;
 
-      monthProposalsSnapshot.forEach((doc) => {
-        const proposal = doc.data();
-        const votes = proposal.votes || [];
+      let userVoteCount = 0;
 
-        if (votes.includes(userId)) {
-          userVoteCountThisMonth += 1;
-        }
+monthProposalsSnapshot.forEach(doc => {
+    const data = doc.data();
+    const votes = data.votes || [];
 
-        if (doc.id === proposalId) {
-          targetProposalDoc = doc;
-          targetProposalData = proposal;
-        }
-      });
+    if (votes.includes(userId)) {
+        userVoteCount++;
+    }
+
+    if (doc.id === proposalId) {
+        targetProposalDocRef = doc.ref;
+        userVotedForTarget = votes.includes(userId);
+    }
+});
+
+if (!userVotedForTarget) {
+    if (userVoteCount >= 2) {
+        throw new Error("Vote limit reached");
+    }
+
+    transaction.update(targetProposalDocRef, {
+        votes: FieldValue.arrayUnion(userId)
+    });
+} else {
+    transaction.update(targetProposalDocRef, {
+        votes: FieldValue.arrayRemove(userId)
+    });
+}
 
       if (!targetProposalDoc || !targetProposalData) {
         throw new Error('Proposal document not found within the transaction.');
