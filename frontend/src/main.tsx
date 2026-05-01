@@ -2658,7 +2658,12 @@ if (userHadVotedForThis) {
 
         if (!response.ok) {
             // If the server fails, throw an error to trigger the catch block
-            throw new Error("Failed to save vote to server.");
+            const err = await response.json();
+
+        // 👇 mostrar mensaje real del backend
+            alert(err.error || "Something went wrong");
+
+        return; // 👈 MUY IMPORTANTE: cortar ejecución
         }
 
         console.log("Vote successfully synced with Firebase.");
