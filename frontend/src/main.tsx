@@ -383,6 +383,18 @@ function formatMonthYearForDisplay(monthYear: string): string  {
     return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
 }
 
+function getPreviousMonthYearString(): string {
+    const now = new Date();
+    let year = now.getFullYear();
+    let month = now.getMonth(); // 👈 ojo (0-indexed)
+
+    if (month === 0) {
+        month = 12;
+        year--;
+    }
+
+    return `${year}-${month.toString().padStart(2, '0')}`;
+}
 
 async function initializeAndSetCurrentBOM() {
     const currentMonthStr = getCurrentMonthYearString();
@@ -425,9 +437,11 @@ async function initializeAndSetCurrentBOM() {
 }
 
         // ✅ 2. Calcular ganador de propuestas
-        const candidates = bomProposals.filter(
-            p => p.proposalMonthYear === currentMonthStr
-        );
+        const lastMonthStr = getPreviousMonthYearString();
+
+const candidates = bomProposals.filter(
+  p => p.proposalMonthYear === lastMonthStr && p.status !== 'selected'
+);
 
         console.log("Candidatos para este mes:", candidates.length);
 
