@@ -10,12 +10,11 @@ exports.handler = async function(event) {
   }
 
   try {
-    const { proposalId, userId, proposalMonth } = JSON.parse(event.body);
+    const { proposalId, userId } = JSON.parse(event.body);
 
     console.log("DATA:", proposalId, userId, proposalMonth);
-    console.log("proposalMonth recibido:", proposalMonth);
 
-    if (!proposalId || !userId || !proposalMonth) {
+    if (!proposalId || !userId) {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: "Missing data" })
@@ -36,40 +35,32 @@ exports.handler = async function(event) {
     const userHadVoted = proposal.votes?.includes(userId);
 
     // 👉 2. contar votos del usuario en este mes
-    const monthSnapshot = await db
+    const allProposalsSnapshot = await db
   .collection('proposals')
-  .where('proposalMonthYear', '==', proposalMonth)
   .get();
 
 let userVoteCount = 0;
 
-monthSnapshot.forEach(doc => {
-  console.log("doc month:", doc.data().proposalMonthYear);
+allProposalsSnapshot.forEach(doc => {
   const data = doc.data();
 
+  // ❌ ignorar libros ya seleccionados como BOM
   if (data.status === 'selected') return;
 
   const votes = data.votes || [];
-
-  // 👇 excluir el proposal actual si ya votó
-  if (doc.id === proposalId) {
-    if (votes.includes(userId)) {
-      userVoteCount--; // 🔥 CLAVE
-    }
-  }
 
   if (votes.includes(userId)) {
     userVoteCount++;
   }
 });
 
-    console.log("User votes this month:", userVoteCount);
+    console.log("User active votes:", userVoteCount);
 
     // 👉 3. lógica de voto
     if (!userHadVoted && userVoteCount >= 2) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Vote limit reached (max 2)" })
+        body: JSON.stringify({ error: "Vote limit reached (max 2 active votes)" })
       };
     }
 
