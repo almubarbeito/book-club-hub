@@ -452,9 +452,16 @@ async function initializeAndSetCurrentBOM() {
         }
 
         // 2) Si no existe, calcular los 2 más votados de la propuesta del mes anterior
-        const candidates = bomProposals.filter(
-  p => p.proposalMonthYear === lastMonthStr
+    const alreadyUsedBomKeys = new Set(
+    bookOfTheMonthHistory.map(b =>
+        `${b.title.toLowerCase()}|${(b.author || '').toLowerCase()}`
+    )
 );
+
+const candidates = bomProposals.filter(p => {
+    const proposalKey = `${p.bookTitle.toLowerCase()}|${(p.bookAuthor || '').toLowerCase()}`;
+    return p.proposalMonthYear === lastMonthStr && !alreadyUsedBomKeys.has(proposalKey);
+});
 
         console.log("Candidatos para el mes anterior:", candidates.length);
 
