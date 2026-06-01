@@ -404,6 +404,54 @@ async function initializeAndSetCurrentBOM() {
 
     console.log("Revisando propuestas disponibles:", bomProposals.length);
 
+    if (currentMonthStr === "2026-06") {
+    const fixedBom1 = bomProposals.find(p => p.id === "OEVCKOnMzqubmCJ668mp");
+    const fixedBom2 = bomProposals.find(p => p.id === "iFHoagQkBX1DMuPnkR43");
+
+    if (fixedBom1 && fixedBom2) {
+        const manualBoms: BomEntry[] = [
+            {
+                id: `bom_${currentMonthStr}_1_${fixedBom1.id}`,
+                monthYear: currentMonthStr,
+                title: fixedBom1.bookTitle,
+                author: fixedBom1.bookAuthor,
+                description: fixedBom1.reason,
+                promptHint: `Top 1 by votes (${fixedBom1.votes.length} votes)`,
+                coverImageUrl: fixedBom1.bookCoverImageUrl,
+                setBy: 'community_vote',
+                discussionStarters: [],
+                sourceProposalId: fixedBom1.id,
+                rank: 1
+            },
+            {
+                id: `bom_${currentMonthStr}_2_${fixedBom2.id}`,
+                monthYear: currentMonthStr,
+                title: fixedBom2.bookTitle,
+                author: fixedBom2.bookAuthor,
+                description: fixedBom2.reason,
+                promptHint: `Top 2 by votes (${fixedBom2.votes.length} votes)`,
+                coverImageUrl: fixedBom2.bookCoverImageUrl,
+                setBy: 'community_vote',
+                discussionStarters: [],
+                sourceProposalId: fixedBom2.id,
+                rank: 2
+            }
+        ];
+
+        await setDoc(doc(db, "config", "activeBOM"), {
+            monthYear: currentMonthStr,
+            books: manualBoms
+        });
+
+        currentBomsToDisplay = manualBoms;
+        currentBomToDisplay = manualBoms[0];
+        activeBomId = manualBoms[0].id;
+        discussionStarters = [];
+
+        return;
+    }
+}
+
     try {
         const bomDocRef = doc(db, "config", "activeBOM");
         const bomSnap = await getDoc(bomDocRef);
