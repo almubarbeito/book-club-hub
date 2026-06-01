@@ -102,9 +102,10 @@ interface BomEntry {
     description: string;
     coverImageUrl?: string;
     promptHint: string;
-    setBy: 'default' | 'vote' | 'admin'; // How this BOM was chosen
+    setBy: 'default' | 'vote' | 'admin' | 'community_vote'; // How this BOM was chosen
     discussionStarters?: string[];
     sourceProposalId?: string;
+    rank?: 1 | 2;
 }
 
 interface BomProposal {
@@ -239,7 +240,8 @@ let bookOfTheMonthHistory: BomEntry[] = Storage.getItem("bookOfTheMonthHistory",
 // 2. IMMEDIATELY save this "correct" state to localStorage, overwriting any old data.
 //Storage.setItem("bookOfTheMonthHistory", bookOfTheMonthHistory);
 let currentBomToDisplay: BomEntry | null = null;
-let activeBomId: string | null = null; 
+let activeBomId: string | null = null;
+let currentBomsToDisplay: BomEntry[] = [];
 
 // Global collections for ratings and comments related to BOM entries
 let globalBomRatings: { [bomId: string]: { [userId: string]: BomRatings } } = Storage.getItem("globalBomRatings", {});
@@ -398,118 +400,147 @@ function getPreviousMonthYearString(): string {
 
 async function initializeAndSetCurrentBOM() {
     const currentMonthStr = getCurrentMonthYearString();
+    const lastMonthStr = getPreviousMonthYearString();
+
     console.log("Revisando propuestas disponibles:", bomProposals.length);
 
     try {
         const bomDocRef = doc(db, "config", "activeBOM");
         const bomSnap = await getDoc(bomDocRef);
 
-        // ✅ 1. Si ya hay BOM para este mes → usarlo
+        // 1) Si ya existe BOM para este mes, usarlo
         if (bomSnap.exists()) {
-    const data = bomSnap.data() as BomEntry;
+            const data = bomSnap.data() as any;
 
-    if (data.monthYear === currentMonthStr) {
-        console.log("Ganador oficial encontrado en Firestore:", data.title);
+            if (data.monthYear === currentMonthStr) {
+                console.log("BOM oficial encontrado en Firestore para este mes.");
 
-        currentBomToDisplay = data;
-        activeBomId = data.id;
-        discussionStarters = data.discussionStarters || [];
+                const booksForMonth: BomEntry[] = Array.isArray(data.books)
+                    ? data.books
+                    : [data as BomEntry];
 
-        // 🔥 AÑADE ESTO
-        if (data.sourceProposalId) {
-            await updateDoc(doc(db, "proposals", data.sourceProposalId), {
-                status: "selected",
-                selectedAsBOMMonth: data.monthYear
-            });
+                currentBomsToDisplay = booksForMonth.filter(Boolean);
+                currentBomToDisplay = currentBomsToDisplay[0] || null;
+                activeBomId = currentBomToDisplay?.id || null;
+                discussionStarters = currentBomToDisplay?.discussionStarters || [];
 
-            // 🔥 también en estado local
-            bomProposals = bomProposals.map(p =>
-                p.id === data.sourceProposalId
-                    ? { ...p, status: 'selected', selectedAsBOMMonth: data.monthYear }
-                    : p
-            );
+                // Sincroniza las proposals seleccionadas en caso de recarga
+                for (const bom of currentBomsToDisplay) {
+                    if (!bom.sourceProposalId) continue;
 
-            Storage.setItem("bomProposals", bomProposals);
+                    await updateDoc(doc(db, "proposals", bom.sourceProposalId), {
+                        status: "selected",
+                        selectedAsBOMMonth: data.monthYear,
+                        selectedAsBOMRank: bom.rank || null
+                    });
+
+                    bomProposals = bomProposals.map(p =>
+                        p.id === bom.sourceProposalId
+                            ? {
+                                ...p,
+                                status: "selected",
+                                selectedAsBOMMonth: data.monthYear,
+                                selectedAsBOMRank: bom.rank || null
+                            }
+                            : p
+                    );
+                }
+
+                Storage.setItem("bomProposals", bomProposals);
+                return;
+            }
         }
 
-        return;
-    }
-}
+        // 2) Si no existe, calcular los 2 más votados de la propuesta del mes anterior
+        const candidates = bomProposals.filter(
+            p => p.proposalMonthYear === lastMonthStr && p.status !== "selected"
+        );
 
-        // ✅ 2. Calcular ganador de propuestas
-        const lastMonthStr = getPreviousMonthYearString();
-
-const candidates = bomProposals.filter(
-  p => p.proposalMonthYear === lastMonthStr && p.status !== 'selected'
-);
-
-        console.log("Candidatos para este mes:", candidates.length);
+        console.log("Candidatos para el mes anterior:", candidates.length);
 
         if (candidates.length > 0) {
-            candidates.sort((a, b) => {
-                const voteDiff = (b.votes?.length || 0) - (a.votes?.length || 0);
-                if (voteDiff !== 0) return voteDiff;
-                return b.timestamp - a.timestamp;
-            });
+            const topTwo = [...candidates]
+                .sort((a, b) => {
+                    const voteDiff = (b.votes?.length || 0) - (a.votes?.length || 0);
+                    if (voteDiff !== 0) return voteDiff;
+                    return (b.timestamp || 0) - (a.timestamp || 0);
+                })
+                .slice(0, 2);
 
-            const winner = candidates[0];
-
-            // ⭐ NUEVO BOM
-            const newBom: BomEntry = {
-                id: `bom_${currentMonthStr}_${winner.id}`,
+            const newBoms: BomEntry[] = topTwo.map((winner, index) => ({
+                id: `bom_${currentMonthStr}_${index + 1}_${winner.id}`,
                 monthYear: currentMonthStr,
                 title: winner.bookTitle,
                 author: winner.bookAuthor,
                 description: winner.reason,
-                promptHint: `Ganador por votación popular (${winner.votes.length} votos)`,
+                promptHint: `Top ${index + 1} by votes (${winner.votes.length} votes)`,
                 coverImageUrl: winner.bookCoverImageUrl,
-                setBy: 'community_vote',
+                setBy: "community_vote",
                 discussionStarters: [],
-                sourceProposalId: winner.id // ⭐ CLAVE
-            };
+                sourceProposalId: winner.id,
+                rank: (index + 1) as 1 | 2
+            }));
 
-            // ✅ Guardar BOM oficial
-            await setDoc(doc(db, "config", "activeBOM"), newBom);
-
-            // 🔥 ELIMINAR LA PROPUESTA GANADORA
-            const { finalOverallAverage, totalRaters } = computeBomStats(winner.id);
-
-            await updateDoc(doc(db, "proposals", winner.id), {
-            status: "selected",
-            selectedAsBOMMonth: currentMonthStr,
-            finalRating: finalOverallAverage,
-            reviewCount: totalRaters
+            await setDoc(doc(db, "config", "activeBOM"), {
+                monthYear: currentMonthStr,
+                books: newBoms
             });
 
-            // 🔥 Actualizar estado local inmediatamente
-            bomProposals = bomProposals.map(p =>
-    p.id === winner.id
-        ? { ...p, status: 'selected', selectedAsBOMMonth: currentMonthStr }
-        : p
-);
+            for (const bom of newBoms) {
+                if (!bom.sourceProposalId) continue;
+
+                const { finalOverallAverage, totalRaters } = computeBomStats(bom.sourceProposalId);
+
+                await updateDoc(doc(db, "proposals", bom.sourceProposalId), {
+                    status: "selected",
+                    selectedAsBOMMonth: currentMonthStr,
+                    selectedAsBOMRank: bom.rank,
+                    finalRating: finalOverallAverage,
+                    reviewCount: totalRaters
+                });
+            }
+
+            bomProposals = bomProposals.map(p => {
+                const selectedBom = newBoms.find(b => b.sourceProposalId === p.id);
+                return selectedBom
+                    ? {
+                        ...p,
+                        status: "selected",
+                        selectedAsBOMMonth: currentMonthStr,
+                        selectedAsBOMRank: selectedBom.rank
+                    }
+                    : p;
+            });
+
             Storage.setItem("bomProposals", bomProposals);
 
-            // ✅ Actualizar estado actual
-            currentBomToDisplay = newBom;
-            activeBomId = newBom.id;
+            currentBomsToDisplay = newBoms;
+            currentBomToDisplay = newBoms[0] || null;
+            activeBomId = currentBomToDisplay?.id || null;
+            discussionStarters = currentBomToDisplay?.discussionStarters || [];
 
-            console.log("¡Nuevo ganador calculado y proposal eliminada!", newBom.title);
-
-        } else {
-            // ✅ 3. Fallback si no hay propuestas
-            console.warn("No hay propuestas. Usando libro hardcoded.");
-
-            currentBomToDisplay =
-                hardcodedBomHistory.find(b => b.monthYear === currentMonthStr) ||
-                hardcodedBomHistory[0];
-
-            activeBomId = currentBomToDisplay ? currentBomToDisplay.id : null;
+            console.log("¡Nuevos BOM seleccionados!", newBoms.map(b => b.title));
+            return;
         }
 
+        // 3) Fallback si no hay propuestas
+        const fallbackBom =
+            hardcodedBomHistory.find(b => b.monthYear === currentMonthStr) ||
+            hardcodedBomHistory[0];
+
+        currentBomsToDisplay = [fallbackBom];
+        currentBomToDisplay = fallbackBom;
+        activeBomId = fallbackBom.id;
+        discussionStarters = fallbackBom.discussionStarters || [];
+
     } catch (error) {
-        console.error("Error seleccionando el libro del mes:", error);
-        currentBomToDisplay = hardcodedBomHistory[0];
-        activeBomId = currentBomToDisplay?.id || null;
+        console.error("Error seleccionando el/los libro(s) del mes:", error);
+
+        const fallbackBom = hardcodedBomHistory[0];
+        currentBomsToDisplay = [fallbackBom];
+        currentBomToDisplay = fallbackBom;
+        activeBomId = fallbackBom.id;
+        discussionStarters = fallbackBom.discussionStarters || [];
     }
 }
 
@@ -719,123 +750,111 @@ function computeBomStats(bomId: string) {
 }
 
 function BookOfTheMonthView() {
-    // This is a good debug log to keep for now.
-    console.log("Rendering BookOfTheMonthView. currentBomToDisplay is:", currentBomToDisplay);
+    console.log("Rendering BookOfTheMonthView. currentBomsToDisplay is:", currentBomsToDisplay);
 
-    // --- Part 1: Handle the case where there is no Book of the Month ---
-    if (!currentBomToDisplay) {
+    const bomsToRender: BomEntry[] =
+        currentBomsToDisplay.length > 0
+            ? currentBomsToDisplay
+            : currentBomToDisplay
+                ? [currentBomToDisplay]
+                : [];
+
+    if (bomsToRender.length === 0) {
         return `
             <div class="page" id="bom-view">
                 <div class="book-item">
-                    <h2>Book of the Month</h2>
-                    <p>The Book of the Month for ${formatMonthYearForDisplay(getCurrentMonthYearString())} has not been set yet. Check back for proposals and voting!</p>
+                    <h2>Books of the Month</h2>
+                    <p>The Book(s) of the Month for ${formatMonthYearForDisplay(getCurrentMonthYearString())} have not been set yet. Check back for proposals and voting!</p>
                 </div>
                 ${currentUser ? renderBomProposalSection() : ''}
             </div>
         `;
     }
 
-    // --- Part 2: If we have a book, prepare all its data for rendering ---
+    const bomCardsHtml = bomsToRender.map((bom) => {
+        const bomId = bom.id;
 
-    const { title, author, description, coverImageUrl, monthYear, id: activeBomId } = currentBomToDisplay;
+        const { finalOverallAverage, totalRaters } = computeBomStats(bomId);
 
-    // --- All calculation logic goes here, before the return statement ---
-    
-    // Calculate Average Ratings
-    // --- NEW, COMBINED Calculate Average Ratings ---
+        const allRatingsForThisBom = globalBomRatings[bomId] || {};
+        const userRatingsArray: BomRatings[] = Object.values(allRatingsForThisBom);
 
-    const allRatingsForThisBom = activeBomId ? globalBomRatings[activeBomId] : null;
+        let detailedAverageRatings: BomRatings = {
+            plot: 0,
+            characters: 0,
+            writingStyle: 0,
+            overallEnjoyment: 0
+        };
 
-let detailedAverageRatings: BomRatings = {
-    plot: 0,
-    characters: 0,
-    writingStyle: 0,
-    overallEnjoyment: 0
-};
+        let ratingCounts = {
+            plot: 0,
+            characters: 0,
+            writingStyle: 0,
+            overallEnjoyment: 0
+        };
 
-let ratingCounts = {
-    plot: 0,
-    characters: 0,
-    writingStyle: 0,
-    overallEnjoyment: 0
-};
+        if (userRatingsArray.length > 0) {
+            userRatingsArray.forEach(userRating => {
+                if (userRating.plot > 0) {
+                    detailedAverageRatings.plot += userRating.plot;
+                    ratingCounts.plot++;
+                }
+                if (userRating.characters > 0) {
+                    detailedAverageRatings.characters += userRating.characters;
+                    ratingCounts.characters++;
+                }
+                if (userRating.writingStyle > 0) {
+                    detailedAverageRatings.writingStyle += userRating.writingStyle;
+                    ratingCounts.writingStyle++;
+                }
+                if (userRating.overallEnjoyment > 0) {
+                    detailedAverageRatings.overallEnjoyment += userRating.overallEnjoyment;
+                    ratingCounts.overallEnjoyment++;
+                }
+            });
 
-let finalOverallAverage = 0;
-let totalRaters = 0;
+            if (ratingCounts.plot > 0) detailedAverageRatings.plot /= ratingCounts.plot;
+            if (ratingCounts.characters > 0) detailedAverageRatings.characters /= ratingCounts.characters;
+            if (ratingCounts.writingStyle > 0) detailedAverageRatings.writingStyle /= ratingCounts.writingStyle;
+            if (ratingCounts.overallEnjoyment > 0) detailedAverageRatings.overallEnjoyment /= ratingCounts.overallEnjoyment;
+        }
 
-if (allRatingsForThisBom) {
-    const userRatingsArray: BomRatings[] = Object.values(allRatingsForThisBom);
-    totalRaters = userRatingsArray.length;
+        const allCommentsForThisBom = globalBomComments[bomId] || {};
+        const bomReviews: BomComment[] = Object.values(allCommentsForThisBom).sort((a, b) => b.timestamp - a.timestamp);
 
-    if (totalRaters > 0) {
-        const individualUserAverages: number[] = [];
+        let startReadingButtonHtml = '';
+        if (currentUser) {
+            const bomInMyBooks = books.find(book =>
+                book.title.toLowerCase() === bom.title.toLowerCase() &&
+                (book.author || '').toLowerCase() === (bom.author || '').toLowerCase()
+            );
 
-        userRatingsArray.forEach(userRating => {
-            if (userRating.plot > 0) { detailedAverageRatings.plot += userRating.plot; ratingCounts.plot++; }
-            if (userRating.characters > 0) { detailedAverageRatings.characters += userRating.characters; ratingCounts.characters++; }
-            if (userRating.writingStyle > 0) { detailedAverageRatings.writingStyle += userRating.writingStyle; ratingCounts.writingStyle++; }
-            if (userRating.overallEnjoyment > 0) { detailedAverageRatings.overallEnjoyment += userRating.overallEnjoyment; ratingCounts.overallEnjoyment++; }
-
-            const scores = [userRating.plot, userRating.characters, userRating.writingStyle, userRating.overallEnjoyment];
-            const validScores = scores.filter(score => score > 0);
-            if (validScores.length > 0) {
-                const sumOfScores = validScores.reduce((acc, score) => acc + score, 0);
-                individualUserAverages.push(sumOfScores / validScores.length);
+            if (bomInMyBooks && bomInMyBooks.status === 'Reading') {
+                startReadingButtonHtml = `<button class="button bom-action-button" disabled>Currently Reading (In My Books)</button>`;
+            } else {
+                startReadingButtonHtml = `<button class="button bom-action-button primary" data-action="start-reading-bom" data-bom-id="${bomId}">Start reading this book</button>`;
             }
-        });
-
-        if (ratingCounts.plot > 0) detailedAverageRatings.plot /= ratingCounts.plot;
-        if (ratingCounts.characters > 0) detailedAverageRatings.characters /= ratingCounts.characters;
-        if (ratingCounts.writingStyle > 0) detailedAverageRatings.writingStyle /= ratingCounts.writingStyle;
-        if (ratingCounts.overallEnjoyment > 0) detailedAverageRatings.overallEnjoyment /= ratingCounts.overallEnjoyment;
-
-        if (individualUserAverages.length > 0) {
-            finalOverallAverage =
-                individualUserAverages.reduce((acc, avg) => acc + avg, 0) / individualUserAverages.length;
         }
-    }
-}
 
+        return `
+            <div class="book-item bom-card" data-bom-id="${bomId}">
+                <h2>${bom.rank === 1 ? 'Book of the Month #1' : bom.rank === 2 ? 'Book of the Month #2' : 'Book of the Month'}</h2>
 
-
-    // Get Comments/Reviews
-    const allCommentsForThisBom = activeBomId ? globalBomComments[activeBomId] : null;
-    const bomReviews: BomComment[] = allCommentsForThisBom ? Object.values(allCommentsForThisBom).sort((a, b) => b.timestamp - a.timestamp) : [];
-
-    // Logic for "Start Reading this Book" button
-    let startReadingButtonHtml = '';
-    if (currentUser && currentBomToDisplay) {
-        const bomInMyBooks = books.find(book =>
-            book.title.toLowerCase() === currentBomToDisplay.title.toLowerCase() &&
-            (book.author || '').toLowerCase() === (currentBomToDisplay.author || '').toLowerCase()
-        );
-        if (bomInMyBooks && bomInMyBooks.status === 'Reading') {
-            startReadingButtonHtml = `<button class="button bom-action-button" disabled>Currently Reading (In My Books)</button>`;
-        } else {
-            startReadingButtonHtml = `<button class="button bom-action-button primary" data-action="start-reading-bom">Start reading this book</button>`;
-        }
-    }
-
-    // --- Part 3: Return the final, clean HTML structure ---
-    return `
-        <div class="page" id="bom-view">
-
-            <div class="book-item">
-                <h2>Reading in ${formatMonthYearForDisplay(monthYear)}</h2>
-                
                 <div class="bom-main-layout-container">
                     <div class="bom-image-wrapper">
-                        <img src="${(coverImageUrl || '').replace('http://', 'https://')}" 
-                             alt="Cover of ${title}" 
+                        <img src="${(bom.coverImageUrl || '').replace('http://', 'https://')}"
+                             alt="Cover of ${bom.title}"
                              class="bom-cover-image">
                     </div>
+
                     <div class="bom-text-wrapper">
                         <div class="bom-text-content">
-                            <h3>${title}</h3>
-                            <p><em>by ${author}</em></p>
+                            <h3>${bom.title}</h3>
+                            <p><em>by ${bom.author}</em></p>
                             ${renderMainAverageRating(finalOverallAverage, totalRaters)}
-                            <p>${description}</p>
+                            <p>${bom.description}</p>
                         </div>
+
                         <div class="bom-main-actions">
                             ${startReadingButtonHtml}
                         </div>
@@ -843,7 +862,7 @@ if (allRatingsForThisBom) {
                 </div>
             </div>
 
-            <div class="book-item">
+            <div class="book-item bom-card bom-card-ratings">
                 <h3>Community Ratings</h3>
                 ${totalRaters > 0 ? `
                     <div class="rating-category"><p>Plot: ${renderAverageStars(detailedAverageRatings.plot)}</p></div>
@@ -853,10 +872,10 @@ if (allRatingsForThisBom) {
                     <p class="total-raters-note">Based on ${totalRaters} review(s).</p>
                 ` : `<p>No ratings submitted yet for this book.</p>`}
             </div>
-            
-            <div class="book-item">
+
+            <div class="book-item bom-card bom-card-reviews">
                 <h3>Thoughts from Readers</h3>
-                <div id="bomReviewsList">
+                <div id="bomReviewsList-${bomId}">
                     ${bomReviews.length === 0 ? "<p>No reviews yet.</p>" : bomReviews.map(review => `
                         <div class="comment-item">
                             <p><strong>${review.userNameDisplay}</strong></p>
@@ -865,9 +884,15 @@ if (allRatingsForThisBom) {
                     `).join('')}
                 </div>
             </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="page" id="bom-view">
+            ${bomCardsHtml}
+            ${currentUser ? renderBomProposalSection() : ''}
         </div>
     `;
-
 }
 
 async function fetchBomSocialData() {
@@ -2368,13 +2393,21 @@ async function handleFetchDiscussionStarters() {
     }
 }
 
-function handleStartReadingBom() {
-    if (!currentUser || !currentUser.id || !currentBomToDisplay) return;
+function handleStartReadingBom(event: Event) {
+    if (!currentUser || !currentUser.id) return;
 
-    const bomTitleLower = currentBomToDisplay.title.toLowerCase();
-    const bomAuthorLower = (currentBomToDisplay.author || '').toLowerCase();
+    const button = (event.currentTarget as HTMLElement).closest('button[data-action="start-reading-bom"]') as HTMLElement | null;
+    const bomId = button?.dataset.bomId;
 
-    const existingBookIndex = books.findIndex(book => 
+    if (!bomId) return;
+
+    const bom = currentBomsToDisplay.find(b => b.id === bomId);
+    if (!bom) return;
+
+    const bomTitleLower = bom.title.toLowerCase();
+    const bomAuthorLower = (bom.author || '').toLowerCase();
+
+    const existingBookIndex = books.findIndex(book =>
         book.title.toLowerCase() === bomTitleLower &&
         (book.author || '').toLowerCase() === bomAuthorLower
     );
@@ -2385,18 +2418,17 @@ function handleStartReadingBom() {
         }
     } else {
         const newBook: Book = {
-            id: generateId(), 
-            title: currentBomToDisplay.title,
-            author: currentBomToDisplay.author,
-            coverImageUrl: currentBomToDisplay.coverImageUrl || undefined,
+            id: generateId(),
+            title: bom.title,
+            author: bom.author,
+            coverImageUrl: bom.coverImageUrl || undefined,
             status: 'Reading'
         };
         books.push(newBook);
     }
 
-    //Storage.setUserItem(currentUser.id, "books", books);
     saveBooksToFirebase();
-    updateView(); 
+    updateView();
 }
 
 // --- BOM Proposal Modal Handlers ---
@@ -2770,11 +2802,14 @@ async function processAndSaveReview(submitReview: boolean) {
 
     // Only add rating/comment promises if the user is submitting a review
     if (submitReview) {
-    // 🔥 USAR EL BOM ACTIVO (NO el history)
-    if (currentBomToDisplay) {
-        const bomId = currentBomToDisplay.id;
+    const reviewedBom = currentBomsToDisplay.find(b =>
+        b.title.toLowerCase() === bookToReview.title.toLowerCase() &&
+        (b.author || '').toLowerCase() === (bookToReview.author || '').toLowerCase()
+    );
 
-        // Update local state
+    if (reviewedBom) {
+        const bomId = reviewedBom.id;
+
         if (!globalBomRatings[bomId]) globalBomRatings[bomId] = {};
         globalBomRatings[bomId][currentUser.id] = { ...reviewBook_formRatings };
 
@@ -3093,6 +3128,9 @@ document.onclick = (e) => {
         case "delete-bom-proposal":
             handleDeleteBomProposal(e);
         break;
+        case "start-reading-bom":
+            handleStartReadingBom(e);
+        break;
         case "submit-bom-proposal":
         e.preventDefault();
         e.stopPropagation();
@@ -3306,7 +3344,7 @@ if (bookSearchInput) {
 }
 
 // --- BLOQUE 1: EXCLUSIVO DE BOOK OF THE MONTH ---
-if (currentView === "bookofthemonth") {
+/*if (currentView === "bookofthemonth") {
     const fetchButton = document.getElementById('fetchDiscussionStarters');
     if (fetchButton) {
         fetchButton.removeEventListener('click', handleFetchDiscussionStarters);
@@ -3318,7 +3356,7 @@ if (currentView === "bookofthemonth") {
         startReadingBomButton.removeEventListener('click', handleStartReadingBom);
         startReadingBomButton.addEventListener('click', handleStartReadingBom);
     }
-}
+}*/
 
 // --- BLOQUE 2: EXCLUSIVO DE PROPOSALS ---
 if (currentView === "proposals") {
@@ -3543,8 +3581,8 @@ function startApplication() {
         await initializeAndSetCurrentBOM();
         console.log("🔍 activeBomId after init:", activeBomId);
         
-        if (activeBomId) {
-            await loadBomCommunityData(activeBomId);
+        for (const bom of currentBomsToDisplay) {
+            await loadBomCommunityData(bom.id);
         }
         
         updateView();

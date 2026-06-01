@@ -1236,3 +1236,76 @@ ul.discussion-starters li {
   margin: 2px 0;
 }
 
+/* --- Book of the Month: 2 libros --- */
+#bom-view {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+#bom-view .bom-card {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+#bom-view .bom-card h2,
+#bom-view .bom-card h3 {
+    margin-top: 0;
+}
+
+#bom-view .bom-card-ratings,
+#bom-view .bom-card-reviews {
+    margin-top: -8px;
+}
+
+#bom-view .bom-card-ratings {
+    padding-top: 16px;
+}
+
+#bom-view .bom-card-reviews {
+    padding-top: 16px;
+}
+
+#bom-view .bom-card-reviews .comment-item {
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+#bom-view .bom-card-reviews .comment-item p {
+    margin: 0 0 6px 0;
+}
+
+#bom-view .bom-card-reviews .comment-item p:last-child {
+    margin-bottom: 0;
+}
+
+#bom-view .bom-main-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+#bom-view .bom-cover-image {
+    border-radius: 16px;
+    max-width: 100%;
+    display: block;
+}
+
+#bom-view .bom-main-layout-container {
+    gap: 20px;
+}
+
+#bom-view .total-raters-note {
+    margin-top: 12px;
+    opacity: 0.8;
+}
+
+#bom-view .book-item + .book-item {
+    margin-top: 0;
+}
