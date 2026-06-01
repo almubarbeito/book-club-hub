@@ -453,8 +453,8 @@ async function initializeAndSetCurrentBOM() {
 
         // 2) Si no existe, calcular los 2 más votados de la propuesta del mes anterior
         const candidates = bomProposals.filter(
-            p => p.proposalMonthYear === lastMonthStr && p.status !== "selected"
-        );
+  p => p.proposalMonthYear === lastMonthStr
+);
 
         console.log("Candidatos para el mes anterior:", candidates.length);
 
