@@ -1143,19 +1143,13 @@ function renderHistoricalBomSection() {
 const historicalProposals = [...bomProposals]
     .filter(p => {
         const selectedMonth = p.selectedAsBOMMonth || "";
-        return (
-            selectedMonth &&
-            selectedMonth !== currentMonth
-        );
+        return selectedMonth && selectedMonth !== currentMonth;
     })
-    .sort((a, b) =>
-        (b.selectedAsBOMMonth || "").localeCompare(a.selectedAsBOMMonth || "")
-    );
-        .sort((a, b) => {
-            const monthA = a.selectedAsBOMMonth || a.proposalMonthYear || '';
-            const monthB = b.selectedAsBOMMonth || b.proposalMonthYear || '';
-            return monthB.localeCompare(monthA);
-        });
+    .sort((a, b) => {
+        const monthA = a.selectedAsBOMMonth || a.proposalMonthYear || '';
+        const monthB = b.selectedAsBOMMonth || b.proposalMonthYear || '';
+        return monthB.localeCompare(monthA);
+    });
 
     return `
         <div class="book-item" id="historical-bom-section">
