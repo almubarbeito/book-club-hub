@@ -247,6 +247,9 @@ let currentBomsToDisplay: BomEntry[] = [];
 let globalBomRatings: { [bomId: string]: { [userId: string]: BomRatings } } = Storage.getItem("globalBomRatings", {});
 let globalBomComments: { [bomId: string]: { [userId: string]: BomComment } } = Storage.getItem("globalBomComments", {}); // Assuming one review-comment per user per BoM
 
+let bomDescriptions: { [bookKey: string]: string } = Storage.getItem("bomDescriptions", {});
+let bomDescriptionsLoading: { [bookKey: string]: boolean } = {};
+
 let discussionStarters: string[] = [];
 let isLoadingDiscussionStarters = false;
 let discussionStartersError: string | null = null;
@@ -399,6 +402,8 @@ function getPreviousMonthYearString(): string {
 }
 
 async function initializeAndSetCurrentBOM() {
+    const SINGLE_BOM_FROM_MONTH = "2026-08";
+    const bomCount = currentMonthStr >= SINGLE_BOM_FROM_MONTH ? 1 : 2;
     const currentMonthStr = getCurrentMonthYearString();
     const lastMonthStr = getPreviousMonthYearString();
 
@@ -514,15 +519,15 @@ const candidates = bomProposals.filter(p => {
         console.log("Candidatos para el mes anterior:", candidates.length);
 
         if (candidates.length > 0) {
-            const topTwo = [...candidates]
-                .sort((a, b) => {
-                    const voteDiff = (b.votes?.length || 0) - (a.votes?.length || 0);
-                    if (voteDiff !== 0) return voteDiff;
-                    return (b.timestamp || 0) - (a.timestamp || 0);
-                })
-                .slice(0, 2);
+            const topBoms = [...candidates]
+  .sort((a, b) => {
+      const voteDiff = (b.votes?.length || 0) - (a.votes?.length || 0);
+      if (voteDiff !== 0) return voteDiff;
+      return (b.timestamp || 0) - (a.timestamp || 0);
+  })
+  .slice(0, bomCount);
 
-            const newBoms: BomEntry[] = topTwo.map((winner, index) => ({
+            const newBoms: BomEntry[] = topBoms.map((winner, index) => ({
                 id: `bom_${currentMonthStr}_${index + 1}_${winner.id}`,
                 monthYear: currentMonthStr,
                 title: winner.bookTitle,
@@ -804,8 +809,56 @@ function computeBomStats(bomId: string) {
     return { finalOverallAverage, totalRaters };
 }
 
+function getBookKey(title: string, author?: string) {
+    return `${(title || '').toLowerCase()}|${(author || '').toLowerCase()}`;
+}
+
+async function fetchBookDescription(title: string, author: string): Promise<string> {
+    const key = getBookKey(title, author);
+
+    if (bomDescriptions[key]) {
+        return bomDescriptions[key];
+    }
+
+    if (bomDescriptionsLoading[key]) {
+        return "Loading summary...";
+    }
+
+    bomDescriptionsLoading[key] = true;
+
+    try {
+        const res = await fetch('/.netlify/functions/get-book-details', {
+            method: 'POST',
+            body: JSON.stringify({ title, author })
+        });
+
+        if (!res.ok) {
+            throw new Error("Failed to fetch book details");
+        }
+
+        const data = await res.json();
+        const description = data.description || "No summary available.";
+
+        bomDescriptions[key] = description;
+        Storage.setItem("bomDescriptions", bomDescriptions);
+
+        return description;
+    } catch (error) {
+        console.error("Failed to fetch book description:", error);
+        const fallback = "Could not load book summary. Please try again later.";
+        bomDescriptions[key] = fallback;
+        Storage.setItem("bomDescriptions", bomDescriptions);
+        return fallback;
+    } finally {
+        bomDescriptionsLoading[key] = false;
+    }
+}
+
 function BookOfTheMonthView() {
     console.log("Rendering BookOfTheMonthView. currentBomsToDisplay is:", currentBomsToDisplay);
+
+    const bomKey = getBookKey(bom.title, bom.author);
+    const bomDescription = bomDescriptions[bomKey];
 
     const bomsToRender: BomEntry[] =
         currentBomsToDisplay.length > 0
@@ -907,7 +960,10 @@ function BookOfTheMonthView() {
                             <h3>${bom.title}</h3>
                             <p><em>by ${bom.author}</em></p>
                             ${renderMainAverageRating(finalOverallAverage, totalRaters)}
-                            <p>${bom.description}</p>
+                            ${bomDescription
+    ? `<p>${bomDescription}</p>`
+    : `<div class="loading-indicator">Loading summary...</div>`
+}
                         </div>
 
                         <div class="bom-main-actions">
@@ -2175,17 +2231,10 @@ async function handleShowProposalDetail(event: Event) {
 
         // --- Now, fetch the description in the background ---
         try {
-            const res = await fetch('/.netlify/functions/get-book-details', {
-                method: 'POST',
-                body: JSON.stringify({
-                    title: proposalToShow.bookTitle,
-                    author: proposalToShow.bookAuthor
-                })
-            });
-            if (!res.ok) throw new Error("Server fetch failed");
-            
-            const data = await res.json();
-            modalBookDescription = data.description; // Store the fetched description
+    modalBookDescription = await fetchBookDescription(
+        proposalToShow.bookTitle,
+        proposalToShow.bookAuthor
+    );
 
         } catch (error) {
             console.error("Failed to fetch book description:", error);
@@ -3635,6 +3684,9 @@ function startApplication() {
         // we calculate the BoM and then perform ONE SINGLE RENDER.
         await initializeAndSetCurrentBOM();
         console.log("🔍 activeBomId after init:", activeBomId);
+        for (const bom of currentBomsToDisplay) {
+        await fetchBookDescription(bom.title, bom.author);
+}
         
         for (const bom of currentBomsToDisplay) {
             await loadBomCommunityData(bom.id);
