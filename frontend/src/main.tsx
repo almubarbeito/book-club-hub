@@ -1138,11 +1138,19 @@ function renderBomProposalSection() {
 }
 
 function renderHistoricalBomSection() {
-    const historicalProposals = [...bomProposals]
-        .filter(p =>
-            p.status === 'selected' ||
-            p.selectedAsBOMMonth
-        )
+    const currentMonth = getCurrentMonthYearString();
+
+const historicalProposals = [...bomProposals]
+    .filter(p => {
+        const selectedMonth = p.selectedAsBOMMonth || "";
+        return (
+            selectedMonth &&
+            selectedMonth !== currentMonth
+        );
+    })
+    .sort((a, b) =>
+        (b.selectedAsBOMMonth || "").localeCompare(a.selectedAsBOMMonth || "")
+    );
         .sort((a, b) => {
             const monthA = a.selectedAsBOMMonth || a.proposalMonthYear || '';
             const monthB = b.selectedAsBOMMonth || b.proposalMonthYear || '';
@@ -1165,7 +1173,7 @@ function renderHistoricalBomSection() {
 
                         return `
                             <div class="bom-proposal-item historical-item">
-                                <div class="historical-badge">📖 Book of the Month</div>
+                                
 
                                 ${proposal.bookCoverImageUrl 
                                     ? `<img src="${proposal.bookCoverImageUrl}" class="book-cover-thumbnail">`
