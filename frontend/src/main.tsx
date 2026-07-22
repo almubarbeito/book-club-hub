@@ -247,6 +247,7 @@ let currentBomsToDisplay: BomEntry[] = [];
 let globalBomRatings: { [bomId: string]: { [userId: string]: BomRatings } } = Storage.getItem("globalBomRatings", {});
 let globalBomComments: { [bomId: string]: { [userId: string]: BomComment } } = Storage.getItem("globalBomComments", {}); // Assuming one review-comment per user per BoM
 
+let expandedBomSummaries: { [bomId: string]: boolean } = Storage.getItem("expandedBomSummaries", {});
 let bomDescriptions: { [bookKey: string]: string } = Storage.getItem("bomDescriptions", {});
 let bomDescriptionsLoading: { [bookKey: string]: boolean } = {};
 
@@ -803,9 +804,10 @@ function BookOfTheMonthView() {
     const bomCardsHtml = bomsToRender.map((bom) => {
         const bomId = bom.id;
         const bomKey = getBookKey(bom.title, bom.author);
-        const bomDescription = bomDescriptions[bomKey] || "";
+const bomDescription = bomDescriptions[bomKey];
+const isSummaryExpanded = !!expandedBomSummaries[bomId];
 
-        // Si todavía no hay resumen, lánzalo en segundo plano
+// Si todavía no hay resumen, lánzalo en segundo plano
 if (!bomDescription && !bomDescriptionsLoading[bomKey]) {
     void fetchBookDescription(bom.title, bom.author).then(() => {
         updateView();
@@ -891,9 +893,22 @@ if (!bomDescription && !bomDescriptionsLoading[bomKey]) {
                             <p><em>by ${bom.author}</em></p>
                             ${renderMainAverageRating(finalOverallAverage, totalRaters)}
                             ${bomDescription
-                                ? `<p>${bomDescription}</p>`
-                                : `<div class="loading-indicator">Loading summary...</div>`
-                            }
+    ? `
+        <div class="bom-summary-box ${isSummaryExpanded ? 'expanded' : ''}">
+            <p>${bomDescription}</p>
+        </div>
+        ${bomDescription.length > 220 ? `
+            <button
+                type="button"
+                class="bom-summary-toggle"
+                data-action="toggle-bom-summary"
+                data-bom-id="${bomId}">
+                ${isSummaryExpanded ? 'Show less' : 'Read more'}
+            </button>
+        ` : ''}
+      `
+    : `<div class="loading-indicator">Loading summary...</div>`
+}
                         </div>
 
                         <div class="bom-main-actions">
@@ -2184,6 +2199,17 @@ function handleCloseProposalDetail() {
     updateView(); // Re-render to hide the modal
 }
 
+function handleToggleBomSummary(event: Event) {
+    const button = (event.target as HTMLElement).closest('button[data-action="toggle-bom-summary"]') as HTMLElement | null;
+    const bomId = button?.dataset.bomId;
+
+    if (!bomId) return;
+
+    expandedBomSummaries[bomId] = !expandedBomSummaries[bomId];
+    Storage.setItem("expandedBomSummaries", expandedBomSummaries);
+    updateView();
+}
+
 // --- Add Book Modal Handlers ---
 function resetAddBookModalState() {
     addBook_searchText = '';
@@ -3165,6 +3191,9 @@ document.onclick = (e) => {
         break;
         case "start-reading-bom":
             handleStartReadingBom(e);
+        break;
+        case "toggle-bom-summary":
+        handleToggleBomSummary(e);
         break;
         case "submit-bom-proposal":
         e.preventDefault();

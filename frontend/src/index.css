@@ -1284,23 +1284,6 @@ ul.discussion-starters li {
     margin-bottom: 0;
 }
 
-#bom-view .bom-main-actions {
-    margin-top: 16px;
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-#bom-view .bom-cover-image {
-    border-radius: 16px;
-    max-width: 100%;
-    display: block;
-}
-
-#bom-view .bom-main-layout-container {
-    gap: 20px;
-}
-
 #bom-view .total-raters-note {
     margin-top: 12px;
     opacity: 0.8;
@@ -1308,4 +1291,32 @@ ul.discussion-starters li {
 
 #bom-view .book-item + .book-item {
     margin-top: 0;
+}
+
+#bom-view .bom-summary-box {
+    max-height: 180px;
+    overflow: hidden;
+    position: relative;
+    line-height: 1.55;
+    padding-right: 6px;
+}
+
+#bom-view .bom-summary-box.expanded {
+    max-height: 380px;
+    overflow: auto;
+}
+
+#bom-view .bom-summary-toggle {
+    margin-top: 10px;
+    background: none;
+    border: none;
+    padding: 0;
+    color: #5b21b6;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+#bom-view .bom-summary-box p {
+    margin: 0;
 }
