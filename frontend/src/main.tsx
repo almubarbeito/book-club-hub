@@ -409,54 +409,6 @@ async function initializeAndSetCurrentBOM() {
 
     console.log("Revisando propuestas disponibles:", bomProposals.length);
 
-    if (currentMonthStr === "2026-06") {
-    const fixedBom1 = bomProposals.find(p => p.id === "OEVCKOnMzqubmCJ668mp");
-    const fixedBom2 = bomProposals.find(p => p.id === "iFHoagQkBX1DMuPnkR43");
-
-    if (fixedBom1 && fixedBom2) {
-        const manualBoms: BomEntry[] = [
-            {
-                id: `bom_${currentMonthStr}_1_${fixedBom1.id}`,
-                monthYear: currentMonthStr,
-                title: fixedBom1.bookTitle,
-                author: fixedBom1.bookAuthor,
-                description: fixedBom1.reason,
-                promptHint: `Top 1 by votes (${fixedBom1.votes.length} votes)`,
-                coverImageUrl: fixedBom1.bookCoverImageUrl,
-                setBy: 'community_vote',
-                discussionStarters: [],
-                sourceProposalId: fixedBom1.id,
-                rank: 1
-            },
-            {
-                id: `bom_${currentMonthStr}_2_${fixedBom2.id}`,
-                monthYear: currentMonthStr,
-                title: fixedBom2.bookTitle,
-                author: fixedBom2.bookAuthor,
-                description: fixedBom2.reason,
-                promptHint: `Top 2 by votes (${fixedBom2.votes.length} votes)`,
-                coverImageUrl: fixedBom2.bookCoverImageUrl,
-                setBy: 'community_vote',
-                discussionStarters: [],
-                sourceProposalId: fixedBom2.id,
-                rank: 2
-            }
-        ];
-
-        await setDoc(doc(db, "config", "activeBOM"), {
-            monthYear: currentMonthStr,
-            books: manualBoms
-        });
-
-        currentBomsToDisplay = manualBoms;
-        currentBomToDisplay = manualBoms[0];
-        activeBomId = manualBoms[0].id;
-        discussionStarters = [];
-
-        return;
-    }
-}
-
     try {
         const bomDocRef = doc(db, "config", "activeBOM");
         const bomSnap = await getDoc(bomDocRef);
@@ -466,66 +418,38 @@ async function initializeAndSetCurrentBOM() {
             const data = bomSnap.data() as any;
 
             if (data.monthYear === currentMonthStr) {
-                console.log("BOM oficial encontrado en Firestore para este mes.");
-
-                const booksForMonth: BomEntry[] = Array.isArray(data.books)
+                const booksFromDoc: BomEntry[] = Array.isArray(data.books)
                     ? data.books
                     : [data as BomEntry];
 
-                currentBomsToDisplay = booksForMonth.filter(Boolean);
-                currentBomToDisplay = currentBomsToDisplay[0] || null;
-                activeBomId = currentBomToDisplay?.id || null;
-                discussionStarters = currentBomToDisplay?.discussionStarters || [];
+                if (booksFromDoc.length > 0) {
+                    console.log("BOM oficial encontrado en Firestore para este mes.");
 
-                // Sincroniza las proposals seleccionadas en caso de recarga
-                for (const bom of currentBomsToDisplay) {
-                    if (!bom.sourceProposalId) continue;
+                    currentBomsToDisplay = booksFromDoc;
+                    currentBomToDisplay = currentBomsToDisplay[0] || null;
+                    activeBomId = currentBomToDisplay?.id || null;
+                    discussionStarters = currentBomToDisplay?.discussionStarters || [];
 
-                    await updateDoc(doc(db, "proposals", bom.sourceProposalId), {
-                        status: "selected",
-                        selectedAsBOMMonth: data.monthYear,
-                        selectedAsBOMRank: bom.rank || null
-                    });
-
-                    bomProposals = bomProposals.map(p =>
-                        p.id === bom.sourceProposalId
-                            ? {
-                                ...p,
-                                status: "selected",
-                                selectedAsBOMMonth: data.monthYear,
-                                selectedAsBOMRank: bom.rank || null
-                            }
-                            : p
-                    );
+                    return;
                 }
-
-                Storage.setItem("bomProposals", bomProposals);
-                return;
             }
         }
 
-        // 2) Si no existe, calcular los 2 más votados de la propuesta del mes anterior
-    const alreadyUsedBomKeys = new Set(
-    bookOfTheMonthHistory.map(b =>
-        `${b.title.toLowerCase()}|${(b.author || '').toLowerCase()}`
-    )
-);
-
-const candidates = bomProposals.filter(p => {
-    const proposalKey = `${p.bookTitle.toLowerCase()}|${(p.bookAuthor || '').toLowerCase()}`;
-    return p.proposalMonthYear === lastMonthStr && !alreadyUsedBomKeys.has(proposalKey);
-});
+        // 2) Calcular los candidatos del mes anterior
+        const candidates = bomProposals.filter(
+            p => p.proposalMonthYear === lastMonthStr
+        );
 
         console.log("Candidatos para el mes anterior:", candidates.length);
 
         if (candidates.length > 0) {
             const topBoms = [...candidates]
-  .sort((a, b) => {
-      const voteDiff = (b.votes?.length || 0) - (a.votes?.length || 0);
-      if (voteDiff !== 0) return voteDiff;
-      return (b.timestamp || 0) - (a.timestamp || 0);
-  })
-  .slice(0, bomCount);
+                .sort((a, b) => {
+                    const voteDiff = (b.votes?.length || 0) - (a.votes?.length || 0);
+                    if (voteDiff !== 0) return voteDiff;
+                    return (b.timestamp || 0) - (a.timestamp || 0);
+                })
+                .slice(0, bomCount);
 
             const newBoms: BomEntry[] = topBoms.map((winner, index) => ({
                 id: `bom_${currentMonthStr}_${index + 1}_${winner.id}`,
@@ -857,9 +781,6 @@ async function fetchBookDescription(title: string, author: string): Promise<stri
 function BookOfTheMonthView() {
     console.log("Rendering BookOfTheMonthView. currentBomsToDisplay is:", currentBomsToDisplay);
 
-    const bomKey = getBookKey(bom.title, bom.author);
-    const bomDescription = bomDescriptions[bomKey];
-
     const bomsToRender: BomEntry[] =
         currentBomsToDisplay.length > 0
             ? currentBomsToDisplay
@@ -881,6 +802,8 @@ function BookOfTheMonthView() {
 
     const bomCardsHtml = bomsToRender.map((bom) => {
         const bomId = bom.id;
+        const bomKey = getBookKey(bom.title, bom.author);
+        const bomDescription = bomDescriptions[bomKey] || "";
 
         const { finalOverallAverage, totalRaters } = computeBomStats(bomId);
 
@@ -961,9 +884,9 @@ function BookOfTheMonthView() {
                             <p><em>by ${bom.author}</em></p>
                             ${renderMainAverageRating(finalOverallAverage, totalRaters)}
                             ${bomDescription
-    ? `<p>${bomDescription}</p>`
-    : `<div class="loading-indicator">Loading summary...</div>`
-}
+                                ? `<p>${bomDescription}</p>`
+                                : `<div class="loading-indicator">Loading summary...</div>`
+                            }
                         </div>
 
                         <div class="bom-main-actions">
