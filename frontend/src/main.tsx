@@ -745,7 +745,7 @@ async function fetchBookDescription(title: string, author: string): Promise<stri
     }
 
     if (bomDescriptionsLoading[key]) {
-        return "Loading summary...";
+        return "";
     }
 
     bomDescriptionsLoading[key] = true;
@@ -804,6 +804,13 @@ function BookOfTheMonthView() {
         const bomId = bom.id;
         const bomKey = getBookKey(bom.title, bom.author);
         const bomDescription = bomDescriptions[bomKey] || "";
+
+        // Si todavía no hay resumen, lánzalo en segundo plano
+if (!bomDescription && !bomDescriptionsLoading[bomKey]) {
+    void fetchBookDescription(bom.title, bom.author).then(() => {
+        updateView();
+    });
+}
 
         const { finalOverallAverage, totalRaters } = computeBomStats(bomId);
 
@@ -1059,7 +1066,7 @@ function renderBomProposalSection() {
                 </div>
             `}
 
-            <h4 style="margin-top: 24px;">Historical Proposals</h4>
+            <h4 style="margin-top: 24px;">Historical Books of the Month</h4>
             ${historicalProposals.length === 0 ? `
                 <p>No historical proposals yet.</p>
             ` : `
