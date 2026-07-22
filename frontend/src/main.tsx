@@ -946,6 +946,7 @@ if (!bomDescription && !bomDescriptionsLoading[bomKey]) {
     return `
         <div class="page" id="bom-view">
             ${bomCardsHtml}
+            ${renderHistoricalBomSection()}
         </div>
     `;
 }
@@ -1130,6 +1131,76 @@ function renderBomProposalSection() {
     </div>
     `;
 }).join('')}
+                </div>
+            `}
+        </div>
+    `;
+}
+
+function renderHistoricalBomSection() {
+    const historicalProposals = [...bomProposals]
+        .filter(p =>
+            p.status === 'selected' ||
+            p.selectedAsBOMMonth
+        )
+        .sort((a, b) => {
+            const monthA = a.selectedAsBOMMonth || a.proposalMonthYear || '';
+            const monthB = b.selectedAsBOMMonth || b.proposalMonthYear || '';
+            return monthB.localeCompare(monthA);
+        });
+
+    return `
+        <div class="book-item" id="historical-bom-section">
+            <h3>Historical Books of the Month</h3>
+
+            ${historicalProposals.length === 0 ? `
+                <p>No historical Books of the Month yet.</p>
+            ` : `
+                <div class="bom-proposals-list historical">
+                    ${historicalProposals.map(proposal => {
+                        const selectedMonth = proposal.selectedAsBOMMonth || proposal.proposalMonthYear;
+                        const commentsForThis = globalBomComments[proposal.id]
+                            ? Object.values(globalBomComments[proposal.id]).slice(0, 2)
+                            : [];
+
+                        return `
+                            <div class="bom-proposal-item historical-item">
+                                <div class="historical-badge">📖 Book of the Month</div>
+
+                                ${proposal.bookCoverImageUrl 
+                                    ? `<img src="${proposal.bookCoverImageUrl}" class="book-cover-thumbnail">`
+                                    : '<div class="book-cover-placeholder-small">No Cover</div>'}
+
+                                <div class="bom-proposal-details">
+                                    <h4>${proposal.bookTitle}</h4>
+                                    <p><em>by ${proposal.bookAuthor || 'Unknown Author'}</em></p>
+
+                                    <p class="proposal-month">
+                                        ${formatMonthYearForDisplay(selectedMonth)}
+                                    </p>
+
+                                    <p class="proposal-rating">
+                                        ⭐ ${proposal.finalRating ? proposal.finalRating.toFixed(1) : '—'}
+                                        ${proposal.reviewCount ? `• ${proposal.reviewCount} reviews` : ''}
+                                    </p>
+
+                                    ${commentsForThis.length > 0 ? `
+                                        <div class="historical-comments">
+                                            ${commentsForThis.map(c => `
+                                                <p class="historical-comment">
+                                                    “${c.text.substring(0, 120)}...”
+                                                </p>
+                                            `).join('')}
+                                        </div>
+                                    ` : ''}
+
+                                    <p class="proposed-by">
+                                        Proposed by: ${proposal.proposedByUserName || 'Unknown'}
+                                    </p>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
                 </div>
             `}
         </div>
