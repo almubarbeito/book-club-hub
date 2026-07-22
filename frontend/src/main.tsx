@@ -402,9 +402,9 @@ function getPreviousMonthYearString(): string {
 }
 
 async function initializeAndSetCurrentBOM() {
+    const currentMonthStr = getCurrentMonthYearString();
     const SINGLE_BOM_FROM_MONTH = "2026-08";
     const bomCount = currentMonthStr >= SINGLE_BOM_FROM_MONTH ? 1 : 2;
-    const currentMonthStr = getCurrentMonthYearString();
     const lastMonthStr = getPreviousMonthYearString();
 
     console.log("Revisando propuestas disponibles:", bomProposals.length);
@@ -1658,7 +1658,7 @@ function OnboardingProfileSetupView() {
 
 
 function renderCurrentView() {
-    /*if (!currentUser) { 
+    if (!currentUser) { 
         switch (currentAuthProcessView) {
             case 'login': return LoginView();
             case 'register': return RegisterView();
@@ -1676,7 +1676,7 @@ function renderCurrentView() {
         }
     }*/
 
-    /*switch (currentView) {
+    switch (currentView) {
         case "mybooks": return MyBooksView();
         case "bookofthemonth": return BookOfTheMonthView();
         case "proposals": return ProposalsView();
@@ -1684,8 +1684,8 @@ function renderCurrentView() {
         default:
             currentView = "bookofthemonth"; 
             return BookOfTheMonthView();
-    }*/
-   return `<div style="padding: 20px;">DEBUG RENDER OK</div>`;
+    }
+   
 }
 
 function getHeaderTitle() {
