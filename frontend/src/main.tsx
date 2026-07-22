@@ -1658,7 +1658,7 @@ function OnboardingProfileSetupView() {
 
 
 function renderCurrentView() {
-    if (!currentUser) { 
+    /*if (!currentUser) { 
         switch (currentAuthProcessView) {
             case 'login': return LoginView();
             case 'register': return RegisterView();
