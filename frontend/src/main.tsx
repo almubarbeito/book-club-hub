@@ -1142,8 +1142,8 @@ function renderHistoricalBomSection() {
 
 const historicalProposals = [...bomProposals]
     .filter(p => {
-        const selectedMonth = p.selectedAsBOMMonth || "";
-        return selectedMonth && selectedMonth !== currentMonth;
+        const selectedMonth = p.selectedAsBOMMonth || p.proposalMonthYear || '';
+        return (p.status === 'selected' || !!p.selectedAsBOMMonth) && selectedMonth !== currentMonth;
     })
     .sort((a, b) => {
         const monthA = a.selectedAsBOMMonth || a.proposalMonthYear || '';
