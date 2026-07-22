@@ -1676,7 +1676,7 @@ function renderCurrentView() {
         }
     }*/
 
-    switch (currentView) {
+    /*switch (currentView) {
         case "mybooks": return MyBooksView();
         case "bookofthemonth": return BookOfTheMonthView();
         case "proposals": return ProposalsView();
@@ -1684,7 +1684,8 @@ function renderCurrentView() {
         default:
             currentView = "bookofthemonth"; 
             return BookOfTheMonthView();
-    }
+    }*/
+   return `<div style="padding: 20px;">DEBUG RENDER OK</div>`;
 }
 
 function getHeaderTitle() {
@@ -3683,8 +3684,10 @@ function startApplication() {
         // After all state (currentUser, books, view, etc.) is definitively set,
         // we calculate the BoM and then perform ONE SINGLE RENDER.
         // --- FINAL STEP FOR ALL SCENARIOS ---
-console.log("Reached final auth step");
-return;
+        await initializeAndSetCurrentBOM();
+console.log("🔍 activeBomId after init:", activeBomId);
+
+updateView();
     });
 }
 
