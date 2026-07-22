@@ -3685,7 +3685,7 @@ function startApplication() {
         await initializeAndSetCurrentBOM();
         console.log("🔍 activeBomId after init:", activeBomId);
         for (const bom of currentBomsToDisplay) {
-        await fetchBookDescription(bom.title, bom.author);
+        //await fetchBookDescription(bom.title, bom.author);
 }
         
         for (const bom of currentBomsToDisplay) {
