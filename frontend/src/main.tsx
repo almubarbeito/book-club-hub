@@ -2553,8 +2553,24 @@ async function handleBookAction(event) {
 }
 
 function handleMyBooksSearchInputChange(event) {
-    myBooksSearchTerm = (event.target as HTMLInputElement).value;
-    updateView(); 
+    const input = event.target as HTMLInputElement;
+    myBooksSearchTerm = input.value;
+
+    const cursorPosition = input.selectionStart ?? myBooksSearchTerm.length;
+
+    updateView();
+
+    requestAnimationFrame(() => {
+        const newInput = document.getElementById('myBooksSearchInput') as HTMLInputElement | null;
+        if (newInput) {
+            newInput.focus();
+            try {
+                newInput.setSelectionRange(cursorPosition, cursorPosition);
+            } catch {
+                // No pasa nada si el navegador no permite setSelectionRange
+            }
+        }
+    });
 }
 
 function handleSearchGoogleBooksFromMyBooks() {
