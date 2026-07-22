@@ -3683,16 +3683,8 @@ function startApplication() {
         // After all state (currentUser, books, view, etc.) is definitively set,
         // we calculate the BoM and then perform ONE SINGLE RENDER.
         await initializeAndSetCurrentBOM();
-        console.log("🔍 activeBomId after init:", activeBomId);
-        for (const bom of currentBomsToDisplay) {
-        //await fetchBookDescription(bom.title, bom.author);
-}
-        
-        for (const bom of currentBomsToDisplay) {
-            await loadBomCommunityData(bom.id);
-        }
-        
-        updateView();
+console.log("🔍 after init:", currentBomsToDisplay);
+updateView();
     });
 }
 
