@@ -466,16 +466,6 @@ async function initializeAndSetCurrentBOM() {
                 rank: (index + 1) as 1 | 2
             }));
 
-            bookOfTheMonthHistory = [
-    ...bookOfTheMonthHistory,
-    ...newBoms
-].filter((bom, index, arr) =>
-    index === arr.findIndex(b =>
-        b.id === bom.id
-    )
-);
-
-Storage.setItem("bookOfTheMonthHistory", bookOfTheMonthHistory);
 
             await setDoc(doc(db, "config", "activeBOM"), {
                 monthYear: currentMonthStr,
@@ -794,13 +784,11 @@ function BookOfTheMonthView() {
     console.log("Rendering BookOfTheMonthView. currentBomsToDisplay is:", currentBomsToDisplay);
 
     const bomsToRender: BomEntry[] =
-    bookOfTheMonthHistory.length > 0
-        ? [...bookOfTheMonthHistory].sort((a, b) => b.monthYear.localeCompare(a.monthYear))
-        : currentBomsToDisplay.length > 0
-            ? currentBomsToDisplay
-            : currentBomToDisplay
-                ? [currentBomToDisplay]
-                : [];
+    currentBomsToDisplay.length > 0
+        ? currentBomsToDisplay
+        : currentBomToDisplay
+            ? [currentBomToDisplay]
+            : [];
 
     if (bomsToRender.length === 0) {
         return `
