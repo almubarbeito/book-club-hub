@@ -1140,16 +1140,16 @@ function renderBomProposalSection() {
 function renderHistoricalBomSection() {
     const currentMonth = getCurrentMonthYearString();
 
-const historicalProposals = [...bomProposals]
-    .filter(p => {
-        const selectedMonth = p.selectedAsBOMMonth || p.proposalMonthYear || '';
-        return (p.status === 'selected' || !!p.selectedAsBOMMonth) && selectedMonth !== currentMonth;
-    })
-    .sort((a, b) => {
-        const monthA = a.selectedAsBOMMonth || a.proposalMonthYear || '';
-        const monthB = b.selectedAsBOMMonth || b.proposalMonthYear || '';
-        return monthB.localeCompare(monthA);
-    });
+    const historicalProposals = [...bomProposals]
+        .filter(p => {
+            const selectedMonth = p.selectedAsBOMMonth || p.proposalMonthYear || '';
+            return (p.status === 'selected' || !!p.selectedAsBOMMonth) && selectedMonth !== currentMonth;
+        })
+        .sort((a, b) => {
+            const monthA = a.selectedAsBOMMonth || a.proposalMonthYear || '';
+            const monthB = b.selectedAsBOMMonth || b.proposalMonthYear || '';
+            return monthB.localeCompare(monthA);
+        });
 
     return `
         <div class="book-item" id="historical-bom-section">
@@ -1165,10 +1165,50 @@ const historicalProposals = [...bomProposals]
                             ? Object.values(globalBomComments[proposal.id]).slice(0, 2)
                             : [];
 
+                        const proposalInMyBooks = books.find(book =>
+                            book.title.toLowerCase() === proposal.bookTitle.toLowerCase() &&
+                            (book.author || '').toLowerCase() === (proposal.bookAuthor || '').toLowerCase()
+                        );
+
+                        let startReadingButtonHtml = '';
+                        if (currentUser) {
+                            if (proposalInMyBooks) {
+    if (proposalInMyBooks.status === 'Reading') {
+        startReadingButtonHtml = `
+            <button class="button bom-action-button" disabled>
+                Currently Reading
+            </button>
+        `;
+    } else if (proposalInMyBooks.status === 'Read') {
+        startReadingButtonHtml = `
+            <button class="button bom-action-button" disabled>
+                Already Read
+            </button>
+        `;
+    } else {
+        startReadingButtonHtml = `
+            <button
+                class="button bom-action-button primary"
+                data-action="start-reading-bom"
+                data-bom-id="${proposal.id}">
+                Start reading this book
+            </button>
+        `;
+    }
+} else {
+    startReadingButtonHtml = `
+        <button
+            class="button bom-action-button primary"
+            data-action="start-reading-bom"
+            data-bom-id="${proposal.id}">
+            Start reading this book
+        </button>
+    `;
+}
+                        }
+
                         return `
                             <div class="bom-proposal-item historical-item">
-                                
-
                                 ${proposal.bookCoverImageUrl 
                                     ? `<img src="${proposal.bookCoverImageUrl}" class="book-cover-thumbnail">`
                                     : '<div class="book-cover-placeholder-small">No Cover</div>'}
@@ -1185,6 +1225,8 @@ const historicalProposals = [...bomProposals]
                                         ⭐ ${proposal.finalRating ? proposal.finalRating.toFixed(1) : '—'}
                                         ${proposal.reviewCount ? `• ${proposal.reviewCount} reviews` : ''}
                                     </p>
+
+                                    ${startReadingButtonHtml}
 
                                     ${commentsForThis.length > 0 ? `
                                         <div class="historical-comments">
@@ -2529,16 +2571,26 @@ async function handleFetchDiscussionStarters() {
 function handleStartReadingBom(event: Event) {
     if (!currentUser || !currentUser.id) return;
 
-    const button = (event.currentTarget as HTMLElement).closest('button[data-action="start-reading-bom"]') as HTMLElement | null;
-    const bomId = button?.dataset.bomId;
+    const button = (event.target as HTMLElement).closest(
+        'button[data-action="start-reading-bom"]'
+    ) as HTMLElement | null;
 
+    const bomId = button?.dataset.bomId;
     if (!bomId) return;
 
-    const bom = currentBomsToDisplay.find(b => b.id === bomId);
+    const bom =
+        currentBomsToDisplay.find(b => b.id === bomId) ||
+        bomProposals.find(p => p.id === bomId) ||
+        bookOfTheMonthHistory.find(b => b.id === bomId);
+
     if (!bom) return;
 
-    const bomTitleLower = bom.title.toLowerCase();
-    const bomAuthorLower = (bom.author || '').toLowerCase();
+    const title = 'bookTitle' in bom ? bom.bookTitle : bom.title;
+    const author = 'bookAuthor' in bom ? bom.bookAuthor : bom.author;
+    const coverImageUrl = 'bookCoverImageUrl' in bom ? bom.bookCoverImageUrl : bom.coverImageUrl;
+
+    const bomTitleLower = (title || '').toLowerCase();
+    const bomAuthorLower = (author || '').toLowerCase();
 
     const existingBookIndex = books.findIndex(book =>
         book.title.toLowerCase() === bomTitleLower &&
@@ -2552,9 +2604,9 @@ function handleStartReadingBom(event: Event) {
     } else {
         const newBook: Book = {
             id: generateId(),
-            title: bom.title,
-            author: bom.author,
-            coverImageUrl: bom.coverImageUrl || undefined,
+            title,
+            author,
+            coverImageUrl: coverImageUrl || undefined,
             status: 'Reading'
         };
         books.push(newBook);
