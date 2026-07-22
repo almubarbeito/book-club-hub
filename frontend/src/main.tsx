@@ -3682,9 +3682,9 @@ function startApplication() {
         // --- FINAL STEP FOR ALL SCENARIOS ---∏
         // After all state (currentUser, books, view, etc.) is definitively set,
         // we calculate the BoM and then perform ONE SINGLE RENDER.
-        await initializeAndSetCurrentBOM();
-console.log("🔍 after init:", currentBomsToDisplay);
-updateView();
+        // --- FINAL STEP FOR ALL SCENARIOS ---
+console.log("Reached final auth step");
+return;
     });
 }
 
