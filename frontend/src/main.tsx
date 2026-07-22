@@ -796,7 +796,6 @@ function BookOfTheMonthView() {
                     <h2>Books of the Month</h2>
                     <p>The Book(s) of the Month for ${formatMonthYearForDisplay(getCurrentMonthYearString())} have not been set yet. Check back for proposals and voting!</p>
                 </div>
-                ${currentUser ? renderBomProposalSection() : ''}
             </div>
         `;
     }
@@ -946,7 +945,6 @@ if (!bomDescription && !bomDescriptionsLoading[bomKey]) {
     return `
         <div class="page" id="bom-view">
             ${bomCardsHtml}
-            ${currentUser ? renderBomProposalSection() : ''}
         </div>
     `;
 }
