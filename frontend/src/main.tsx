@@ -298,6 +298,7 @@ let chatMessages = Storage.getItem("chatMessagesGlobal", []);
 let myBooksSearchTerm = '';
 
 // Add Book Modal State
+let addBookModalMode: 'add' | 'mybooks' = 'add';
 let showAddBookModal = false;
 let addBook_searchText = '';
 let addBook_searchResults: any[] = [];
@@ -667,8 +668,13 @@ function MyBooksView() {
     if (books.length === 0) {
         booksHtml = `<p>Your reading list is empty. Add a book to get started!</p>`;
     } else if (booksToDisplay.length === 0 && searchTerm) {
-        booksHtml = `<p>No books match your search for "${myBooksSearchTerm}".</p>`;
-    } else if (booksToDisplay.length === 0 && !searchTerm) {
+    booksHtml = `
+        <p>No books match your search for "${myBooksSearchTerm}".</p>
+        <button class="button" data-action="search-google-books-from-mybooks">
+            Search Google Books
+        </button>
+    `;
+} else if (booksToDisplay.length === 0 && !searchTerm) {
         // This case might not be reachable if books.length > 0 and searchTerm is empty.
         // It's here for completeness if filtering logic changes.
         booksHtml = `<p>Your reading list is currently empty or filtered out.</p>`;
@@ -1849,7 +1855,9 @@ function renderAddBookModal() {
                             <h4>${book.title}</h4>
                             <p>${book.author}</p>
                         </div>
-                        <button class="button small-button" data-action="select-searched-book" data-index="${index}">Select</button>
+                        <button class="button small-button" data-action="select-searched-book" data-index="${index}">
+    ${addBookModalMode === 'mybooks' ? 'Add to My Books' : 'Select'}
+</button>
                     </li>
                 `).join('')}
             </ul>
@@ -1878,24 +1886,30 @@ function renderAddBookModal() {
                     ${searchResultsHtml}
                 </div>
                 
-                <hr class="modal-divider">
+                ${addBookModalMode === 'add' ? `
+    <hr class="modal-divider">
 
-                <form id="addBookForm" class="form">
-                    <div>
-                        <label for="bookTitle">Title:</label>
-                        <input type="text" id="bookTitle" name="title" required value="${addBook_formTitle}">
-                    </div>
-                    <div>
-                        <label for="bookAuthor">Author:</label>
-                        <input type="text" id="bookAuthor" name="author" value="${addBook_formAuthor}">
-                    </div>
-                    <div>
-                        <label for="bookCoverImageUrl">Cover Image URL:</label>
-                        <input type="url" id="bookCoverImageUrl" name="coverImageUrl" placeholder="https://example.com/image.jpg" value="${addBook_formCoverUrl}">
-                        ${addBook_formCoverUrl ? `<img src="${addBook_formCoverUrl}" alt="Selected cover preview" class="modal-cover-preview">` : ''}
-                    </div>
-                    <button type="submit">Add Book to My List</button>
-                </form>
+    <form id="addBookForm" class="form">
+        <div>
+            <label for="bookTitle">Title:</label>
+            <input type="text" id="bookTitle" name="title" required value="${addBook_formTitle}">
+        </div>
+        <div>
+            <label for="bookAuthor">Author:</label>
+            <input type="text" id="bookAuthor" name="author" value="${addBook_formAuthor}">
+        </div>
+        <div>
+            <label for="bookCoverImageUrl">Cover Image URL:</label>
+            <input type="url" id="bookCoverImageUrl" name="coverImageUrl" placeholder="https://example.com/image.jpg" value="${addBook_formCoverUrl}">
+            ${addBook_formCoverUrl ? `<img src="${addBook_formCoverUrl}" alt="Selected cover preview" class="modal-cover-preview">` : ''}
+        </div>
+        <button type="submit">Add Book to My List</button>
+    </form>
+` : `
+    <div class="mybooks-modal-note">
+        Select a book below to add it directly to My Books.
+    </div>
+`}
             </div>
         </div>
     `;
@@ -2336,6 +2350,7 @@ function resetAddBookModalState() {
 }
 
 function handleAddBookFabClick() {
+    addBookModalMode = 'add';
     resetAddBookModalState();
     showAddBookModal = true;
     updateView();
@@ -2343,6 +2358,7 @@ function handleAddBookFabClick() {
 
 function handleCloseAddBookModal() {
     showAddBookModal = false;
+    addBookModalMode = 'add';
     resetAddBookModalState();
     updateView();
 }
@@ -2428,14 +2444,44 @@ function handleSelectSearchedBookForAdd(event) {
     const index = parseInt((event.target as HTMLElement).dataset.index!, 10);
     const selectedBook = addBook_searchResults[index];
 
-    if (selectedBook) {
-        addBook_formTitle = selectedBook.title;
-        addBook_formAuthor = selectedBook.author;
-        addBook_formCoverUrl = selectedBook.cover || '';
-        addBook_searchResults = []; 
-        addBook_searchText = ''; 
-        updateView(); 
+    if (!selectedBook) return;
+
+    // Si el modal se abrió desde My Books, añadimos directamente al listado
+    if (addBookModalMode === 'mybooks') {
+        if (currentUser && currentUser.id) {
+            const existingIndex = books.findIndex(book =>
+                book.title.toLowerCase() === selectedBook.title.toLowerCase() &&
+                (book.author || '').toLowerCase() === (selectedBook.author || '').toLowerCase()
+            );
+
+            if (existingIndex !== -1) {
+                books[existingIndex] = {
+                    ...books[existingIndex],
+                    coverImageUrl: books[existingIndex].coverImageUrl || selectedBook.cover || undefined
+                };
+            } else {
+                books.push({
+                    id: generateId(),
+                    title: selectedBook.title,
+                    author: selectedBook.author,
+                    coverImageUrl: selectedBook.cover || undefined,
+                    status: 'Pending'
+                });
+            }
+
+            saveBooksToFirebase();
+            handleCloseAddBookModal();
+        }
+        return;
     }
+
+    // Comportamiento normal de Add Book
+    addBook_formTitle = selectedBook.title;
+    addBook_formAuthor = selectedBook.author;
+    addBook_formCoverUrl = selectedBook.cover || '';
+    addBook_searchResults = [];
+    addBook_searchText = '';
+    updateView();
 }
 
 
@@ -2509,6 +2555,19 @@ async function handleBookAction(event) {
 function handleMyBooksSearchInputChange(event) {
     myBooksSearchTerm = (event.target as HTMLInputElement).value;
     updateView(); 
+}
+
+function handleSearchGoogleBooksFromMyBooks() {
+    addBookModalMode = 'mybooks';
+    addBook_searchText = myBooksSearchTerm.trim();
+    addBook_isLoadingSearch = false;
+    addBook_searchError = null;
+    addBook_searchResults = [];
+    addBook_formTitle = '';
+    addBook_formAuthor = '';
+    addBook_formCoverUrl = '';
+    showAddBookModal = true;
+    updateView();
 }
 
 
@@ -3319,6 +3378,9 @@ document.onclick = (e) => {
         case "toggle-bom-summary":
         handleToggleBomSummary(e);
         break;
+        case "search-google-books-from-mybooks":
+    handleSearchGoogleBooksFromMyBooks();
+    break;
         case "submit-bom-proposal":
         e.preventDefault();
         e.stopPropagation();

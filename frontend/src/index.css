@@ -1320,3 +1320,12 @@ ul.discussion-starters li {
 #bom-view .bom-summary-box p {
     margin: 0;
 }
+
+.mybooks-modal-note {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 0.95rem;
+    opacity: 0.9;
+}
