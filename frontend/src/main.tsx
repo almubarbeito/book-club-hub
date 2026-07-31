@@ -296,6 +296,7 @@ let userProfile: UserProfile = {
 };
 let chatMessages = Storage.getItem("chatMessagesGlobal", []); 
 let myBooksSearchTerm = '';
+let myBooksSearchDebounceTimer: number | null = null;
 
 // Add Book Modal State
 let addBookModalMode: 'add' | 'mybooks' = 'add';
@@ -2548,25 +2549,31 @@ async function handleBookAction(event) {
     updateView();
 }
 
-function handleMyBooksSearchInputChange(event) {
-    const input = event.target as HTMLInputElement;
+function handleMyBooksSearchInputChange(event: Event) {
+    const input = event.target as HTMLInputElement | null;
+    if (!input) return;
+
     myBooksSearchTerm = input.value;
 
     const cursorPosition = input.selectionStart ?? myBooksSearchTerm.length;
 
-    updateView();
+    if (myBooksSearchDebounceTimer) {
+        window.clearTimeout(myBooksSearchDebounceTimer);
+    }
 
-    requestAnimationFrame(() => {
-        const newInput = document.getElementById('myBooksSearchInput') as HTMLInputElement | null;
-        if (newInput) {
-            newInput.focus();
-            try {
-                newInput.setSelectionRange(cursorPosition, cursorPosition);
-            } catch {
-                // No pasa nada si el navegador no permite setSelectionRange
+    myBooksSearchDebounceTimer = window.setTimeout(() => {
+        updateView();
+
+        requestAnimationFrame(() => {
+            const newInput = document.getElementById('myBooksSearchInput') as HTMLInputElement | null;
+            if (newInput) {
+                newInput.focus();
+                try {
+                    newInput.setSelectionRange(cursorPosition, cursorPosition);
+                } catch {}
             }
-        }
-    });
+        });
+    }, 250);
 }
 
 function handleSearchGoogleBooksFromMyBooks() {
