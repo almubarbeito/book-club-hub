@@ -1,3 +1,4 @@
+console.log("search-google-books function hit");
 const axios = require('axios');
 
 const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';

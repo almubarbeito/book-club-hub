@@ -745,6 +745,23 @@ function getBookKey(title: string, author?: string) {
     return `${(title || '').toLowerCase()}|${(author || '').toLowerCase()}`;
 }
 
+async function fetchGoogleBooksFromBackend(query: string) {
+    console.log("FETCH BACKEND SEARCH CALLED", query);
+    const res = await fetch('/.netlify/functions/search-google-books', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+        throw new Error(data?.error || `Google Books search failed (${res.status})`);
+    }
+
+    return data.results || [];
+}
+
 async function fetchBookDescription(title: string, author: string): Promise<string> {
     const key = getBookKey(title, author);
 
@@ -2391,52 +2408,31 @@ function handleSearchInputKeypress(event: KeyboardEvent, searchButtonId: string)
     }
 }
 async function handlePerformAddBookSearch() {
-    if (!addBook_searchText.trim()) {
+    const input = document.getElementById('bookSearchText') as HTMLInputElement | null;
+    const term = (input?.value || addBook_searchText || '').trim();
+
+    addBook_searchText = term;
+
+    if (!term) {
         addBook_searchError = "Please enter a search term.";
         addBook_searchResults = [];
-        updateView(); // Re-render
+        updateView();
         return;
     }
 
     addBook_isLoadingSearch = true;
     addBook_searchError = null;
     addBook_searchResults = [];
-    updateView(); // Re-render to show loading
+    updateView();
 
     try {
-        if (!BOOKS_API_KEY) {
-            throw new Error("Books API Key is not configured.");
-        }
-
-        const query = encodeURIComponent(addBook_searchText.trim());
-        const fullUrl = `${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=10&key=${BOOKS_API_KEY}`;
-        
-        // This fetch call now goes directly to Google's servers
-        const res = await fetch(fullUrl);
-
-        if (!res.ok) {
-            throw new Error(`Google Books API error: ${res.status}`);
-        }
-
-        const data = await res.json();
-        if (data.items && data.items.length > 0) {
-            addBook_searchResults = data.items.map(item => {
-                const volumeInfo = item.volumeInfo;
-                return {
-                    title: volumeInfo.title || "No Title",
-                    author: volumeInfo.authors ? volumeInfo.authors.join(', ') : "Unknown Author",
-                    cover: volumeInfo.imageLinks?.thumbnail || volumeInfo.imageLinks?.smallThumbnail || null,
-                };
-            });
-        } else {
-            addBook_searchResults = [];
-        }
+        addBook_searchResults = await fetchGoogleBooksFromBackend(term);
     } catch (error) {
         console.error("Error searching books:", error);
         addBook_searchError = "Failed to search for books. Please try again.";
     } finally {
         addBook_isLoadingSearch = false;
-        updateView(); // Re-render to show results or error
+        updateView();
     }
 }
 
@@ -2584,6 +2580,9 @@ function handleSearchGoogleBooksFromMyBooks() {
     addBook_formCoverUrl = '';
     showAddBookModal = true;
     updateView();
+    setTimeout(() => {
+        void handlePerformAddBookSearch();
+    }, 0);
 }
 
 
@@ -2741,7 +2740,6 @@ function handleSelectSearchedBomProposalBook(event) {
 // ========================================================
 
 async function handlePerformBomProposalBookSearch() {
-
     const termValue = (window as any).bomProposal_searchText?.trim() || "";
 
     console.log("DEBUG - Buscando término:", termValue);
@@ -2757,30 +2755,16 @@ async function handlePerformBomProposalBookSearch() {
     bomProposal_searchError = null;
     bomProposal_searchResults = [];
 
-    updateView(); // 👈 IMPORTANTE para mostrar loading
+    updateView();
 
     try {
-        const apiKey = (import.meta as any).env.VITE_GOOGLE_BOOKS_API_KEY;
-        const query = encodeURIComponent(termValue);
-        const res = await fetch(`${GOOGLE_BOOKS_API_URL}?q=${query}&maxResults=5&key=${apiKey}`);
-        const data = await res.json();
-
-        if (data.items) {
-            bomProposal_searchResults = data.items.map((item: any) => ({
-                title: item.volumeInfo.title || "No Title",
-                author: item.volumeInfo.authors?.join(', ') || "Unknown Author",
-                cover: item.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || null,
-                pageCount: item.volumeInfo.pageCount || null // ⭐ NUEVO
-            }));
-        } else {
-            bomProposal_searchResults = [];
-        }
+        bomProposal_searchResults = await fetchGoogleBooksFromBackend(termValue);
     } catch (error) {
         console.error("Error fetching books:", error);
         bomProposal_searchError = "Error fetching books.";
     } finally {
         bomProposal_isLoadingSearch = false;
-        updateView(); // 👈 ESTE ES EL QUE PINTA RESULTADOS
+        updateView();
     }
 }
 
