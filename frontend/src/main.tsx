@@ -3558,24 +3558,31 @@ if (showBomProposalModal) {
     // --- 1. Handle the main form for adding the book ---
     const addBookForm = document.getElementById('addBookForm');
     if (addBookForm) {
-        // Listen for the final submission
         addBookForm.removeEventListener('submit', handleAddBookSubmit);
         addBookForm.addEventListener('submit', handleAddBookSubmit);
 
-        // Listen for typing in the Title, Author, and Cover fields
         addBookForm.querySelectorAll('input').forEach(input => {
             input.removeEventListener('input', handleAddBookFormInputChange);
             input.addEventListener('input', handleAddBookFormInputChange);
         });
     }
 
-// --- 2. Handle the book search functionality ---
-    const bookSearchInput = document.getElementById('bookSearchText');
-if (bookSearchInput) {
-    bookSearchInput.oninput = handleAddBookSearchInputChange;
-    bookSearchInput.onkeydown = (e) => handleSearchInputKeypress(e as KeyboardEvent, 'performBookSearchButton');
-}  
-    
+    // --- 2. Handle the book search functionality ---
+    const bookSearchInput = document.getElementById('bookSearchText') as HTMLInputElement | null;
+    if (bookSearchInput) {
+        bookSearchInput.oninput = handleAddBookSearchInputChange;
+        bookSearchInput.onkeydown = (e) => handleSearchInputKeypress(e as KeyboardEvent, 'performBookSearchButton');
+    }
+
+    const performBookSearchBtn = document.getElementById('performBookSearchButton');
+    if (performBookSearchBtn) {
+        performBookSearchBtn.removeEventListener('click', handlePerformAddBookSearch as any);
+        performBookSearchBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            await handlePerformAddBookSearch();
+        });
+    }
 
     // --- 3. Handle selecting a book from the search results ---
     document.querySelectorAll('#addBookModalContainer .book-search-result-item button[data-action="select-searched-book"]').forEach(button => {
@@ -3595,7 +3602,7 @@ if (bookSearchInput) {
         function closeModalOnClickOutside(e: Event) {
             if (e.target === modalContainer) handleCloseAddBookModal();
         }
-        modalContainer.removeEventListener('click', closeModalOnClickOutside); 
+        modalContainer.removeEventListener('click', closeModalOnClickOutside);
         modalContainer.addEventListener('click', closeModalOnClickOutside);
     }
 }
