@@ -364,6 +364,10 @@ function simpleHash(password) {
     return `hashed_${hash}_${password.length}`; 
 }
 
+const BOM_PAUSED_MONTHS = new Set([
+    "2026-08"
+]);
+
 function getCurrentMonthYearString(): string {
     const now = new Date();
     const year = now.getFullYear();
@@ -406,6 +410,18 @@ function getPreviousMonthYearString(): string {
 
 async function initializeAndSetCurrentBOM() {
     const currentMonthStr = getCurrentMonthYearString();
+
+    if (BOM_PAUSED_MONTHS.has(currentMonthStr)) {
+        console.log(`BOM paused for ${currentMonthStr}`);
+
+        currentBomsToDisplay = [];
+        currentBomToDisplay = null;
+        activeBomId = null;
+        discussionStarters = [];
+        
+        return;
+    }
+
     const SINGLE_BOM_FROM_MONTH = "2026-08";
     const bomCount = currentMonthStr >= SINGLE_BOM_FROM_MONTH ? 1 : 2;
     const lastMonthStr = getPreviousMonthYearString();
@@ -815,15 +831,43 @@ function BookOfTheMonthView() {
             : [];
 
     if (bomsToRender.length === 0) {
-        return `
-            <div class="page" id="bom-view">
-                <div class="book-item">
-                    <h2>Books of the Month</h2>
-                    <p>The Book(s) of the Month for ${formatMonthYearForDisplay(getCurrentMonthYearString())} have not been set yet. Check back for proposals and voting!</p>
-                </div>
+    const currentMonthStr = getCurrentMonthYearString();
+    const isPaused = BOM_PAUSED_MONTHS.has(currentMonthStr);
+
+    return `
+        <div class="page" id="bom-view">
+            <div class="book-item">
+                <h2>Libro del Mes</h2>
+
+                ${isPaused ? `
+                    <h3>🌴 ¡Nos vamos de vacaciones!</h3>
+
+                    <p>
+                        Este mes hacemos una pequeña pausa en el club de lectura.
+                    </p>
+
+                    <p>
+                        Aprovecha para leer ese libro que llevas tiempo posponiendo,
+                        descubrir una nueva historia o simplemente disfrutar de tus lecturas a tu ritmo.
+                    </p>
+
+                    <p>
+                        En septiembre volveremos con un nuevo Libro del Mes.
+                        ¡Feliz verano y felices lecturas! 📚
+                    </p>
+                ` : `
+                    <p>
+                        El Libro del Mes para ${formatMonthYearForDisplay(currentMonthStr)}
+                        todavía no se ha seleccionado.
+                        ¡Vuelve pronto!
+                    </p>
+                `}
             </div>
+
+            ${renderHistoricalBomSection()}
+        </div>
         `;
-    }
+    }       
 
     const bomCardsHtml = bomsToRender.map((bom) => {
         const bomId = bom.id;
