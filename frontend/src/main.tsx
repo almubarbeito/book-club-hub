@@ -1052,38 +1052,27 @@ function renderBomProposalSection() {
     const canProposeMore = userProposalsForNextMonth.length < 3;
 
     const isCurrentBomWinner = (proposal: BomProposal) => {
-    if (!currentBomToDisplay) return false;
+        if (!currentBomToDisplay) return false;
 
-    return (
-        proposal.id === currentBomToDisplay.sourceProposalId ||
-        (
-            proposal.bookTitle === currentBomToDisplay.title &&
-            proposal.bookAuthor === currentBomToDisplay.author
-        )
-    );
-};
+        return (
+            proposal.id === currentBomToDisplay.sourceProposalId ||
+            (
+                proposal.bookTitle === currentBomToDisplay.title &&
+                proposal.bookAuthor === currentBomToDisplay.author
+            )
+        );
+    };
 
     const activeProposals = [...bomProposals]
         .filter(p =>
-    !isCurrentBomWinner(p) &&     // ❌ no es el BOM actual
-    p.status !== 'selected'       // ❌ no es histórico
-  )
+            !isCurrentBomWinner(p) &&   // no es el BOM actual
+            p.status !== 'selected'     // no es histórico
+        )
         .sort((a, b) => {
             const voteDifference = (b.votes?.length || 0) - (a.votes?.length || 0);
             if (voteDifference !== 0) return voteDifference;
             return (b.timestamp || 0) - (a.timestamp || 0);
         });
-
-    const historicalProposals = [...bomProposals]
-  .filter(p =>
-    p.status === 'selected' ||
-    isCurrentBomWinner(p)
-  )
-  .sort((a, b) => {
-    const monthA = a.selectedAsBOMMonth || a.proposalMonthYear || '';
-    const monthB = b.selectedAsBOMMonth || b.proposalMonthYear || '';
-    return monthB.localeCompare(monthA);
-  });
 
     return `
         <div class="book-item" id="bom-proposal-section">
@@ -1126,15 +1115,14 @@ function renderBomProposalSection() {
                                     <h4>${proposal.bookTitle}</h4>
                                     <p><em>by ${proposal.bookAuthor || 'Unknown Author'}</em></p>
                                     ${proposal.pageCount ? `
-    <p class="book-meta">
-        📖 ${proposal.pageCount} pages
-        ${Math.round(proposal.pageCount / 50)
-            ? ` • ⏱️ ~${Math.round(proposal.pageCount / 50)}h read`
-            : ''
-        }
-    </p>
-` : ''}
-                                    
+                                        <p class="book-meta">
+                                            📖 ${proposal.pageCount} pages
+                                            ${Math.round(proposal.pageCount / 50)
+                                                ? ` • ⏱️ ~${Math.round(proposal.pageCount / 50)}h read`
+                                                : ''
+                                            }
+                                        </p>
+                                    ` : ''}
                                     <p class="proposal-month">Proposed for: ${formatMonthYearForDisplay(proposal.proposalMonthYear)}</p>
                                     <p class="proposal-reason"><strong>Reason:</strong> ${proposal.reason}</p>
                                     <p class="proposed-by">Proposed by: ${proposal.proposedByUserName || 'Unknown'}</p>
@@ -1146,59 +1134,6 @@ function renderBomProposalSection() {
                             </div>
                         `;
                     }).join('')}
-                </div>
-            `}
-
-            <h4 style="margin-top: 24px;">Historical Books of the Month</h4>
-            ${historicalProposals.length === 0 ? `
-                <p>No historical proposals yet.</p>
-            ` : `
-                <div class="bom-proposals-list historical">
-                    ${historicalProposals.map(proposal => {
-    const selectedMonth = proposal.selectedAsBOMMonth || proposal.proposalMonthYear;
-
-    const commentsForThis = globalBomComments[proposal.id]
-        ? Object.values(globalBomComments[proposal.id]).slice(0, 2)
-        : [];
-
-    return `
-    <div class="bom-proposal-item historical-item">
-        <div class="historical-badge">📖 Book of the Month</div>
-
-        ${proposal.bookCoverImageUrl 
-            ? `<img src="${proposal.bookCoverImageUrl}" class="book-cover-thumbnail">`
-            : '<div class="book-cover-placeholder-small">No Cover</div>'}
-
-        <div class="bom-proposal-details">
-            <h4>${proposal.bookTitle}</h4>
-            <p><em>by ${proposal.bookAuthor || 'Unknown Author'}</em></p>
-
-            <p class="proposal-month">
-                ${formatMonthYearForDisplay(selectedMonth)}
-            </p>
-
-            <p class="proposal-rating">
-                ⭐ ${proposal.finalRating ? proposal.finalRating.toFixed(1) : '—'}
-                ${proposal.reviewCount ? `• ${proposal.reviewCount} reviews` : ''}
-            </p>
-
-            ${commentsForThis.length > 0 ? `
-                <div class="historical-comments">
-                    ${commentsForThis.map(c => `
-                        <p class="historical-comment">
-                            “${c.text.substring(0, 120)}...”
-                        </p>
-                    `).join('')}
-                </div>
-            ` : ''}
-
-            <p class="proposed-by">
-                Proposed by: ${proposal.proposedByUserName || 'Unknown'}
-            </p>
-        </div>
-    </div>
-    `;
-}).join('')}
                 </div>
             `}
         </div>
